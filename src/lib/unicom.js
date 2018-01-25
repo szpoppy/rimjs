@@ -130,6 +130,17 @@ let groupForVm = {}
 // 命名 唯一
 let idForVm = {}
 let unicomIdName = ''
+function updateId(that, nv, ov){
+    if(nv == ov){
+        return
+    }
+    if(ov){
+        delete idForVm[ov]
+    }
+    if(nv){
+        idForVm[nv] = that
+    }
+}
 
 // 转化为一维数组
 function toOneArray(data, that, arr = []){
@@ -252,7 +263,12 @@ function install(vue, {
             // 实例命名 唯一
             let id = (this.$options.propsData || {}).unicomId
             if(id){
-                idForVm[id] = this
+                updateId(this, id)
+            }
+        },
+        watch: {
+            unicomId (nv, ov) {
+                updateId(this, nv, ov)
             }
         },
         // 全局混合， 销毁实例的时候，销毁事件
@@ -290,8 +306,8 @@ function install(vue, {
 
             // 移除唯一ID
             let id = this.unicomId
-            if(id && idForVm[id]){
-                delete idForVm[id]
+            if(id){
+                updateId(this, undefined, id)
             }
         }
     })
@@ -317,6 +333,6 @@ if(window.Vue){
     install(window.Vue)
 }
 
-return {EventEmitter, unicom, install}
+return {EventEmitter, install}
 
 })))
