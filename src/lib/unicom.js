@@ -1,6 +1,6 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) : factory();
+	typeof define === 'function' && define.amd ? define(factory) : factory()
 }(this, (function () { 'use strict';
 
 
@@ -9,7 +9,7 @@ const slice = Array.prototype.slice;
 class EventEmitter {
     constructor(){
         // 克隆一份 事件
-        this._monitor_ = Object.assign({}, this._monitor_ || {});
+        this._monitor_ = Object.assign({}, this._monitor_ || {})
     }
     /**
      * 绑定事件
@@ -18,35 +18,10 @@ class EventEmitter {
      * @returns {EventEmitter}
      */
     on(type, fun) {
-        let monitor = this._monitor_ || (this._monitor_ = {});
-        monitor[type] || (monitor[type] = []);
-        monitor[type].push(fun);
-        return this;
-    }
-
-    /**
-     * 判断是否还有特定事件
-     * @param type
-     * @returns {*}
-     */
-    hasEvent(type) {
-        let monitor = this._monitor_ && this._monitor_[type] || [];
-        return monitor.length > 0 || !!this['on' + type];
-    }
-
-    /**
-     * 只有执行一次的事件
-     * @param type 事件名称
-     * @param fun 事件方法
-     * @returns {EventEmitter}
-     */
-    onec(type, fun) {
-        function funx() {
-            fun.apply(this, arguments);
-            this.off(type, funx);
-        }
-        this.on(type, funx);
-        return this;
+        let monitor = this._monitor_ || (this._monitor_ = {})
+        monitor[type] || (monitor[type] = [])
+        monitor[type].push(fun)
+        return this
     }
 
     /**
@@ -56,23 +31,23 @@ class EventEmitter {
      * @returns {EventEmitter}
      */
     off(type, fun) {
-        let monitor = this._monitor_;
+        let monitor = this._monitor_
         if (monitor) {
             if (fun) {
-                let es = monitor[type];
+                let es = monitor[type]
                 if (es) {
-                    let index = es.indexOf(fun);
+                    let index = es.indexOf(fun)
                     if (index > -1) {
-                        es.splice(index, 1);
+                        es.splice(index, 1)
                     }
                 }
             } else if (type) {
-                delete monitor[type];
+                delete monitor[type]
             } else {
-                delete this._monitor_;
+                delete this._monitor_
             }
         }
-        return this;
+        return this
     }
 
     /**
@@ -82,28 +57,13 @@ class EventEmitter {
      */
     emit(type, ...ag) {
         let es = this._monitor_ && this._monitor_[type] || [];
+        let rv = []
         if (es.length) {
             for (let i = 0; i < es.length; i += 1) {
-                es[i].apply(this, ag);
+                rv.push(es[i].apply(this, ag))
             }
         }
-        let onFun = this['on' + type];
-        onFun && onFun.apply(this, ag);
-        return this;
-    }
-
-    /**
-     * 扩展本身
-     */
-    assign(...args) {
-        if(typeof args[0] === 'string'){
-            this.assign({[args[0]]:args[1]})
-        }
-        else{
-            args.unshift(this);
-            Object.assign.apply(Object, args);
-        }
-        return this;
+        return this
     }
 }
 
@@ -119,7 +79,8 @@ let toString = Object.prototype.toString
 let unicom = new EventEmitter()
 
 // vm容器
-let vmHooks = [], evHooks = []
+let vmMap = new Map()
+//let vmHooks = [], evHooks = []
 
 // group Name
 let unicomGroupName = ''
@@ -168,8 +129,11 @@ function sendSwitch(fn, that){
         let arg = Array.prototype.slice.call(arguments)
         let to = arg.shift()
         let isId = arg.shift()
+
+        let group = isId ? null : vmMap.get(that).group
+
         // #目标不存在  @分组不存在
-        if(!!to && ((isId && that[unicomIdName] != to) || (!isId && (!that[unicomGroupName] || that[unicomGroupName].indexOf(to) < 0)))){
+        if(!!to && ((isId && that[unicomIdName] != to) || (group && group.indexOf(to) < 0))){
             // 目标不存在
             return
         }
@@ -178,51 +142,39 @@ function sendSwitch(fn, that){
     }
 }
 
-// 发送容器
-function send() {
-    let arg = Array.prototype.slice.call(arguments)
-    
+// 发送容器 或者 获得 目标容器
+function unicomQuery(query, ...args){
     let to = '', isId = false
-    let key = String(arg[0]).replace(/([@#])([^@#]*)$/, function(s0, s1, s2){
+    let key = query.replace(/([@#])([^@#]*)$/, function(s0, s1, s2){
         to = s2
         isId = s1 == '#'
         return ''
     })
-    arg.splice(0, 1, key, to, isId, this)
-    //console.log('arg:', arg)
-    unicom.emit.apply(unicom, arg)
+    if(key){
+        args.unshift(key, to, isId, this)
+        return unicom.emit.apply(unicom, args)
+    }
+
+    // 获取目标 vm
+    return isId ? idForVm[to] : groupForVm[to]
 }
 
 // 安装配置 名称
 function install(vue, {
     name = 'unicom',
-    sendName,
-    groupName,
-    idName
+    idName,
+    groupName
 } = {}) {
     if(install.installed){
         return
     }
     install.installed = true
-    
-    vue.prototype['$' + (sendName || (name + 'Send'))] = send
 
-    unicomGroupName = groupName || (name + 'Name')
-
-    Object.defineProperty(vue.prototype, '$' + (groupName || (name + 'VM')), {
-        get () {
-            return groupForVm
-        }
-    })
-    
+    vue.prototype['$' + name] = unicomQuery
 
     unicomIdName = idName || (name + 'Id')
 
-    Object.defineProperty(vue.prototype, '$' + unicomIdName, {
-        get () {
-            return idForVm
-        }
-    })
+    unicomGroupName = groupName || (name + 'Name')
 
     vue.mixin({
         props: {
@@ -237,9 +189,13 @@ function install(vue, {
             let opt = this.$options
             let us = opt[name]
             //console.log(us)
+
+            let vmData = {}
+            let vmDataFlag = false
             if(us){
-                let uni = {}
+                let uni = vmData.uni = {}
                 for(let n in us){
+                    vmDataFlag = true
                     uni[n] = []
                     if(toString.call(us[n]).toLowerCase() != '[object array]'){
                         us[n] = [us[n]]
@@ -253,18 +209,21 @@ function install(vue, {
                         }
                     }
                 }
-                evHooks.push(uni)
-                vmHooks.push(this)
             }
 
             // 命名分组
-            this[unicomGroupName] = toOneArray(opt[unicomGroupName], this)
+            vmData.group = toOneArray(opt[unicomGroupName], this)
+            if(vmData.group.length > 0){
+                vmDataFlag = true
+            }
 
             // 实例命名 唯一
             let id = (this.$options.propsData || {}).unicomId
             if(id){
                 updateId(this, id)
             }
+            
+            vmDataFlag && vmMap.set(this, vmData)
         },
         watch: {
             unicomId (nv, ov) {
@@ -273,25 +232,27 @@ function install(vue, {
         },
         // 全局混合， 销毁实例的时候，销毁事件
         destroyed () {
-            // 销毁， 销毁 hooks 中的值
-            let index = vmHooks.indexOf(this)
-            if(index >= 0){
-                let uni = evHooks[index]
+            // 移除唯一ID
+            let id = this.unicomId
+            if(id){
+                updateId(this, undefined, id)
+            }
 
-                // 移除缓存
-                vmHooks.splice(index, 1)
-                evHooks.splice(index, 1)
+            let vmData = vmMap.get(this)
+            if(!vmData){
+                return
+            }
 
-                // 移除事件
-                for(let n in uni){
-                    uni[n].forEach(function(fn){
-                        unicom.off(n, fn)
-                    })
-                }
+            let uni = vmData.uni
+            // 移除事件
+            for(let n in uni){
+                uni[n].forEach(function(fn){
+                    unicom.off(n, fn)
+                })
             }
 
             // 分组，一对多， 单个vm可以多个分组名称
-            this[unicomGroupName].forEach((name) => {
+            vmData.group.forEach((name) => {
                 let gs = groupForVm[name]
                 if(gs){
                     let index = gs.indexOf(this)
@@ -303,12 +264,6 @@ function install(vue, {
                     }
                 }
             })
-
-            // 移除唯一ID
-            let id = this.unicomId
-            if(id){
-                updateId(this, undefined, id)
-            }
         }
     })
 
