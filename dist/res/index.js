@@ -1,2 +1,1 @@
-"use strict";var app=new Vue({el:"#app",data:{},methods:{}});
-//# sourceMappingURL=data:application/json;charset=utf8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInJlcy9pbmRleC5qcyJdLCJuYW1lcyI6WyJhcHAiLCJWdWUiLCJlbCIsIm1ldGhvZHMiXSwibWFwcGluZ3MiOiJZQUFBLElBQUlBLEtBQU0sR0FBSUMsTUFDVkMsR0FBSSxPQURKRixRQUtBRyIsImZpbGUiOiJyZXMvaW5kZXguanMiLCJzb3VyY2VzQ29udGVudCI6WyJ2YXIgYXBwID0gbmV3IFZ1ZSh7XG4gICAgZWw6ICcjYXBwJyxcbiAgICBkYXRhOiB7XG4gICAgICAgIFxuICAgIH0sXG4gICAgbWV0aG9kczoge1xuICAgICAgICBcbiAgICB9XG59KSJdfQ==
+"use strict";Vue.use(VueUnicom);var app=new Vue({el:"#app",data:{},methods:{}});

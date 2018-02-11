@@ -14,6 +14,7 @@
     <script src="res/component/b1.js"></script>
     <script src="res/component/b2.js"></script>
     <script src="res/component/c.js"></script>
+    <script src="res/component/btn.js"></script>
 </head>
 
 <body>
@@ -24,19 +25,7 @@
         <cb2></cb2>
         <cc></cc>
         <hr>
-        <button @click="$unicom('message', '通用Send')">通用Send</button>
-        
-        <button @click="$unicom('message@a', 'Send@a')">Send@a</button>
-        <button @click="$unicom('message#a-id1', 'Send#a-id1')">Send#a-id1</button>
-        <button @click="$unicom('message#a-id2', 'Send#a-id2')">Send#a-id2</button>
-
-        <button @click="$unicom('message@b', 'Send@b')">Send@b</button>
-        <button @click="$unicom('message@b1', 'Send@b1')">Send@b1</button>
-        <button @click="$unicom('message@b2', 'Send@b2')">Send@b2</button>
-
-        <button @click="$unicom('message@c', 'Send@c')">Send@c</button>
-
-        <button @click="$unicom('message@c', 'Send@c from #a-id1[' + $unicom('#a-id1').msg + ']')">Send@c from #a-id1</button>
+        <cbtn></cbtn>
     </div>
     <script src="res/index.js"></script>
 </body>

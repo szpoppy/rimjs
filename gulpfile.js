@@ -2,12 +2,13 @@ const gulp = require('gulp');
 const plugin = require('gulp-load-plugins')();
 
 // sourcemap
+let sourcemapFlag = false
 function sourcemapsInit() {
-    return plugin.sourcemaps.init();
+    return plugin.if(sourcemapFlag, plugin.sourcemaps.init());
 }
 
 function sourcemapsWrite() {
-    return plugin.sourcemaps.write();
+    return plugin.if(sourcemapFlag, plugin.sourcemaps.write());
 }
 
 // es6 转换
