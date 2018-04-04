@@ -14,7 +14,9 @@
      * [2018-02-08] 在实例组件时，也可以设置分组 unicom-name
      */
 
+    // 用户将 argumengs 转数组
     const slice = Array.prototype.slice;
+
     // 自定义事件 类似 nodejs中的 EventEmitter
     class EventEmitter {
         constructor() {
@@ -77,25 +79,22 @@
          */
         emit(type, ...ag) {
             let es = this._monitor_ && this._monitor_[type] || [];
-            let rv = []
             if (es.length) {
                 for (let i = 0; i < es.length; i += 1) {
-                    rv.push(es[i].apply(this, ag))
+                    es[i].apply(this, ag)
                 }
             }
-            return this
+            return es.length > 0
         }
     }
-    /**
-     * unicom 联通 想到中国联通就想到了这个名字 -_-
-     * 目的，提供vue 全局的转发机制
-     * [2018-01-18] 增加分组， 可以直接获取分组的 vm
-     */
+
+    // 判断数据类型
     let toString = Object.prototype.toString
     // 事件
     let unicom = new EventEmitter()
     // vm容器
     let vmMap = new Map()
+
     // 转化为一维数组
     function toOneArray(data, arr = [], fn, repetition = {}) {
         if (toString.call(data).toLowerCase() == '[object array]') {
@@ -190,7 +189,7 @@
     function _unicomQuery(method, toKey, aim, args, that) {
         if (method) {
             args.unshift(method, toKey, aim, that)
-            unicom.emit.apply(unicom, args)
+            return unicom.emit.apply(unicom, args)
         }
     }
 
@@ -217,7 +216,7 @@
             return this
         }
 
-        _unicomQuery(method, toKey, aim, args, this)
+        let flag = _unicomQuery(method, toKey, aim, args, this)
 
         // 获取目标 vm
         switch (aim) {
@@ -226,6 +225,8 @@
             case '@':
                 return groupForVm[toKey] || []
         }
+
+        return flag;
     }
 
     // 安装配置 名称
@@ -239,12 +240,15 @@
         }
         install.installed = true
 
+        // 添加原型方法
         vue.prototype['$' + name] = unicomQuery
 
+        // unicom-id
         unicomIdName = idName || (name + 'Id')
-
+        // 分组  unicom-name
         unicomGroupName = groupName || (name + 'Name')
 
+        // 全局混入
         vue.mixin({
             props: {
                 // 命名
@@ -348,6 +352,7 @@
                     if (flag) {
                         // 找到 目标，触发事件
                         if (method == '') {
+                            // 这个是需要延后销毁的
                             args[0](this)
                         } else {
                             sendDefer.splice(i, 1)
@@ -400,7 +405,7 @@
                     }
                 })
 
-                // 延后 销毁部分
+                // 延后 销毁部分 method为空
                 for (let i = 0; i < sendDefer.length;) {
                     let pms = sendDefer[i]
                     if (pms[0] == '' && pms[4] == this) {
@@ -412,12 +417,10 @@
             }
         })
 
+        // 自定义属性合并策略
         let merge = vue.config.optionMergeStrategies
         merge[name] = merge[unicomGroupName] = function (parentVal, childVal) {
-            let x = []
-            if (parentVal) {
-                x.push(parentVal)
-            }
+            let x = parentVal || []
             if (childVal) {
                 x.push(childVal)
             }
@@ -429,7 +432,9 @@
     function VueUnicom() {
         return unicomQuery.apply(this, arguments)
     }
+    // 抛出 EventEmitter 事件
     VueUnicom.EventEmitter = EventEmitter
+    // 安装
     VueUnicom.install = install
     return VueUnicom
 
