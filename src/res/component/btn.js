@@ -1,6 +1,8 @@
 // 注册
 Vue.component('cbtn', {
     template: `<div>
+    <p>自己收到的信息：{{msg}}</p>
+    <hr />
     <button @click="$unicom('message', '通用Send')">发送指令 message</button>
         
     <button @click="$unicom('message@a', 'Send@a')">发送指令 message@a</button>
@@ -18,10 +20,12 @@ Vue.component('cbtn', {
     unicom: {
         message: function(sender, text){
             // 指令发送后，自己也能收到
-            console.log(text)
+            this.msg = text
         }
     },
     data: function(){
-        return {}
+        return {
+            msg: ''
+        }
     }
 })

@@ -12,86 +12,15 @@
      * [2018-02-07] 增加 ～ 表示，发送到还没创建的组件，目标组件创建的时候，会在created，收到unicom事件
      *              ~后面为空（不包含@#...）, 当目标组件被创建的时候，就会调用第二个函数参数
      * [2018-02-08] 在实例组件时，也可以设置分组 unicom-name
+     * [2018-04-11] 去除 EventEmitter， 优化事件总线
      */
 
     // 用户将 argumengs 转数组
     const slice = Array.prototype.slice;
 
-    // 自定义事件 类似 nodejs中的 EventEmitter
-    class EventEmitter {
-        constructor() {
-            let ms = {}
-            let mx = this._monitor_
-            if (mx) {
-                // 克隆一份 事件
-                for (let n in mx) {
-                    ms[n] = []
-                    for (let i = 0; i < mx[n].length; i += 1) {
-                        ms[n].push(mx[n][i])
-                    }
-                }
-            }
-            this._monitor_ = ms;
-        }
-        /**
-         * 绑定事件
-         * @param type 事件名称
-         * @param fun 事件方法
-         * @returns {EventEmitter}
-         */
-        on(type, fun) {
-            let monitor = this._monitor_ || (this._monitor_ = {})
-            monitor[type] || (monitor[type] = [])
-            monitor[type].push(fun)
-            return this
-        }
-
-        /**
-         * 移除事件
-         * @param type 事件名称
-         * @param fun 事件方法
-         * @returns {EventEmitter}
-         */
-        off(type, fun) {
-            let monitor = this._monitor_
-            if (monitor) {
-                if (fun) {
-                    let es = monitor[type]
-                    if (es) {
-                        let index = es.indexOf(fun)
-                        if (index > -1) {
-                            es.splice(index, 1)
-                        }
-                    }
-                } else if (type) {
-                    delete monitor[type]
-                } else {
-                    delete this._monitor_
-                }
-            }
-            return this
-        }
-
-        /**
-         * 触发事件
-         * @param {String} type 事件名称
-         * @param {*} ag 传递的参数
-         */
-        emit(type, ...ag) {
-            let es = this._monitor_ && this._monitor_[type] || [];
-            if (es.length) {
-                for (let i = 0; i < es.length; i += 1) {
-                    es[i].apply(this, ag)
-                }
-            }
-            return es.length > 0
-        }
-    }
-
     // 判断数据类型
     let toString = Object.prototype.toString
-    // 事件
-    let unicom = new EventEmitter()
+
     // vm容器
     let vmMap = new Map()
 
@@ -162,34 +91,77 @@
         }
     }
 
-    // 交换 this 用
-    function sendSwitch(fn, that) {
-        return function (toKey, aim, ...args) {
-            if (aim == '#') {
-                // id
-                if (that[unicomIdName] != toKey) {
-                    // 目标不存在
-                    return
+    // 事件
+    let events = {};
+
+    function appendEvent(n, fn, self) {
+        if (!events[n]) {
+            events[n] = []
+        }
+        events[n].push({
+            fn,
+            self,
+            method: n
+        })
+    }
+
+    function emitEvent(method, toKey, aim, args) {
+        let evs = events[method];
+        let evLen = 0;
+        if (evs) {
+            // 循环已经注册的指令
+            for (let i = 0; i < evs.length; i += 1) {
+                
+                // 存储的 数据
+                let {
+                    fn,
+                    self
+                } = evs[i];
+
+                if (aim == '#') {
+                    // id
+                    if (self[unicomIdName] != toKey) {
+                        // 目标不存在
+                        continue;
+                    }
+                } else if (aim == '@') {
+                    // 分组
+                    let group = vmMap.get(self).group
+                    let name = self[unicomGroupName]
+                    let ns = name ? toOneArray(name) : []
+                    if ((!group || group.indexOf(toKey) < 0) && ns.indexOf(toKey) < 0) {
+                        // 目标不存在
+                        continue;
+                    }
                 }
-            } else if (aim == '@') {
-                // 分组
-                let group = vmMap.get(that).group
-                let name = that[unicomGroupName]
-                let ns = name ? toOneArray(name) : []
-                if ((!group || group.indexOf(toKey) < 0) && ns.indexOf(toKey) < 0) {
-                    // 目标不存在
-                    return
+
+                evLen += 1;
+
+                fn.apply(self, args);
+            }
+        }
+
+        // 返回被出发的 指令
+        return evLen;
+    }
+
+    function removeEvent(method, fn, self) {
+        let evs = events[method];
+        if (evs) {
+            for (let i = 0; i < evs.length; i += 1) {
+                if (fn === evs[i].fn && self === evs[i].self) {
+                    // 移除
+                    evs.splice(i, 1);
+                    return;
                 }
             }
-
-            fn.apply(that, args)
         }
     }
 
     function _unicomQuery(method, toKey, aim, args, that) {
         if (method) {
-            args.unshift(method, toKey, aim, that)
-            return unicom.emit.apply(unicom, args)
+            args.unshift(that)
+            return emitEvent(method, toKey, aim, args)
         }
     }
 
@@ -200,10 +172,10 @@
     function unicomQuery(query, ...args) {
         let toKey = '',
             aim = '',
-            isDefer = false
+            defer = ''
         let method = query.replace(/^([`~])/, function (s0, s1) {
-            if (s1 == '~') {
-                isDefer = true
+            if(s1 == '～'){
+                defer = s1
             }
             return ''
         }).replace(/([@#])([^@#]*)$/, function (s0, s1, s2) {
@@ -211,7 +183,7 @@
             aim = s1
             return ''
         })
-        if (isDefer) {
+        if (defer) {
             sendDefer.push([method, toKey, aim, args, this])
             return this
         }
@@ -291,9 +263,8 @@
                             if (!uni[n]) {
                                 uni[n] = []
                             }
-                            let xfn = sendSwitch(opt[n], this)
-                            uni[n].push(xfn)
-                            unicom.on(n, xfn)
+                            uni[n].push([opt[n]])
+                            appendEvent(n, opt[n], this)
                         }
                     })
                 }
@@ -332,7 +303,7 @@
                 // 延后触发时，触发
                 for (let i = 0; i < sendDefer.length; i += 1) {
                     let pms = sendDefer[i]
-                    let [method, toKey, aim, args] = pms
+                    let [method, toKey, aim, args, self] = pms
                     let flag = false
 
                     if (aim == '#') {
@@ -350,14 +321,14 @@
                     }
 
                     if (flag) {
-                        // 找到 目标，触发事件
+                        // 延后，并且方法为空
                         if (method == '') {
-                            // 这个是需要延后销毁的
-                            args[0](this)
+                            // 这个是监听事件
+                            args[0](this);
                         } else {
-                            sendDefer.splice(i, 1)
+                            sendDefer.splice(i, 1);
                             i -= 1
-                            _unicomQuery.apply(this, pms)
+                            _unicomQuery(method, toKey, aim, args, self);
                         }
                     }
                 }
@@ -386,8 +357,8 @@
                 let uni = vmData.uni
                 // 移除事件
                 for (let n in uni) {
-                    uni[n].forEach(function (fn) {
-                        unicom.off(n, fn)
+                    uni[n].forEach(fn => {
+                        removeEvent(n, fn, this)
                     })
                 }
 
@@ -405,7 +376,7 @@
                     }
                 })
 
-                // 延后 销毁部分 method为空
+                // 监控销毁 method为空
                 for (let i = 0; i < sendDefer.length;) {
                     let pms = sendDefer[i]
                     if (pms[0] == '' && pms[4] == this) {
@@ -432,8 +403,6 @@
     function VueUnicom() {
         return unicomQuery.apply(this, arguments)
     }
-    // 抛出 EventEmitter 事件
-    VueUnicom.EventEmitter = EventEmitter
     // 安装
     VueUnicom.install = install
     return VueUnicom
