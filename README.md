@@ -49,7 +49,7 @@ vue-unicom是一个Vue.js的一个组件。解决了Vue中组件通讯的痛点�
 - 浏览器中输入http://127.0.0.1:3101 (PC)
 - 浏览器中输入http://ip:3101 (手机浏览器)
 - demo中无，延后指令发送实例
-- 实例访问： https://szpoppy.github.io/vue-unicom/dist/
+- 实例访问： https://szpoppy.github.io/vue-unicom/dist/index.html
 
 
 
