@@ -51,6 +51,9 @@ vue-unicom是一个Vue.js的一个组件。解决了Vue中组件通讯的痛点�
 - demo中无，延后指令发送实例
 - 实例访问： https://szpoppy.github.io/vue-unicom/dist/index.html
 
+## 获取vue-unicom
+- npm install vue-unicom
+- github下载zip包，dist/lib/unicom.js，可以直接引入 到页面
 
 
 ## 使用，注册组件
