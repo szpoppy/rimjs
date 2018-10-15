@@ -13,10 +13,8 @@
      *              ~后面为空（不包含@#...）, 当目标组件被创建的时候，就会调用第二个函数参数
      * [2018-02-08] 在实例组件时，也可以设置分组 unicom-name
      * [2018-04-11] 去除 EventEmitter， 优化事件总线
+     * [2018-10-15] 加入Vue.unicom 方便全局触发
      */
-
-    // 用户将 argumengs 转数组
-    const slice = Array.prototype.slice;
 
     // 判断数据类型
     let toString = Object.prototype.toString
@@ -111,7 +109,7 @@
         if (evs) {
             // 循环已经注册的指令
             for (let i = 0; i < evs.length; i += 1) {
-                
+
                 // 存储的 数据
                 let {
                     fn,
@@ -174,7 +172,7 @@
             aim = '',
             defer = ''
         let method = query.replace(/^([`~])/, function (s0, s1) {
-            if(s1 == '～'){
+            if (s1 == '～') {
                 defer = s1
             }
             return ''
@@ -214,6 +212,7 @@
 
         // 添加原型方法
         vue.prototype['$' + name] = unicomQuery
+        vue[name] = unicomQuery
 
         // unicom-id
         unicomIdName = idName || (name + 'Id')

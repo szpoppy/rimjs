@@ -1,6 +1,6 @@
 {
   "name": "vue-unicom",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "vue-unicom",
   "main": "dist/lib/unicom.js",
   "scripts": {
