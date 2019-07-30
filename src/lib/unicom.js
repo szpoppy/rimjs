@@ -14,213 +14,334 @@
     /**
      * unicom 联通 想到中国联通就想到了这个名字 -_-
      * 目的，提供vue 全局的转发机制
-     * [2018-01-18] 增加分组， 可以直接获取分组的 vm
-     * [2018-01-25] 增加 unicom-id，确定vm的唯一值
-     * [2018-02-07] 增加 ～ 表示，发送到还没创建的组件，目标组件创建的时候，会在created，收到unicom事件
-     *              ~后面为空（不包含@#...）, 当目标组件被创建的时候，就会调用第二个函数参数
-     * [2018-02-08] 在实例组件时，也可以设置分组 unicom-name
-     * [2018-04-11] 去除 EventEmitter， 优化事件总线
-     * [2018-10-15] 加入Vue.unicom 方便全局触发
-     * [2019-06-25] 修复了组建销毁无法销毁event中的数据问题
+     * [2019-07-21] 重构,以事件模型为基础,多组件之间 订阅者和发布者来制作
      */
 
-    // 判断数据类型
-    let toString = Object.prototype.toString;
+    // 目前所有实例化的 unicom通讯 方便做 订阅者和发布者
 
-    // vm容器
-    let vmMap = new Map();
-
-    // 转化为一维数组
-    function toOneArray(data, arr = [], fn, repetition = {}) {
-        if (toString.call(data).toLowerCase() == "[object array]") {
-            for (let i = 0; i < data.length; i += 1) {
-                toOneArray(data[i], arr, fn, repetition);
-            }
-        } else if (data) {
-            let key = fn ? fn(data) : data;
-            if (key === undefined) {
-                key = data;
-            }
-            if (!repetition[key]) {
-                // 去重
-                arr.push(key);
-                repetition[key] = true;
-            }
+    // #id
+    let unicomGroupByID = {};
+    function updateUnicomGroupByID(target, newId, oldId) {
+        // 更新
+        if (oldId && unicomGroupByID[oldId] == target) {
+            delete unicomGroupByID[oldId];
         }
-        return arr;
-    }
-
-    // group Name
-    let unicomGroupName = "";
-    // 分组
-    let groupForVm = {};
-
-    function updateName(that, nv, ov) {
-        // 实例上设置分组
-        let vmData = vmMap.get(this) || {};
-        let group = vmData.group || [];
-
-        // 删除旧的 vm
-        ov &&
-            toOneArray(ov).forEach(function(key) {
-                if (group.indexOf(key) < 0) {
-                    let vms = groupForVm[key];
-                    vms && vms.splice(vms.indexOf(that), 1);
-                }
-            });
-
-        // 增加新的
-        toOneArray(nv).forEach(function(key) {
-            let vms = groupForVm[key];
-            if (!vms) {
-                vms = groupForVm[key] = [];
-            }
-            if (vms.indexOf(that) < 0) {
-                vms.push(that);
-            }
-        });
-    }
-
-    // 命名 唯一
-    let idForVm = {};
-    let unicomIdName = "";
-
-    function updateId(that, nv, ov) {
-        if (nv == ov) {
-            return;
-        }
-        if (ov && idForVm[ov] == that) {
-            // id被其他vm更新了，就不用删除了
-            delete idForVm[ov];
-        }
-        if (nv) {
-            idForVm[nv] = that;
+        if (newId) {
+            unicomGroupByID[newId] = target;
         }
     }
 
-    // 事件
-    let events = {};
-
-    function appendEvent(n, fn, self) {
-        if (!events[n]) {
-            events[n] = [];
+    // @name
+    let unicomGroupByName = {};
+    function addUnicomGroupByNameOne(target, name) {
+        let unicoms = unicomGroupByName[name];
+        if (!unicoms) {
+            unicoms = unicomGroupByName[name] = [];
         }
-        events[n].push({
-            fn,
-            self,
-            method: n
-        });
+        if (unicoms.indexOf(target) < 0) {
+            unicoms.push(target);
+        }
     }
-
-    function emitEvent(method, toKey, aim, args) {
-        let evs = events[method];
-        let evLen = 0;
-        if (evs) {
-            // 循环已经注册的指令
-            for (let i = 0; i < evs.length; i += 1) {
-                // 存储的 数据
-                let { fn, self } = evs[i];
-
-                if (aim == "#") {
-                    // id
-                    if (self[unicomIdName] != toKey) {
-                        // 目标不存在
-                        continue;
-                    }
-                } else if (aim == "@") {
-                    // 分组
-                    let group = vmMap.get(self).group;
-                    let name = self[unicomGroupName];
-                    let ns = name ? toOneArray(name) : [];
-                    if ((!group || group.indexOf(toKey) < 0) && ns.indexOf(toKey) < 0) {
-                        // 目标不存在
-                        continue;
+    function updateUnicomGroupByName(target, newName, oldName) {
+        if (oldName) {
+            // 移除所有旧的
+            oldName.forEach(function(name) {
+                let unicoms = unicomGroupByName[name];
+                if (unicoms) {
+                    let index = unicoms.indexOf(target);
+                    if (index > -1) {
+                        unicoms.splice(index, 1);
                     }
                 }
-
-                evLen += 1;
-
-                fn.apply(self, args);
-            }
-        }
-
-        // 返回被出发的 指令
-        return evLen;
-    }
-
-    function removeEvent(method, self) {
-        let evs = events[method];
-        if (evs) {
-            for (let i = 0; i < evs.length; i += 1) {
-                if (self === evs[i].self) {
-                    // 移除
-                    evs.splice(i, 1);
-                    return;
-                }
-            }
-        }
-    }
-
-    function _unicomQuery(method, toKey, aim, args, that) {
-        if (method) {
-            args.unshift(that);
-            return emitEvent(method, toKey, aim, args);
-        }
-    }
-
-    // 推迟触发的事件
-    let sendDefer = [];
-
-    // 发送容器 或者 获得 目标容器
-    function unicomQuery(query, ...args) {
-        let toKey = "",
-            aim = "",
-            defer = "";
-        let method = query
-            .replace(/^([`~])/, function(s0, s1) {
-                if (s1 == "～") {
-                    defer = s1;
-                }
-                return "";
-            })
-            .replace(/([@#])([^@#]*)$/, function(s0, s1, s2) {
-                toKey = s2;
-                aim = s1;
-                return "";
             });
-        if (defer) {
-            sendDefer.push([method, toKey, aim, args, this]);
+        }
+
+        if (newName) {
+            // 加入新的
+            newName.forEach(function(name) {
+                addUnicomGroupByNameOne(target, name);
+            });
+        }
+    }
+
+    // @all
+    let unicomGroup = [];
+    function addUnicomGroup(target) {
+        // 添加
+        unicomGroup.push(target);
+    }
+    function removeUnicomGroup(target) {
+        // 移除
+        let index = unicomGroup.indexOf(target);
+        if (index > -1) {
+            unicomGroup.splice(index, 1);
+        }
+    }
+
+    // 事件 参数
+    class UnicomEvent {
+        constructor(from, args) {
+            this.from = from;
+            this.target = from.target;
+            this.data = args[0];
+            args.forEach((arg, index) => {
+                this["$" + (index + 1)] = arg;
+            });
+        }
+    }
+
+    // 单列模式触发
+    function emitAll(self, type, target, instruct, args) {
+        let targetUnicom = [];
+        if (type == "#") {
+            let one = unicomGroupByID[target];
+            if (!instruct) {
+                // 只是获取
+                return one;
+            }
+            if (one) {
+                targetUnicom.push(one);
+            }
+        } else if (type == "@") {
+            let group = unicomGroupByName[target];
+            if (!instruct) {
+                // 只是获取
+                return group;
+            }
+            if (group) {
+                targetUnicom.push(...group);
+            }
+        } else {
+            targetUnicom.push(...unicomGroup);
+        }
+        let uniEvent = new UnicomEvent(self, args);
+        targetUnicom.forEach(function(emit) {
+            emit.emit(instruct, uniEvent, ...args);
+        });
+        return uniEvent;
+    }
+
+    // 监控数据
+    let monitorArr = [];
+    function monitorExec(that) {
+        for (let i = 0; i < monitorArr.length; i += 1) {
+            let [type, target, callback] = monitorArr[i];
+            if ((type == "#" && that.id == target) || (type == "@" && that.group.indexOf(target) > -1)) {
+                // 运行回调
+                callback(that);
+            }
+        }
+    }
+
+    // 通讯基础类
+    class Unicom {
+        constructor({ id, group, target = null } = {}) {
+            // 克隆一份 事件
+            this._instruct_ = {};
+            let _instruct_ = this._instruct_;
+            if (_instruct_) {
+                for (let n in _instruct_) {
+                    this._instruct_[n] = [].push(..._instruct_[n]);
+                }
+            }
+
+            this.target = target;
+            this.group = [];
+
+            if (id) {
+                this.setId(id);
+            }
+
+            if (group) {
+                this.setGroup(group);
+            }
+
+            addUnicomGroup(this);
+
+            // 运行延后执行，作为监控
+            this.monitorBack();
+        }
+
+        // 延迟合并执行
+        monitorBack() {
+            clearTimeout(this._monitor_back_);
+            this._monitor_back_ = setTimeout(() => {
+                monitorExec(this);
+            }, 1);
+        }
+
+        // 监听目标创建
+        monitor(instruct, callback) {
+            let type = instruct.slice(0, 1);
+            let target = instruct.slice(1, instruct.length);
+            monitorArr.push([type, target, callback, this]);
+        }
+
+        // 销毁监听
+        monitorOff(instruct, callback) {
+            for (let i = 0; i < monitorArr.length; ) {
+                let [type, target, fn, self] = monitorArr[i];
+                if (self == this && (!instruct || instruct == type + target) && (!callback || callback == fn)) {
+                    monitorArr.splice(i, 1);
+                    continue;
+                }
+
+                i += 1;
+            }
+        }
+
+        // 销毁
+        destroy() {
+            removeUnicomGroup(this);
+
+            // 移除
+            updateUnicomGroupByID(this, null, this.id);
+            updateUnicomGroupByName(this, null, this.group);
+
+            // 监控销毁
+            this.monitorOff();
+
+            // 订阅销毁
+            this.off();
+        }
+
+        // 唯一标识
+        setId(id) {
+            if (this.id != id) {
+                updateUnicomGroupByID(this, id, this.id);
+                this.id = id;
+
+                // 运行延后执行
+                this.monitorBack();
+            }
+
             return this;
         }
 
-        let flag = _unicomQuery(method, toKey, aim, args, this);
+        // 分组
+        setGroup(group) {
+            if (typeof group == "string") {
+                this.group.push(group);
+                addUnicomGroupByNameOne(this, group);
+                return this;
+            }
 
-        // 获取目标 vm
-        switch (aim) {
-            case "#":
-                return idForVm[toKey] || null;
-            case "@":
-                return groupForVm[toKey] || [];
+            // 重新更新
+            updateUnicomGroupByName(this, group, this.group);
+            this.group = group;
+
+            // 运行延后执行
+            this.monitorBack();
+            return this;
         }
 
-        return flag;
+        has(type) {
+            let instruct = (this._instruct_ || {})[type];
+            return !!(instruct && instruct.length > 0);
+        }
+
+        /**
+         * 绑定事件
+         * @param type 事件名称
+         * @param fun 事件方法
+         * @returns {EventEmitter}
+         */
+        on(type, fun) {
+            let instruct = this._instruct_ || (this._instruct_ = {});
+            instruct[type] || (instruct[type] = []);
+            instruct[type].push(fun);
+            return this;
+        }
+
+        /**
+         * 移除事件
+         * @param type 事件名称
+         * @param fun 事件方法
+         * @returns {EventEmitter}
+         */
+        off(type, fun) {
+            let instruct = this._instruct_;
+            if (instruct) {
+                if (fun) {
+                    let es = instruct[type];
+                    if (es) {
+                        let index = es.indexOf(fun);
+                        if (index > -1) {
+                            es.splice(index, 1);
+                        }
+                        if (es.length == 0) {
+                            delete instruct[type];
+                        }
+                    }
+                } else if (type) {
+                    delete instruct[type];
+                } else {
+                    delete this._instruct_;
+                }
+            }
+            return this;
+        }
+
+        /**
+         * 触发事件
+         * @param {String} type 事件名称
+         */
+        emit(query, ...args) {
+            let data = args[0];
+            if (data && data.constructor == UnicomEvent) {
+                // 只需要负责自己
+                let es = (this._instruct_ && this._instruct_[query]) || [];
+                es.forEach(channelFn => {
+                    channelFn.apply(this.target || this, args);
+                });
+                return data;
+            }
+
+            // 以下是全局触发发布
+            let type, target, instruct;
+            instruct = query.replace(/([@#])([^@#]*)$/, function(s0, s1, s2) {
+                target = s2;
+                type = s1;
+                return "";
+            });
+
+            return emitAll(this, type, target, instruct, args);
+        }
     }
 
-    // 安装配置 名称
-    function install(vue, { name = "unicom", idName, groupName } = {}) {
-        if (install.installed) {
+    // vue 安装插槽
+    let unicomInstalled = false;
+    Unicom.install = function(vue, { name = "unicom", unicomName, unicomId, unicomEmit, unicomClass } = {}) {
+        if (unicomInstalled) {
             return;
         }
-        install.installed = true;
+        unicomInstalled = true;
 
         // 添加原型方法
-        vue.prototype["$" + name] = unicomQuery;
-        vue[name] = unicomQuery;
+        let unicomEmitName = unicomEmit || name;
+        vue.prototype["$" + unicomEmitName] = function() {
+            return this._unicom_data_.self.emit(...arguments);
+        };
+        // 方便插件中引入
+        let VueUnicomClassName = unicomClass;
+        if (!VueUnicomClassName) {
+            VueUnicomClassName = name.replace(/^\w/, function(s0) {
+                return s0.toUpperCase();
+            });
+        }
+        vue[VueUnicomClassName] = Unicom;
 
         // unicom-id
-        unicomIdName = idName || name + "Id";
+        let unicomIdName = unicomId || name + "Id";
         // 分组  unicom-name
-        unicomGroupName = groupName || name + "Name";
+        let unicomGroupName = unicomName || name + "Name";
+
+        // 组合分组
+        function getGroup(target) {
+            let unicomData = target._unicom_data_;
+            let names = target[unicomGroupName] || [];
+            return unicomData.initGroup.concat(names);
+        }
 
         // 全局混入
         vue.mixin({
@@ -237,173 +358,83 @@
                 }
             },
             watch: {
-                [unicomIdName](nv, ov) {
-                    updateId(this, nv, ov);
+                [unicomIdName](nv) {
+                    let unicom = this._unicom_data_ && this._unicom_data_.self;
+                    if (unicom) {
+                        unicom.setId(nv);
+                    }
                 },
-                [unicomGroupName]: {
-                    deep: true,
-                    handler(nv, ov) {
-                        updateName(this, nv, ov);
+                [unicomGroupName]() {
+                    let unicom = this._unicom_data_ && this._unicom_data_.self;
+                    if (unicom) {
+                        unicom.setGroup(getGroup(this));
                     }
                 }
             },
             // 创建的时候，加入事件机制
             beforeCreate() {
-                let opt = this.$options;
-                let us = opt[name];
-
-                let vmData = {};
-                let vmDataFlag = false;
-                let uni = (vmData.uni = {});
-                if (us && us.length) {
-                    vmDataFlag = true;
-                    us.forEach(opt => {
-                        if (!opt) {
-                            return;
-                        }
-                        for (let n in opt) {
-                            if (!uni[n]) {
-                                uni[n] = [];
-                            }
-                            uni[n].push([opt[n]]);
-                            appendEvent(n, opt[n], this);
-                        }
-                    });
-                }
-
-                // 命名分组
-                let group = (vmData.group = []);
-                toOneArray(opt[unicomGroupName], group, data => {
-                    let key = String(data);
-                    if (!groupForVm[key]) {
-                        groupForVm[key] = [];
-                    }
-                    groupForVm[key].push(this);
+                // 屏蔽不需要融合的 节点
+                let isIgnore = !this.$vnode || /-transition$/.test(this.$vnode.tag);
+                let unicomData = (this._unicom_data_ = {
+                    isIgnore
                 });
-
-                if (group.length > 0) {
-                    vmDataFlag = true;
+                if (isIgnore) {
+                    return;
                 }
+                let opt = this.$options;
+                unicomData.initGroup = opt[unicomGroupName] || [];
+                unicomData.channels = opt[name] || [];
 
-                vmDataFlag && vmMap.set(this, vmData);
+                // 触发器
+                // unicomData.self = new Unicom({target: this})
             },
             created() {
-                // 实例命名 唯一
-                let uId = this[unicomIdName];
-                if (uId) {
-                    updateId(this, uId);
-                }
-
-                let uName = this[unicomGroupName];
-                if (uName) {
-                    updateName(this, uName);
-                }
-
-                // 实例上设置分组
-                let vmData = vmMap.get(this) || {};
-
-                // 延后触发时，触发
-                for (let i = 0; i < sendDefer.length; i += 1) {
-                    let pms = sendDefer[i];
-                    let [method, toKey, aim, args, self] = pms;
-                    let flag = false;
-
-                    if (aim == "#") {
-                        if (toKey == uId) {
-                            flag = true;
-                        }
-                    } else if (aim == "@") {
-                        if (vmData.group && vmData.group.indexOf(toKey) > -1) {
-                            flag = true;
-                        }
-                    } else {
-                        if (method == "" || Object.keys(vmData.uni || {}).indexOf(method) > -1) {
-                            flag = true;
-                        }
-                    }
-
-                    if (flag) {
-                        // 延后，并且方法为空
-                        if (method == "") {
-                            // 这个是监听事件
-                            args[0](this);
-                        } else {
-                            sendDefer.splice(i, 1);
-                            i -= 1;
-                            _unicomQuery(method, toKey, aim, args, self);
-                        }
-                    }
-                }
-            },
-            // 全局混合， 销毁实例的时候，销毁事件
-            destroyed() {
-                // 移除唯一ID
-                let id = this.unicomId;
-                if (id) {
-                    updateId(this, undefined, id);
-                }
-
-                // 移除 命名分组 实例命名
-                let uName = this[unicomGroupName];
-                if (uName) {
-                    updateName(this, undefined, uName);
-                }
-
-                let vmData = vmMap.get(this);
-                if (!vmData) {
+                let unicomData = this._unicom_data_;
+                if (unicomData.isIgnore) {
                     return;
                 }
 
-                vmMap.delete(this);
+                // 初始化
+                let self = (unicomData.self = new Unicom({ target: this, id: this[unicomIdName], group: getGroup(this), subs: unicomData.channels }));
 
-                let uni = vmData.uni;
-                // 移除事件
-                for (let n in uni) {
-                    removeEvent(n, this);
-                }
-
-                // 分组，一对多， 单个vm可以多个分组名称 组件命名
-                vmData.group.forEach(name => {
-                    let gs = groupForVm[name];
-                    if (gs) {
-                        let index = gs.indexOf(this);
-                        if (index > -1) {
-                            gs.splice(index, 1);
-                        }
-                        if (gs.length == 0) {
-                            delete groupForVm[name];
-                        }
+                // 订阅事件
+                let subChannels = unicomData.channels;
+                subChannels.forEach(function(subs) {
+                    for (let n in subs) {
+                        self.on(n, subs[n]);
                     }
                 });
-
-                // 监控销毁 method为空
-                for (let i = 0; i < sendDefer.length; ) {
-                    let pms = sendDefer[i];
-                    if (pms[0] == "" && pms[4] == this) {
-                        sendDefer.splice(i, 1);
-                    } else {
-                        i += 1;
-                    }
+            },
+            // 全局混合， 销毁实例的时候，销毁事件
+            destroyed() {
+                let unicomData = this._unicom_data_;
+                if (unicomData.isIgnore) {
+                    return;
                 }
+                unicomData.self.destroy();
             }
         });
 
         // 自定义属性合并策略
         let merge = vue.config.optionMergeStrategies;
-        merge[name] = merge[unicomGroupName] = function(parentVal, childVal) {
-            let x = parentVal || [];
+        merge[name] = function(parentVal, childVal) {
+            let arr = parentVal || [];
             if (childVal) {
-                x.push(childVal);
+                arr.push(childVal);
             }
-            return x;
+            return arr;
         };
-    }
-
-    // 提供 在 vue 之外也能调用发布指令
-    function VueUnicom() {
-        return unicomQuery.apply(this, arguments);
-    }
-    // 安装
-    VueUnicom.install = install;
-    return VueUnicom;
+        merge[unicomGroupName] = function(parentVal, childVal) {
+            let arr = parentVal || [];
+            if (childVal) {
+                if (typeof childVal == "string") {
+                    arr.push(childVal);
+                } else {
+                    arr.push(...childVal);
+                }
+            }
+            return arr;
+        };
+    };
+    return Unicom;
 });

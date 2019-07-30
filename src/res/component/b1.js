@@ -3,8 +3,8 @@ Vue.component('cb1', {
     template: '<div><p>text:{{text}}#{{unicomId}}</p><p>msg: {{msg}}</p></div>',
     unicomName: ['b', 'b1'],
     unicom: {
-        message: function(sender, text){
-            this.msg = text
+        message: function({data}){
+            this.msg = data
         }
     },
     data: function(){

@@ -1,5 +1,5 @@
 // 注册
-Vue.component('cbtn', {
+Vue.component("cbtn", {
     template: `<div>
     <p>自己收到的信息：{{msg}}</p>
     <hr />
@@ -15,17 +15,24 @@ Vue.component('cbtn', {
 
     <button @click="$unicom('message@c', 'Send@c')">发送指令 message@c</button>
 
-    <button @click="$unicom('message@c', 'Send@c from #a-id1[' + $unicom('#a-id1').msg + ']')">发送指令 message@c from #a-id1</button>
+    <button @click="getA_id1">发送指令 message@c from #a-id1</button>
     </div>`,
     unicom: {
-        message: function(sender, text){
+        message: function({ data }) {
             // 指令发送后，自己也能收到
-            this.msg = text
+            this.msg = data;
         }
     },
-    data: function(){
+    data: function() {
         return {
-            msg: ''
+            msg: ""
+        };
+    },
+    methods: {
+        getA_id1() {
+            let id1msg = this.$unicom("#a-id1").target.msg;
+            // console.log("group-b", this.$unicom('@b'))
+            this.$unicom("message@c", "Send@c from #a-id1[" + id1msg + "]");
         }
     }
-})
+});

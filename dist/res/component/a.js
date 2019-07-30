@@ -1,1 +1,1 @@
-"use strict";Vue.component("ca",{template:"<div><p>text:{{text}}#{{unicomId}}</p><p>msg: {{msg}}</p></div>",unicomName:"a",unicom:{message:function(t,e){this.msg=e}},data:function(){return{text:"component - ca",msg:""}}});
+"use strict";Vue.component("ca",{template:"<div><p>text:{{text}}#{{unicomId}}</p><p>msg: {{msg}}</p></div>",unicomName:"a",unicom:{message:function(t){var e=t.data;this.msg=e}},data:function(){return{text:"component - ca",msg:""}}});
