@@ -1,5 +1,3 @@
-
-
 <p align="center">
    <a href="https://www.npmjs.com/package/vue-unicom">
    		<img src="https://img.shields.io/npm/v/vue-unicom.svg?style=flat" alt="npm">
@@ -10,39 +8,43 @@
 </p>
 
 ## vue-unicom
-* 它是Vuejs的一个插件，解决了Vue中非父子组件通讯的痛点。
-* 它还可以使用在任意JS中，作为和Vue组件通讯的纽带
-* 利用订阅者和发布者模式来管理消息
 
+- 它是 Vuejs 的一个插件，解决了 Vue 中非父子组件通讯的痛点。
+- 它还可以使用在任意 JS 中，作为和 Vue 组件通讯的纽带
+- 利用订阅者和发布者模式来管理消息
 
 ## 更新日志
-* [2019-07-30]重构vue-unicom，重构后代码逻辑更清晰
-* [2019-07-31]优化注解，修复全局订阅问题以及一些多余代码删除
 
-## 功能  
-* 任意相对独立的JS之间的通讯（包括Vue组件以及JS）
-* 订阅需要初始化客户端，并且有自身的生命周期
-* 当在Vue组件内，unicom会自动注册，并将生命周期融合
-* 全局监控支持（当监控到某个组件初始化后，会自动触发回调）
+- [2019-07-30]重构 vue-unicom，重构后代码逻辑更清晰
+- [2019-07-31]优化注解，修复全局订阅问题以及一些多余代码删除
 
+## 功能
 
-## 运行demo
+- 任意相对独立的 JS 之间的通讯（包括 Vue 组件以及 JS）
+- 订阅需要初始化客户端，并且有自身的生命周期
+- 当在 Vue 组件内，unicom 会自动注册，并将生命周期融合
+- 全局监控支持（当监控到某个组件初始化后，会自动触发回调）
+
+## 运行 demo
+
 - npm install
-- npm install gulp -g   (安装过可以忽略)
+- npm install gulp -g (安装过可以忽略)
 - gulp
 - 浏览器中输入http://127.0.0.1:3101 (PC)
 - 浏览器中输入http://ip:3101 (手机浏览器)
 - 实例访问： https://szpoppy.github.io/vue-unicom/dist/index.html
 - vue-cli demo: https://github.com/szpoppy/vue-unicom-demo
 
-## 获取vue-unicom
+## 获取 vue-unicom
+
 - npm i vue-unicom -S
-- github下载zip包，dist/lib/unicom.js，可以直接引入 到页面
+- github 下载 zip 包，dist/lib/unicom.js，可以直接引入 到页面
 
-## API  
-### JS中使用  
+## API
 
-````javascript
+### JS 中使用
+
+```javascript
 let unicom = new Unicom({
     // 绑定的对象
     target: {},
@@ -86,7 +88,7 @@ let event = unicom.emit('instruct@group', arg1, arg2, ...)
 // 获取命名为 id 的unicom
 let that = unicom.emit('#id')
 
-// 获取分组 group 
+// 获取分组 group
 let thats = unicom.emit('@group')
 
 // 监控组件被命名为 id
@@ -110,10 +112,11 @@ unicom.monitorOff("@group")
 // 取消全部和unicom有关的监控
 unicom.monitorOff()
 
-````
+```
 
-### main.js 注册Unicom插件
-````javascript
+### main.js 注册 Unicom 插件
+
+```javascript
 import Vue from 'vue'
 import VueUnicom from 'vue-unicom'
 // 非 cli 也必须 install一下
@@ -129,21 +132,23 @@ Vue.use(VueUnicom, {
     // 定制 Vue中，全局访问的类名 默认为  unicom 参数，并将第一个字母大写
     unicomClass: 'Unicom'
 })
-````
+```
 
-### 其他关联JS中使用
-````javascript
+### 其他关联 JS 中使用
+
+```javascript
 // 提供 main.js 安装的插件
 export default function install(Vue) {
-    // 通过 Vue.Unicom 获取类
-    let unicom = new Vue.Unicom()
+  // 通过 Vue.Unicom 获取类
+  let unicom = new Vue.Unicom();
 
-    // 其他操作 参照 JS中使用方案
+  // 其他操作 参照 JS中使用方案
 }
-````
+```
 
-### Vue组件内部使用
-````javascript
+### Vue 组件内部使用
+
+```javascript
 {
     // 将这个组件归到group分组， 多个分组请使用字符串数组
     unicomName: 'group',
@@ -172,12 +177,13 @@ export default function install(Vue) {
         }
     }
 }
-````
+```
 
-### Vue组件实例化传参
-````html
+### Vue 组件实例化传参
+
+```html
 <!-- 加入group分组 并且 将本组件命名为 id -->
 <component unicom-name="group" unicom-id="id"></component>
 <!-- 加入多个分组，请传入数组 -->
 <component :unicom-name="['group1', 'group2']"></component>
-````
+```
