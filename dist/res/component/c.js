@@ -1,1 +1,0 @@
-"use strict";Vue.component("cc",{template:"<div><p>text:{{text}}#{{unicomId}}</p><p>msg: {{msg}}</p></div>",unicomName:"c",unicom:{message:function(t){var e=t.$1;console.log(arguments),this.msg=e}},data:function(){return{text:"component - c",msg:""}}});

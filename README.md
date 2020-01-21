@@ -9,42 +9,37 @@
 
 ## vue-unicom
 
-- 它是 Vuejs 的一个插件，解决了 Vue 中非父子组件通讯的痛点。
-- 它还可以使用在任意 JS 中，作为和 Vue 组件通讯的纽带
-- 利用订阅者和发布者模式来管理消息
+-   它是 Vuejs 的一个插件，解决了 Vue 中非父子组件通讯的痛点。
+-   它还可以使用在任意 JS 中，作为和 Vue 组件通讯的纽带
+-   利用订阅者和发布者模式来管理消息
 
 ## 更新日志
 
-- [2019-07-30]重构 vue-unicom，重构后代码逻辑更清晰
-- [2019-07-31]优化注解，修复全局订阅问题以及一些多余代码删除
+-   [2019-07-30]重构 vue-unicom，重构后代码逻辑更清晰
+-   [2019-07-31]优化注解，修复全局订阅问题以及一些多余代码删除
+-   [2020-01-21]TS 改造，只支持 CommonJS 加载
 
 ## 功能
 
-- 任意相对独立的 JS 之间的通讯（包括 Vue 组件以及 JS）
-- 订阅需要初始化客户端，并且有自身的生命周期
-- 当在 Vue 组件内，unicom 会自动注册，并将生命周期融合
-- 全局监控支持（当监控到某个组件初始化后，会自动触发回调）
+-   任意相对独立的 JS 之间的通讯（包括 Vue 组件以及 JS）
+-   订阅需要初始化客户端，并且有自身的生命周期
+-   当在 Vue 组件内，unicom 会自动注册，并将生命周期融合
+-   全局监控支持（当监控到某个组件初始化后，会自动触发回调）
 
 ## 运行 demo
 
-- npm install
-- npm install gulp -g (安装过可以忽略)
-- gulp
-- 浏览器中输入http://127.0.0.1:3101 (PC)
-- 浏览器中输入http://ip:3101 (手机浏览器)
-- 实例访问： https://szpoppy.github.io/vue-unicom/dist/index.html
-- vue-cli demo: https://github.com/szpoppy/vue-unicom-demo
+-   vue-cli demo: https://github.com/szpoppy/vue-unicom-demo
 
 ## 获取 vue-unicom
 
-- npm i vue-unicom -S
-- github 下载 zip 包，dist/lib/unicom.js，可以直接引入 到页面
+-   npm i vue-unicom -S
 
 ## API
 
 ### JS 中使用
 
 ```javascript
+import Unicom from "vue-unicom"
 let unicom = new Unicom({
     // 绑定的对象
     target: {},
@@ -139,10 +134,10 @@ Vue.use(VueUnicom, {
 ```javascript
 // 提供 main.js 安装的插件
 export default function install(Vue) {
-  // 通过 Vue.Unicom 获取类
-  let unicom = new Vue.Unicom();
+    // 通过 Vue.Unicom 获取类
+    let unicom = new Vue.Unicom()
 
-  // 其他操作 参照 JS中使用方案
+    // 其他操作 参照 JS中使用方案
 }
 ```
 
