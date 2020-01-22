@@ -3,7 +3,8 @@
  */
 export default class Event {
     private _events;
-    constructor();
+    parent?: Event;
+    constructor(parent?: Event);
     /**
      * 绑定事件
      * @param type 事件名称
@@ -18,14 +19,15 @@ export default class Event {
      */
     off(type?: string, fn?: Function): Event;
     /**
-     * 触发事件
+     * 内部调用 事件触发函数
+     * @param target
      * @param type
-     * @param arg
+     * @param args
      */
-    emit(type: string, ...arg: any): any;
+    emit(target: Event | string, type: string | any, ...args: any[]): any;
     /**
      * 判断事件是否存在
      * @param type
      */
-    has(type: string): boolean;
+    hasEvent(type: string): boolean;
 }

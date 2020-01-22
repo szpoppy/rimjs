@@ -2,10 +2,25 @@
 /**
  * 事件类
  */
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+function emitEvent(events, target, args) {
+    for (var i = 0; i < events.length; i += 1) {
+        events[i].apply(target, args);
+    }
+}
 var Event = /** @class */ (function () {
-    function Event() {
+    function Event(parent) {
         this._events = {};
+        if (parent) {
+            this.parent = parent;
+        }
     }
     /**
      * 绑定事件
@@ -47,26 +62,36 @@ var Event = /** @class */ (function () {
         return this;
     };
     /**
-     * 触发事件
+     * 内部调用 事件触发函数
+     * @param target
      * @param type
-     * @param arg
+     * @param args
      */
-    Event.prototype.emit = function (type) {
-        var arg = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            arg[_i - 1] = arguments[_i];
+    Event.prototype.emit = function (target, type) {
+        var args = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            args[_i - 2] = arguments[_i];
+        }
+        if (typeof target == "string") {
+            args.unshift(type);
+            type = target;
+            target = this;
+        }
+        var parent = this.parent;
+        if (parent && parent.emit) {
+            parent.emit.apply(parent, __spreadArrays([target, type], args));
         }
         var evs = this._events[type] || [];
         for (var i = 0; i < evs.length; i += 1) {
-            evs[i].apply(this, arg);
+            evs[i].apply(target, args);
         }
-        return arg[0];
+        return args[0];
     };
     /**
      * 判断事件是否存在
      * @param type
      */
-    Event.prototype.has = function (type) {
+    Event.prototype.hasEvent = function (type) {
         var evs = this._events[type] || [];
         return evs.length > 0;
     };

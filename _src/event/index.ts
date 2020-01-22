@@ -6,6 +6,12 @@ interface eventObj {
     [propName: string]: Function[]
 }
 
+function emitEvent(events:Function[], target:Event, args:any[]):any {
+    for (let i = 0; i < events.length; i += 1) {
+        events[i].apply(target, args)
+    }
+}
+
 export default class Event {
     private _events: eventObj
     parent?: Event
@@ -57,19 +63,28 @@ export default class Event {
     }
 
     /**
-     * 触发事件
-     * @param type
-     * @param arg
+     * 内部调用 事件触发函数
+     * @param target 
+     * @param type 
+     * @param args 
      */
-    emit(type: string, ...arg: Array<any>) {
-        if (this.parent) {
-            this.parent.emit(type, ...arg)
+    emit(target:Event|string, type:string | any, ...args:any[]):any {
+        if(typeof target == "string") {
+            args.unshift(type)
+            type = target
+            target = this
+        }
+
+        let parent = this.parent
+        if (parent && parent.emit) {
+            parent.emit(target, type, ...args)
         }
         let evs = this._events[type] || []
         for (let i = 0; i < evs.length; i += 1) {
-            evs[i].apply(this, arg)
+            evs[i].apply(target, args)
         }
-        return arg[0]
+
+        return args[0]
     }
 
     /**

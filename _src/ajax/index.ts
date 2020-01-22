@@ -2,9 +2,7 @@ import qs from "../qs"
 import forEach from "../each"
 import Event from "../event"
 import getUUID from "../sole"
-
-// 用于类型判断
-const _toString: Function = Object.prototype.toString
+import {mixin as assign} from "../assign"
 
 // 当前host
 const host: string = window.location.host
@@ -98,6 +96,8 @@ interface IFParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean>
 }
 
+type sendParam = IFParam | FormData | string
+
 interface IFConf {
     baseURL?: string
     paths?: IFStrObj
@@ -106,7 +106,7 @@ interface IFConf {
     method?: string
     dataType?: string
     resType?: string
-    param?: IFParam | FormData | string
+    param?: IFParam | string
     header?: IFStrObj
     jsonpKey?: string
     cache?: boolean
@@ -115,20 +115,26 @@ interface IFConf {
 // ==================================================================== 资源返回类
 
 class Req {
-    path?: string
-    orginURL?: string
-    formatURL?: string
     baseURL?: string
+    paths?: IFStrObj
+    useFetch?: boolean
     url?: string
-    isFormData?: boolean
     method?: string
     dataType?: string
     resType?: string
-    param?: IFParam | FormData | string
-    cache?: boolean
-    isCross?: boolean
+    param?: IFParam | string | FormData
+    header?: IFStrObj
     jsonpKey?: string
+    cache?: boolean
+    withCredentials?: boolean
 
+    xhr?: XMLHttpRequest
+    path?: string
+    orginURL?: string
+    formatURL?: string
+    isFormData?: boolean
+    isCross?: boolean
+    
     parent?: Ajax
 
     outFlag?: boolean
@@ -142,8 +148,8 @@ class Res {
 
     parent?: Ajax
 
-    headers?: Headers | string
-    status?: string
+    headers?: Headers | string = ""
+    status?: number
     text?: string
     json?: object
     cancel?: boolean
@@ -180,29 +186,199 @@ class Ajax extends Event {
     _req?: Req
     conf?: IFConf
 
-    constructor(parent: Group) {
+    constructor(parent: Group, opt:IFConf) {
         super(parent)
+        this.conf = assign({}, theGlobal.conf, parent.conf, getConf(opt))
+    }
+
+    // 设置参数
+    setConf(opt:IFConf = {}):Ajax {
+        getConf(opt, this.conf)
+        return this
+    }
+
+    // 扩展
+    assign(...args:any):Ajax {
+        if (typeof args[0] === 'string') {
+            this.assign({ [args[0]]: args[1] })
+        } else {
+            args.unshift(this)
+            assign.apply(Object, args)
+        }
+        return this
+    }
+
+    // 中止 请求
+    abort():Ajax {
+        ajaxAbort.call(this, true)
+        return this
+    }
+
+    // 超时
+    timeout(this:Ajax, time:number, callback:Function):Ajax {
+        setTimeout(() => {
+            let req = this._req
+            if (req) {
+                // 超时 设置中止
+                ajaxAbort.call(this)
+                // 出发超时事件
+                this.emit('timeout', req)
+            }
+        }, time)
+        callback && this.on('timeout', callback)
+        return this
+    }
+
+    // 发送数据， over 代表 是否要覆盖本次请求
+    send(this:Ajax, param?:sendParam, over:boolean = false):Ajax {
+        if (this._req) {
+            // 存在 _req
+            if (!over) {
+                // 不覆盖，取消本次发送
+                return this
+            }
+            // 中止当前的
+            this.abort()
+        }
+
+        // 制造 req
+        let req = new Req()
+        req.parent = this
+        this._req = req
+        // 异步，settime 部分参数可以后置设置生效
+        setTimeout(() => {
+            assign(req, this.conf)
+            requestSend.call(this, param || {}, req)
+        }, 1)
+        return this
+    }
+
+    // 返回Promist
+    then(thenFn?:()=>any):Promise<any> {
+        let pse:Promise<any> = new Promise((resolve, reject) => {
+            this.on('callback', function(res:Res) {
+                resolve(res)
+            })
+            this.on('timeout', function() {
+                reject({ err: '访问超时', errType: 1 })
+            })
+            this.on('abort', function() {
+                reject({ err: '访问中止', errType: 2 })
+            })
+        })
+        return (thenFn && pse.then(thenFn)) || pse
     }
 }
 
-class Group extends Event {
-    dateDiff?: number = 0
+interface shortcutEventObj {
+    [propName:string]:Function
+}
+type shortcutEvent = shortcutEventObj | Function
 
-    constructor() {
+function groupLoad(this:Group, url:string|IFConf, callback:Function | sendParam, param:sendParam, onNew?:Function) {
+    let opt = typeof url == 'string' ? {url} : url
+
+    if (callback && typeof callback != 'function') {
+        param = callback
+        callback = null
+    }
+
+    let one = new Ajax(this, opt)
+    onNew && onNew(one)
+    if(typeof callback == "function") {
+        one.on('callback', callback)
+    }
+    one.send(param)
+    return one
+}
+
+let ajaxDateDiff:number = 0
+class Group extends Event {
+    dateDiff?: number = ajaxDateDiff
+    conf?: IFConf
+
+    global?: Global
+    Request?: Function
+
+    static create(key:string = "load", opt?:IFConf): Function | Group {
+        let group = new Group(opt)
+        function fn(){
+            return group[key].apply(group, arguments)
+        }
+        Object.setPrototypeOf(fn, group)
+        return fn
+    }
+
+    constructor(opt?:IFConf) {
         super(theGlobal)
+        this.conf = {}
+        opt && this.setConf(opt)
+    }
+
+    // 设置默认
+    setConf(opt?:IFConf):Group {
+        opt && getConf(opt, this.conf)
+        return this
+    }
+
+    // 创建一个ajax
+    create(opt?:IFConf):Ajax {
+        return new Ajax(this, opt)
+    }
+
+    // 快捷函数
+    shortcut(this:Group, opt:IFConf, events?:shortcutEvent) {
+        return (callback:Function, param:sendParam):Ajax => {
+            return groupLoad.call(this, opt, callback, param, function(one:Ajax) {
+                if (events) {
+                    if (typeof events == 'function') {
+                        one.on('callback', events)
+                        return
+                    }
+                    for (let n in events) {
+                        one.on(n, events[n])
+                    }
+                }
+            })
+        }
+    }
+
+    // 创建并加载
+    load(this:Group):Ajax {
+        return groupLoad.apply(this, arguments)
+    }
+
+    get(this:Group):Ajax {
+        return groupLoad.apply(this, arguments).setConf({method:"get"})
+    }
+    post(this:Group):Ajax {
+        return groupLoad.apply(this, arguments).setConf({method:"post"})
+    }
+    put(this:Group):Ajax {
+        return groupLoad.apply(this, arguments).setConf({method:"put"})
+    }
+    jsonp(this:Group):Ajax {
+        return groupLoad.apply(this, arguments).setConf({method:"jsonp"})
+    }
+
+    // promise
+    fetch(this:Group, opt?:IFConf, param?:sendParam):Promise<any> {
+        return this.create(opt).send(param).then()
     }
 
     setDate(date: string | Date): void {
         if (typeof date == "string") {
             date = new Date(date.replace(/T/, " ").replace(/\.\d+$/, ""))
         }
-        this.dateDiff = date.getTime() - new Date().getTime()
+        this.dateDiff = ajaxDateDiff = date.getTime() - new Date().getTime()
     }
     // 获取 服务器时间
     getDate(): Date {
         return new Date(this.dateDiff + new Date().getTime())
     }
 }
+
+export let Request = Group
 
 class Global extends Event {
     conf?: IFConf = { useFetch: true, resType: "json", jsonpKey: "callback", cache: true }
@@ -215,7 +391,7 @@ class Global extends Event {
         getConf(conf, this.conf)
     }
 }
-let theGlobal = new Global()
+export let theGlobal = new Global()
 
 // 统一设置参数
 function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, param = {}, header = {}, jsonpKey, cache, withCredentials }: IFConf = {}, val: IFConf = {}): IFConf {
@@ -346,10 +522,11 @@ function jsonpSend(this: Ajax, res: Res): void {
     }
 
     // 设置默认的回调函数
-    window[backFunKey] = backFun
+    let w = window as any
+    w[backFunKey] = backFun
 
     // 所有参数都放在url上
-    let url = fixedURL(req.url, getParamString(param, req.dataType))
+    let url = fixedURL(req.url, getParamString(param, req.dataType) as string)
 
     // 发送事件出发
     this.emit("send", req)
@@ -358,3 +535,341 @@ function jsonpSend(this: Ajax, res: Res): void {
         backFun()
     })
 }
+
+/**
+ * fetch 发送数据
+ */
+function fetchSend(res:Res):void {
+    let req = res.withReq
+    // 方法
+    let method = String(req.method || 'GET').toUpperCase()
+
+    // 参数
+    let param = req.param
+
+    // fetch option参数
+    let option:RequestInit = {
+        method: method,
+        headers: req.header
+    }
+
+    // 提交字符串
+    let paramStr = getParamString(param, req.dataType)
+
+    if (method == 'GET') {
+        req.url = fixedURL(req.url, paramStr as string)
+        option.body = param = null
+    } else {
+        option.body = paramStr || null
+        if (req.header['Content-Type'] === undefined && !req.isFormData) {
+            // 默认 Content-Type
+            req.header['Content-Type'] = getDefaultContentType(req.dataType)
+        }
+    }
+
+    if (req.header['X-Requested-With'] === undefined && !req.isCross) {
+        // 跨域不增加 X-Requested-With
+        req.header['X-Requested-With'] = 'XMLHttpRequest'
+    }
+
+    if (req.isCross) {
+        // 跨域
+        option.mode = 'cors'
+        if (req.withCredentials) {
+            // 发送请求，带上cookie
+            option.credentials = 'include'
+        }
+    } else {
+        // 同域，默认带上cookie
+        option.credentials = 'same-origin'
+    }
+
+    // response.text then回调函数
+    let fetchData = ([text, result]) => {
+        res.text = text
+        res.result = result
+        // 统一处理 返回数据
+        responseEnd.call(this, res)
+    }
+
+    // fetch then回调函数
+    function fetchBack(response) {
+        if (!req.outFlag) {
+            // outFlag 为true，表示 中止了
+            // 设置 headers 方便获取
+            res.headers = response.headers
+
+            // 状态吗
+            res.status = response.status
+            // 返回的字符串
+            res.text = ''
+            // 是否有错误
+            res.err = response.ok ? null : 'http error [' + res.status + ']'
+            let results = ['', null]
+            try {
+                results[0] = response.text()
+            } catch (e) {}
+
+            if (['json', 'text'].indexOf(req.resType) < 0) {
+                try {
+                    results[1] = response[req.resType]()
+                } catch (e) {}
+            }
+
+            Promise.all(results).then(fetchData, fetchData)
+        }
+        delete req.outFlag
+    }
+
+    // 发送事件处理
+    this.emit('send', req)
+    // 发送数据
+    window.fetch(req.url, option).then(fetchBack, fetchBack)
+}
+
+// ===================================================================xhr 发送数据 
+// xhr的onload事件
+function onload(this:Ajax, res:Res):void {
+    let req = res.withReq
+    let xhr = req.xhr
+    if (xhr && !req.outFlag) {
+    // req.outFlag 为true 表示，本次ajax已经中止，无需处理
+        try {
+            // 获取所有可以的的header值（字符串）
+            res.headers = xhr.getAllResponseHeaders()
+        } catch (e) {}
+
+        res.text = ''
+        try {
+            // 返回的文本信息
+            res.text = xhr.responseText
+        } catch (e) {}
+        res.result = null
+        try {
+            // 返回的文本信息
+            res.result = xhr.response
+        } catch (e) {}
+
+        // 默认状态值为 0
+        res.status = 0
+        try {
+            // xhr status
+            res.status = xhr.status
+        } catch (e) {}
+        // if(res.status === 0){
+        //     res.status = res.text ? 200 : 404;
+        // }
+        let s = res.status
+        // 默认只有当 正确的status才是 null， 否则是错误
+        res.err = (s >= 200 && s < 300) || s === 304 || s === 1223 ? null : 'http error [' + s + ']'
+        // 统一后处理
+        responseEnd.call(this, res)
+    }
+    delete req.xhr
+    delete req.outFlag
+}
+
+/**
+ * xhr 发送数据
+ * @returns {ajax}
+ */
+function xhrSend(this:Ajax, res:Res):void {
+    let req = res.withReq
+    // XHR
+    req.xhr = new window.XMLHttpRequest()
+
+    // xhr 请求方法
+    let method = String(req.method || 'GET').toUpperCase()
+
+    if (req.withCredentials) {
+        // xhr 跨域带cookie
+        req.xhr.withCredentials = true
+    }
+
+    let paramStr = getParamString(req.param, req.dataType)
+
+    if (method == 'GET') {
+        // get 方法，参数都组合到 url上面
+        req.xhr.open(method, fixedURL(req.url, paramStr as string), true)
+        paramStr = null
+    } else {
+        req.xhr.open(method, req.url, true)
+        if (req.header['Content-Type'] === undefined && !req.isFormData) {
+            // Content-Type 默认值
+            req.header['Content-Type'] = getDefaultContentType(req.dataType)
+        }
+    }
+    if (req.header['X-Requested-With'] === undefined && !req.isCross) {
+        // 跨域不增加 X-Requested-With 如果增加，容易出现问题，需要可以通过 事件设置
+        req.header['X-Requested-With'] = 'XMLHttpRequest'
+    }
+
+    // XDR 不能设置 header
+    forEach(req.header, function(v:string, k:string) {
+        req.xhr.setRequestHeader(k, v)
+    })
+    res.status = 0
+
+    if (this.hasEvent('progress')) {
+        // 跨域 加上 progress post请求导致 多发送一个 options 的请求
+        // 只有有进度需求的任务,才加上
+        try {
+            req.xhr.upload.onprogress = () => {
+                this.emit('progress', event)
+            }
+        } catch (e) {}
+    }
+
+    //发送请求
+
+    // onload事件
+    req.xhr.onload = onload.bind(this, res)
+
+    // 发送前出发send事件
+    this.emit('send', req)
+    
+    if (['arraybuffer', 'blob'].indexOf(req.resType) >= 0) {
+        req.xhr.responseType = req.resType as XMLHttpRequestResponseType
+    }
+
+    // 发送请求，注意要替换
+    if (typeof paramStr == "string") {
+        // eslint-disable-next-line
+        paramStr = paramStr.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, '*')
+    }
+    req.xhr.send(paramStr)
+}
+
+// 发送数据整理
+function requestSend(this:Ajax, param:sendParam, req:Req) {
+    // console.log("xxxx", param, req);
+    if (req.outFlag) {
+        // 已经中止
+        return
+    }
+
+    // 方法
+    req.method = String(req.method || 'get').toUpperCase()
+
+    // callback中接收的 res
+    let res = new Res()
+    res.withReq = req
+    res.parent = this
+
+    // 之前发出
+    this.emit('before', req)
+
+    req.path = ''
+    req.orginURL = req.url
+    // 短路径替换
+    req.formatURL = req.orginURL
+        // 自定义req属性
+        .replace(/^<([\w,:]*)>/, function(s0:string, s1:string) {
+            s1.split(/,+/).forEach(function(key:string) {
+                let [k1, k2] = key.toLowerCase().split(/:+/)
+                if (k2 === undefined) {
+                    k2 = k1
+                    k1 = 'method'
+                }
+                req[k1] = k2
+            })
+            return ''
+        })
+        // 短路经
+        .replace(/^(\w+):(?!\/\/)/, (s0:string, s1:string) => {
+            req.path = s0
+            return req.paths[s1] || s0
+        })
+
+    if (req.baseURL && !/^(:?http(:?s)?:)?\/\//i.test(req.url)) {
+        // 有baseURL 并且不是全量地址
+        req.formatURL = req.baseURL + req.formatURL
+    }
+
+    // 确认短路径后
+    this.emit('path', req)
+
+    // 是否为 FormData
+    let isFormData = false
+    if (window.FormData && param instanceof window.FormData) {
+        isFormData = true
+    }
+    req.isFormData = isFormData
+
+    // 请求类型
+    let dataType = (req.dataType = String(req.dataType || '').toLowerCase())
+
+    if (isFormData) {
+        // FormData 将参数都添加到 FormData中
+        forEach(req.param, function(value, key) {
+            (<FormData>param).append(key, value)
+        })
+        req.param = param
+    } else {
+        if (typeof param == 'string') {
+            // 参数为字符串，自动格式化为 object，后面合并后在序列化
+            param = dataType == 'json' ? JSON.parse(param) : qs.parse(param)
+        }
+        assign(req.param as IFParam, param as IFParam || {})
+    }
+
+    // 数据整理完成
+    this.emit('open', req)
+
+    // 还原,防止复写， 防止在 open中重写这些参数
+    req.isFormData = isFormData
+    req.dataType = dataType
+
+    let method = String(req.method || 'get').toUpperCase()
+    if (method == 'GET') {
+        let para = req.param as IFParam
+        if (para && req.cache === false && !para._r_) {
+            // 加随机数，去缓存
+            para._r_ = getUUID()
+        }
+    }
+
+    // 是否跨域, 获全路径后，比对
+    req.isCross = !/:\/\/$/.test(getFullUrl(req.formatURL).split(host)[0] || '')
+
+    req.url = req.formatURL
+    if (method == 'JSONP') {
+        // jsonp 获取数据
+        jsonpSend.call(this, res)
+        return
+    }
+
+    if (hasFetch && req.useFetch && !this.hasEvent('progress')) {
+        //fetch 存在 fetch 并且无上传或者进度回调 只能异步
+        fetchSend.call(this, res)
+        return
+    }
+
+    // 走 XMLHttpRequest
+    xhrSend.call(this, res)
+}
+
+// 中止
+function ajaxAbort(this:Ajax, flag:boolean):void {
+    let req = this._req
+    if (req) {
+        // 设置outFlag，会中止回调函数的回调
+        req.outFlag = true
+        if (req.xhr) {
+            // xhr 可以原声支持 中止
+            req.xhr.abort()
+            req.xhr = null
+        }
+        delete this._req
+        flag && this.emit('abort', req)
+    }
+}
+
+let def = Group.create("load") as Group
+
+// 全局
+def.global = theGlobal
+// 分组类
+def.Request = Group
+
+export default def

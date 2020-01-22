@@ -12,20 +12,22 @@ function _assign(target: object, objs: Array<object>, flag = false): object {
                     target[n] = new Date(item.getTime())
                     return
                 }
-                let targetType = _toString.call(target[n]).toLowerCase()
-                if (type == "[object array]") {
-                    if (!flag && targetType != type) {
-                        target[n] = []
+                if (target[n] != null) {
+                    let targetType = _toString.call(target[n]).toLowerCase()
+                    if (type == "[object array]") {
+                        if (!flag && targetType != type) {
+                            target[n] = []
+                        }
+                        _assign(target[n], item, flag)
+                        return
                     }
-                    _assign(target[n], item, flag)
-                    return
-                }
-                if (type == "[object object]") {
-                    if (!flag && targetType != type) {
-                        target[n] = {}
+                    if (type == "[object object]") {
+                        if (!flag && targetType != type) {
+                            target[n] = {}
+                        }
+                        _assign(target[n], item, flag)
+                        return
                     }
-                    _assign(target[n], item, flag)
-                    return
                 }
             }
             target[n] = item

@@ -13,20 +13,22 @@ function _assign(target, objs, flag) {
                     target[n] = new Date(item.getTime());
                     return;
                 }
-                var targetType = _toString.call(target[n]).toLowerCase();
-                if (type == "[object array]") {
-                    if (!flag && targetType != type) {
-                        target[n] = [];
+                if (target[n] != null) {
+                    var targetType = _toString.call(target[n]).toLowerCase();
+                    if (type == "[object array]") {
+                        if (!flag && targetType != type) {
+                            target[n] = [];
+                        }
+                        _assign(target[n], item, flag);
+                        return;
                     }
-                    _assign(target[n], item, flag);
-                    return;
-                }
-                if (type == "[object object]") {
-                    if (!flag && targetType != type) {
-                        target[n] = {};
+                    if (type == "[object object]") {
+                        if (!flag && targetType != type) {
+                            target[n] = {};
+                        }
+                        _assign(target[n], item, flag);
+                        return;
                     }
-                    _assign(target[n], item, flag);
-                    return;
                 }
             }
             target[n] = item;
