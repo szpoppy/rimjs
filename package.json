@@ -1,29 +1,7 @@
 {
-    "name": "vue-unicom",
-    "version": "2.1.1",
-    "description": "vue-unicom",
-    "main": "dist/index.js",
-    "scripts": {
-        "build": "rm -rf ./dist && tsc"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/szpoppy/vue-unicom.git"
-    },
-    "keywords": [
-        "vue",
-        "unicom"
-    ],
-    "author": "locus",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/szpoppy/vue-unicom/issues"
-    },
-    "homepage": "https://github.com/szpoppy/vue-unicom#readme",
-    "dependencies": {
-        "vue": "^2.6.11"
-    },
-    "devDependencies": {
-        "typescript": "^3.7.5"
-    }
+  "name": "rimjs",
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*"
+  ]
 }
