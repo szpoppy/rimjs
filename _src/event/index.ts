@@ -8,8 +8,12 @@ interface eventObj {
 
 export default class Event {
     private _events: eventObj
-    constructor() {
+    parent?: Event
+    constructor(parent?: Event) {
         this._events = {}
+        if (parent) {
+            this.parent = parent
+        }
     }
 
     /**
@@ -29,8 +33,8 @@ export default class Event {
 
     /**
      * 移除事件 可以移除全部事件
-     * @param type 
-     * @param fn 
+     * @param type
+     * @param fn
      */
     off(type?: string, fn?: Function): Event {
         if (!type) {
@@ -54,10 +58,13 @@ export default class Event {
 
     /**
      * 触发事件
-     * @param type 
-     * @param arg 
+     * @param type
+     * @param arg
      */
-    emit(type: string, ...arg: any) {
+    emit(type: string, ...arg: Array<any>) {
+        if (this.parent) {
+            this.parent.emit(type, ...arg)
+        }
         let evs = this._events[type] || []
         for (let i = 0; i < evs.length; i += 1) {
             evs[i].apply(this, arg)
@@ -67,9 +74,9 @@ export default class Event {
 
     /**
      * 判断事件是否存在
-     * @param type 
+     * @param type
      */
-    has(type: string): boolean {
+    hasEvent(type: string): boolean {
         let evs = this._events[type] || []
         return evs.length > 0
     }

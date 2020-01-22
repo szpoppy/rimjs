@@ -68,7 +68,7 @@ function fixedURL(url: string, paramStr: string): string {
 }
 
 // ===================================================================== 参数转为 字符串
-function getParamString(param?: FormData | object | string, dataType?: string): string | FormData {
+function getParamString(param?: FormData | IFParam | string, dataType?: string): string | FormData {
     if (!param) {
         return ""
     }
@@ -97,7 +97,6 @@ interface IFStrObj {
 interface IFParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean>
 }
-interface IFReq {}
 
 interface IFConf {
     baseURL?: string
@@ -107,7 +106,7 @@ interface IFConf {
     method?: string
     dataType?: string
     resType?: string
-    param?: IFParam | FormData
+    param?: IFParam | FormData | string
     header?: IFStrObj
     jsonpKey?: string
     cache?: boolean
@@ -124,11 +123,13 @@ class Req {
     isFormData?: boolean
     method?: string
     dataType?: string
-    param?: IFParam | FormData
+    resType?: string
+    param?: IFParam | FormData | string
     cache?: boolean
     isCross?: boolean
+    jsonpKey?: string
 
-    root?: Ajax
+    parent?: Ajax
 
     outFlag?: boolean
 
@@ -139,18 +140,21 @@ class Res {
     withReq: Req
     jsonKey: string = "json"
 
-    root?: Ajax
+    parent?: Ajax
 
     headers?: Headers | string
     status?: string
     text?: string
+    json?: object
+    cancel?: boolean
     err?: any
-    
+    result?: any
 
     constructor() {}
 
     getDate(): Date {
-        return this.root.root.getDate()
+        let parent = this.parent.parent as Group
+        return parent.getDate()
     }
 
     getData(prot: string, data?: any): any {
@@ -172,14 +176,22 @@ class Res {
     }
 }
 
-class Ajax {
-    root?: Group
-    private _req?: Req
+class Ajax extends Event {
+    _req?: Req
     conf?: IFConf
+
+    constructor(parent: Group) {
+        super(parent)
+    }
 }
 
-class Group {
+class Group extends Event {
     dateDiff?: number = 0
+
+    constructor() {
+        super(theGlobal)
+    }
+
     setDate(date: string | Date): void {
         if (typeof date == "string") {
             date = new Date(date.replace(/T/, " ").replace(/\.\d+$/, ""))
@@ -192,8 +204,78 @@ class Group {
     }
 }
 
+class Global extends Event {
+    conf?: IFConf = { useFetch: true, resType: "json", jsonpKey: "callback", cache: true }
+
+    constructor() {
+        super()
+    }
+
+    setConf(conf: IFConf) {
+        getConf(conf, this.conf)
+    }
+}
+let theGlobal = new Global()
+
+// 统一设置参数
+function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, param = {}, header = {}, jsonpKey, cache, withCredentials }: IFConf = {}, val: IFConf = {}): IFConf {
+    if (baseURL) {
+        val.baseURL = baseURL
+    }
+
+    if (paths) {
+        val.paths = paths
+    }
+
+    if (typeof useFetch == "boolean") {
+        val.useFetch = useFetch
+    }
+
+    if (url) {
+        // url  ==> req
+        val.url = url
+    }
+
+    if (method) {
+        // 方法 ==> req
+        val.method = method.toUpperCase()
+    }
+
+    if (param) {
+        // 参数  ==> req
+        val.param = param
+    }
+
+    if (header) {
+        // 请求头设置 ==> req
+        val.header = header
+    }
+
+    if (dataType) {
+        // 缓存 get ==> req
+        val.dataType = dataType
+    }
+    if (resType) {
+        // 返回数据类型
+        val.resType = resType
+    }
+
+    if (jsonpKey) {
+        val.jsonpKey = jsonpKey
+    }
+
+    if (typeof cache == "boolean") {
+        val.cache = cache
+    }
+
+    if (typeof withCredentials == "boolean") {
+        val.withCredentials = withCredentials
+    }
+    return val
+}
+
 // 结束 统一处理返回的数据
-function responseEnd(res) {
+function responseEnd(this: Ajax, res: Res): void {
     let req = res.withReq
     if (!res.json && res.text) {
         // 尝试格式为 json字符串
@@ -210,7 +292,8 @@ function responseEnd(res) {
 
     let date = res.getHeader("Date")
     if (date) {
-        this.root.setDate(date)
+        let group = <Group>this.parent
+        group.setDate(date)
     }
 
     delete this._req
@@ -224,4 +307,54 @@ function responseEnd(res) {
     }
     // callback事件，可以看做函数回调
     this.emit("callback", res)
+}
+
+// ============================================== jsonp
+function jsonpSend(this: Ajax, res: Res): void {
+    // req
+    let req = res.withReq
+
+    // 参数
+    let param = req.param
+
+    // callback
+    let key = req.jsonpKey
+    // jsonp回调字符串
+    let backFunKey = param[key]
+    if (!backFunKey) {
+        // 没设置，自动设置一个
+        param[key] = backFunKey = "jsonp_" + getUUID()
+    }
+
+    // 控制，只出发一次回调
+    let backFunFlag
+    // 回调函数
+    let backFun = (data?: any) => {
+        if (!backFunFlag) {
+            backFunFlag = true
+            // json数据
+            res.json = data
+            // json字符串
+            res.text = ""
+            // 错误，有data就正确的
+            res.err = data ? null : "http error"
+            if (!req.outFlag) {
+                // outFlag 就中止
+                responseEnd.call(this, res)
+            }
+        }
+    }
+
+    // 设置默认的回调函数
+    window[backFunKey] = backFun
+
+    // 所有参数都放在url上
+    let url = fixedURL(req.url, getParamString(param, req.dataType))
+
+    // 发送事件出发
+    this.emit("send", req)
+    // 发送请求
+    loadJS(url, function() {
+        backFun()
+    })
 }
