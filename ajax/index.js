@@ -130,7 +130,7 @@ var Ajax = /** @class */ (function (_super) {
     __extends(Ajax, _super);
     function Ajax(parent, opt) {
         var _this = _super.call(this, parent) || this;
-        _this.conf = assign_1.mixin({}, exports.theGlobal.conf, parent.conf, getConf(opt));
+        _this.conf = assign_1.merge({}, exports.theGlobal.conf, parent.conf, getConf(opt));
         return _this;
     }
     // 设置参数
@@ -146,12 +146,12 @@ var Ajax = /** @class */ (function (_super) {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        if (typeof args[0] === 'string') {
+        if (typeof args[0] === "string") {
             this.assign((_a = {}, _a[args[0]] = args[1], _a));
         }
         else {
             args.unshift(this);
-            assign_1.mixin.apply(Object, args);
+            assign_1.merge.apply(Object, args);
         }
         return this;
     };
@@ -169,10 +169,10 @@ var Ajax = /** @class */ (function (_super) {
                 // 超时 设置中止
                 ajaxAbort.call(_this);
                 // 出发超时事件
-                _this.emit('timeout', req);
+                _this.emit("timeout", req);
             }
         }, time);
-        callback && this.on('timeout', callback);
+        callback && this.on("timeout", callback);
         return this;
     };
     // 发送数据， over 代表 是否要覆盖本次请求
@@ -194,7 +194,7 @@ var Ajax = /** @class */ (function (_super) {
         this._req = req;
         // 异步，settime 部分参数可以后置设置生效
         setTimeout(function () {
-            assign_1.mixin(req, _this.conf);
+            assign_1.merge(req, _this.conf);
             requestSend.call(_this, param || {}, req);
         }, 1);
         return this;
@@ -203,14 +203,14 @@ var Ajax = /** @class */ (function (_super) {
     Ajax.prototype.then = function (thenFn) {
         var _this = this;
         var pse = new Promise(function (resolve, reject) {
-            _this.on('callback', function (res) {
+            _this.on("callback", function (res) {
                 resolve(res);
             });
-            _this.on('timeout', function () {
-                reject({ err: '访问超时', errType: 1 });
+            _this.on("timeout", function () {
+                reject({ err: "访问超时", errType: 1 });
             });
-            _this.on('abort', function () {
-                reject({ err: '访问中止', errType: 2 });
+            _this.on("abort", function () {
+                reject({ err: "访问中止", errType: 2 });
             });
         });
         return (thenFn && pse.then(thenFn)) || pse;
@@ -218,15 +218,15 @@ var Ajax = /** @class */ (function (_super) {
     return Ajax;
 }(event_1.default));
 function groupLoad(url, callback, param, onNew) {
-    var opt = typeof url == 'string' ? { url: url } : url;
-    if (callback && typeof callback != 'function') {
+    var opt = typeof url == "string" ? { url: url } : url;
+    if (callback && typeof callback != "function") {
         param = callback;
         callback = null;
     }
     var one = new Ajax(this, opt);
     onNew && onNew(one);
     if (typeof callback == "function") {
-        one.on('callback', callback);
+        one.on("callback", callback);
     }
     one.send(param);
     return one;
@@ -265,8 +265,8 @@ var Group = /** @class */ (function (_super) {
         return function (callback, param) {
             return groupLoad.call(_this, opt, callback, param, function (one) {
                 if (events) {
-                    if (typeof events == 'function') {
-                        one.on('callback', events);
+                    if (typeof events == "function") {
+                        one.on("callback", events);
                         return;
                     }
                     for (var n in events) {
@@ -294,7 +294,9 @@ var Group = /** @class */ (function (_super) {
     };
     // promise
     Group.prototype.fetch = function (opt, param) {
-        return this.create(opt).send(param).then();
+        return this.create(opt)
+            .send(param)
+            .then();
     };
     Group.prototype.setDate = function (date) {
         if (typeof date == "string") {
@@ -452,7 +454,7 @@ function fetchSend(res) {
     var _this = this;
     var req = res.withReq;
     // 方法
-    var method = String(req.method || 'GET').toUpperCase();
+    var method = String(req.method || "GET").toUpperCase();
     // 参数
     var param = req.param;
     // fetch option参数
@@ -462,32 +464,32 @@ function fetchSend(res) {
     };
     // 提交字符串
     var paramStr = getParamString(param, req.dataType);
-    if (method == 'GET') {
+    if (method == "GET") {
         req.url = fixedURL(req.url, paramStr);
         option.body = param = null;
     }
     else {
         option.body = paramStr || null;
-        if (req.header['Content-Type'] === undefined && !req.isFormData) {
+        if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // 默认 Content-Type
-            req.header['Content-Type'] = getDefaultContentType(req.dataType);
+            req.header["Content-Type"] = getDefaultContentType(req.dataType);
         }
     }
-    if (req.header['X-Requested-With'] === undefined && !req.isCross) {
+    if (req.header["X-Requested-With"] === undefined && !req.isCross) {
         // 跨域不增加 X-Requested-With
-        req.header['X-Requested-With'] = 'XMLHttpRequest';
+        req.header["X-Requested-With"] = "XMLHttpRequest";
     }
     if (req.isCross) {
         // 跨域
-        option.mode = 'cors';
+        option.mode = "cors";
         if (req.withCredentials) {
             // 发送请求，带上cookie
-            option.credentials = 'include';
+            option.credentials = "include";
         }
     }
     else {
         // 同域，默认带上cookie
-        option.credentials = 'same-origin';
+        option.credentials = "same-origin";
     }
     // response.text then回调函数
     var fetchData = function (_a) {
@@ -506,15 +508,15 @@ function fetchSend(res) {
             // 状态吗
             res.status = response.status;
             // 返回的字符串
-            res.text = '';
+            res.text = "";
             // 是否有错误
-            res.err = response.ok ? null : 'http error [' + res.status + ']';
-            var results = ['', null];
+            res.err = response.ok ? null : "http error [" + res.status + "]";
+            var results = ["", null];
             try {
                 results[0] = response.text();
             }
             catch (e) { }
-            if (['json', 'text'].indexOf(req.resType) < 0) {
+            if (["json", "text"].indexOf(req.resType) < 0) {
                 try {
                     results[1] = response[req.resType]();
                 }
@@ -525,11 +527,11 @@ function fetchSend(res) {
         delete req.outFlag;
     }
     // 发送事件处理
-    this.emit('send', req);
+    this.emit("send", req);
     // 发送数据
     window.fetch(req.url, option).then(fetchBack, fetchBack);
 }
-// ===================================================================xhr 发送数据 
+// ===================================================================xhr 发送数据
 // xhr的onload事件
 function onload(res) {
     var req = res.withReq;
@@ -541,7 +543,7 @@ function onload(res) {
             res.headers = xhr.getAllResponseHeaders();
         }
         catch (e) { }
-        res.text = '';
+        res.text = "";
         try {
             // 返回的文本信息
             res.text = xhr.responseText;
@@ -565,7 +567,7 @@ function onload(res) {
         // }
         var s = res.status;
         // 默认只有当 正确的status才是 null， 否则是错误
-        res.err = (s >= 200 && s < 300) || s === 304 || s === 1223 ? null : 'http error [' + s + ']';
+        res.err = (s >= 200 && s < 300) || s === 304 || s === 1223 ? null : "http error [" + s + "]";
         // 统一后处理
         responseEnd.call(this, res);
     }
@@ -582,39 +584,39 @@ function xhrSend(res) {
     // XHR
     req.xhr = new window.XMLHttpRequest();
     // xhr 请求方法
-    var method = String(req.method || 'GET').toUpperCase();
+    var method = String(req.method || "GET").toUpperCase();
     if (req.withCredentials) {
         // xhr 跨域带cookie
         req.xhr.withCredentials = true;
     }
     var paramStr = getParamString(req.param, req.dataType);
-    if (method == 'GET') {
+    if (method == "GET") {
         // get 方法，参数都组合到 url上面
         req.xhr.open(method, fixedURL(req.url, paramStr), true);
         paramStr = null;
     }
     else {
         req.xhr.open(method, req.url, true);
-        if (req.header['Content-Type'] === undefined && !req.isFormData) {
+        if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // Content-Type 默认值
-            req.header['Content-Type'] = getDefaultContentType(req.dataType);
+            req.header["Content-Type"] = getDefaultContentType(req.dataType);
         }
     }
-    if (req.header['X-Requested-With'] === undefined && !req.isCross) {
+    if (req.header["X-Requested-With"] === undefined && !req.isCross) {
         // 跨域不增加 X-Requested-With 如果增加，容易出现问题，需要可以通过 事件设置
-        req.header['X-Requested-With'] = 'XMLHttpRequest';
+        req.header["X-Requested-With"] = "XMLHttpRequest";
     }
     // XDR 不能设置 header
     each_1.default(req.header, function (v, k) {
         req.xhr.setRequestHeader(k, v);
     });
     res.status = 0;
-    if (this.hasEvent('progress')) {
+    if (this.hasEvent("progress")) {
         // 跨域 加上 progress post请求导致 多发送一个 options 的请求
         // 只有有进度需求的任务,才加上
         try {
             req.xhr.upload.onprogress = function () {
-                _this.emit('progress', event);
+                _this.emit("progress", event);
             };
         }
         catch (e) { }
@@ -623,14 +625,14 @@ function xhrSend(res) {
     // onload事件
     req.xhr.onload = onload.bind(this, res);
     // 发送前出发send事件
-    this.emit('send', req);
-    if (['arraybuffer', 'blob'].indexOf(req.resType) >= 0) {
+    this.emit("send", req);
+    if (["arraybuffer", "blob"].indexOf(req.resType) >= 0) {
         req.xhr.responseType = req.resType;
     }
     // 发送请求，注意要替换
     if (typeof paramStr == "string") {
         // eslint-disable-next-line
-        paramStr = paramStr.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, '*');
+        paramStr = paramStr.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*");
     }
     req.xhr.send(paramStr);
 }
@@ -642,14 +644,14 @@ function requestSend(param, req) {
         return;
     }
     // 方法
-    req.method = String(req.method || 'get').toUpperCase();
+    req.method = String(req.method || "get").toUpperCase();
     // callback中接收的 res
     var res = new Res();
     res.withReq = req;
     res.parent = this;
     // 之前发出
-    this.emit('before', req);
-    req.path = '';
+    this.emit("before", req);
+    req.path = "";
     req.orginURL = req.url;
     // 短路径替换
     req.formatURL = req.orginURL
@@ -659,11 +661,11 @@ function requestSend(param, req) {
             var _a = key.toLowerCase().split(/:+/), k1 = _a[0], k2 = _a[1];
             if (k2 === undefined) {
                 k2 = k1;
-                k1 = 'method';
+                k1 = "method";
             }
             req[k1] = k2;
         });
-        return '';
+        return "";
     })
         // 短路经
         .replace(/^(\w+):(?!\/\/)/, function (s0, s1) {
@@ -675,7 +677,7 @@ function requestSend(param, req) {
         req.formatURL = req.baseURL + req.formatURL;
     }
     // 确认短路径后
-    this.emit('path', req);
+    this.emit("path", req);
     // 是否为 FormData
     var isFormData = false;
     if (window.FormData && param instanceof window.FormData) {
@@ -683,28 +685,29 @@ function requestSend(param, req) {
     }
     req.isFormData = isFormData;
     // 请求类型
-    var dataType = (req.dataType = String(req.dataType || '').toLowerCase());
+    var dataType = (req.dataType = String(req.dataType || "").toLowerCase());
     if (isFormData) {
         // FormData 将参数都添加到 FormData中
         each_1.default(req.param, function (value, key) {
+            ;
             param.append(key, value);
         });
         req.param = param;
     }
     else {
-        if (typeof param == 'string') {
+        if (typeof param == "string") {
             // 参数为字符串，自动格式化为 object，后面合并后在序列化
-            param = dataType == 'json' ? JSON.parse(param) : qs_1.default.parse(param);
+            param = dataType == "json" ? JSON.parse(param) : qs_1.default.parse(param);
         }
-        assign_1.mixin(req.param, param || {});
+        assign_1.merge(req.param, param || {});
     }
     // 数据整理完成
-    this.emit('open', req);
+    this.emit("open", req);
     // 还原,防止复写， 防止在 open中重写这些参数
     req.isFormData = isFormData;
     req.dataType = dataType;
-    var method = String(req.method || 'get').toUpperCase();
-    if (method == 'GET') {
+    var method = String(req.method || "get").toUpperCase();
+    if (method == "GET") {
         var para = req.param;
         if (para && req.cache === false && !para._r_) {
             // 加随机数，去缓存
@@ -712,14 +715,14 @@ function requestSend(param, req) {
         }
     }
     // 是否跨域, 获全路径后，比对
-    req.isCross = !/:\/\/$/.test(getFullUrl(req.formatURL).split(host)[0] || '');
+    req.isCross = !/:\/\/$/.test(getFullUrl(req.formatURL).split(host)[0] || "");
     req.url = req.formatURL;
-    if (method == 'JSONP') {
+    if (method == "JSONP") {
         // jsonp 获取数据
         jsonpSend.call(this, res);
         return;
     }
-    if (hasFetch && req.useFetch && !this.hasEvent('progress')) {
+    if (hasFetch && req.useFetch && !this.hasEvent("progress")) {
         //fetch 存在 fetch 并且无上传或者进度回调 只能异步
         fetchSend.call(this, res);
         return;
@@ -739,7 +742,7 @@ function ajaxAbort(flag) {
             req.xhr = null;
         }
         delete this._req;
-        flag && this.emit('abort', req);
+        flag && this.emit("abort", req);
     }
 }
 var def = Group.create("load");

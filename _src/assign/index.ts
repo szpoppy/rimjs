@@ -41,7 +41,7 @@ function _assign(target: object, objs: Array<object>, flag = false): object {
  * @param  target
  * @param  objs 每个单元应该同　target 的数据类型一致
  */
-export function mixin(target: object, ...objs: Array<object>): object {
+export function merge(target: object, ...objs: Array<object>): object {
     return _assign(target, objs, true)
 }
 

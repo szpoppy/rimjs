@@ -41,14 +41,14 @@ function _assign(target, objs, flag) {
  * @param  target
  * @param  objs 每个单元应该同　target 的数据类型一致
  */
-function mixin(target) {
+function merge(target) {
     var objs = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         objs[_i - 1] = arguments[_i];
     }
     return _assign(target, objs, true);
 }
-exports.mixin = mixin;
+exports.merge = merge;
 /**
  * 深度克隆 对象
  * @param target
