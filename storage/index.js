@@ -166,5 +166,8 @@ exports.LSClass = LSClass;
  */
 var ls = new LSClass(":");
 ls.LSClass = LSClass;
+exports.getStorage = ls.getItem;
+exports.setStorage = ls.setItem;
+exports.removeStorage = ls.removeItem;
 exports.default = ls;
 //# sourceMappingURL=index.js.map

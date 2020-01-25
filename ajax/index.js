@@ -15,13 +15,14 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var qs_1 = require("../qs");
 var each_1 = require("../each");
-var event_1 = require("../event");
 var sole_1 = require("../sole");
+var event_1 = require("../event");
 var assign_1 = require("../assign");
 // 当前host
 var host = window.location.host;
 // 是否原声支持 fetch
 var hasFetch = !!window.fetch;
+// ========================================================================= 事件
 // ========================================================================= 动态加载js
 // jsonp 加载方式需要使用
 var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -95,27 +96,24 @@ function getDefaultContentType(dataType) {
     return "application/x-www-form-urlencoded";
 }
 // ==================================================================== 资源返回类
-var Req = /** @class */ (function () {
-    function Req() {
+var AjaxReq = /** @class */ (function () {
+    function AjaxReq() {
     }
-    return Req;
+    return AjaxReq;
 }());
-var Res = /** @class */ (function () {
-    function Res() {
+exports.AjaxReq = AjaxReq;
+var AjaxRes = /** @class */ (function () {
+    function AjaxRes() {
         this.jsonKey = "json";
         this.headers = "";
     }
-    Res.prototype.getDate = function () {
-        var parent = this.parent.parent;
-        return parent.getDate();
-    };
-    Res.prototype.getData = function (prot, data) {
+    AjaxRes.prototype.getData = function (prot, data) {
         if (data === undefined) {
             data = this[this.jsonKey];
         }
         return getSafeData(data, prot);
     };
-    Res.prototype.getHeader = function (key) {
+    AjaxRes.prototype.getHeader = function (key) {
         if (typeof this.headers == "string") {
             return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers) ? RegExp["$1"] : "";
         }
@@ -124,13 +122,23 @@ var Res = /** @class */ (function () {
         }
         return "";
     };
-    return Res;
+    return AjaxRes;
 }());
+exports.AjaxRes = AjaxRes;
+var AjaxCourse = /** @class */ (function () {
+    function AjaxCourse() {
+    }
+    AjaxCourse.prototype.getDate = function () {
+        return this.parent.parent.getDate();
+    };
+    return AjaxCourse;
+}());
+exports.AjaxCourse = AjaxCourse;
 var Ajax = /** @class */ (function (_super) {
     __extends(Ajax, _super);
     function Ajax(parent, opt) {
-        var _this = _super.call(this, parent) || this;
-        _this.conf = assign_1.merge({}, exports.theGlobal.conf, parent.conf, getConf(opt));
+        var _this = _super.call(this) || this;
+        _this.conf = assign_1.merge({}, exports.ajaxGlobal.conf, parent.conf, getConf(opt));
         return _this;
     }
     // 设置参数
@@ -164,12 +172,13 @@ var Ajax = /** @class */ (function (_super) {
     Ajax.prototype.timeout = function (time, callback) {
         var _this = this;
         setTimeout(function () {
-            var req = _this._req;
+            var course = _this._course;
+            var req = course.req;
             if (req) {
                 // 超时 设置中止
                 ajaxAbort.call(_this);
                 // 出发超时事件
-                _this.emit("timeout", req);
+                _this.emit("timeout", course);
             }
         }, time);
         callback && this.on("timeout", callback);
@@ -179,7 +188,7 @@ var Ajax = /** @class */ (function (_super) {
     Ajax.prototype.send = function (param, over) {
         var _this = this;
         if (over === void 0) { over = false; }
-        if (this._req) {
+        if (this._course) {
             // 存在 _req
             if (!over) {
                 // 不覆盖，取消本次发送
@@ -189,13 +198,14 @@ var Ajax = /** @class */ (function (_super) {
             this.abort();
         }
         // 制造 req
-        var req = new Req();
-        req.parent = this;
-        this._req = req;
+        var course = new AjaxCourse();
+        course.parent = this;
+        var req = (course.req = new AjaxReq());
+        this._course = course;
         // 异步，settime 部分参数可以后置设置生效
         setTimeout(function () {
             assign_1.merge(req, _this.conf);
-            requestSend.call(_this, param || {}, req);
+            requestSend.call(_this, param || {}, course);
         }, 1);
         return this;
     };
@@ -203,7 +213,8 @@ var Ajax = /** @class */ (function (_super) {
     Ajax.prototype.then = function (thenFn) {
         var _this = this;
         var pse = new Promise(function (resolve, reject) {
-            _this.on("callback", function (res) {
+            _this.on("callback", function (_a) {
+                var res = _a.res;
                 resolve(res);
             });
             _this.on("timeout", function () {
@@ -217,6 +228,7 @@ var Ajax = /** @class */ (function (_super) {
     };
     return Ajax;
 }(event_1.default));
+exports.Ajax = Ajax;
 function groupLoad(url, callback, param, onNew) {
     var opt = typeof url == "string" ? { url: url } : url;
     if (callback && typeof callback != "function") {
@@ -232,35 +244,26 @@ function groupLoad(url, callback, param, onNew) {
     return one;
 }
 var ajaxDateDiff = 0;
-var Group = /** @class */ (function (_super) {
-    __extends(Group, _super);
-    function Group(opt) {
-        var _this = _super.call(this, exports.theGlobal) || this;
+var AjaxGroup = /** @class */ (function (_super) {
+    __extends(AjaxGroup, _super);
+    function AjaxGroup(opt) {
+        var _this = _super.call(this, exports.ajaxGlobal) || this;
         _this.dateDiff = ajaxDateDiff;
         _this.conf = {};
         opt && _this.setConf(opt);
         return _this;
     }
-    Group.create = function (key, opt) {
-        if (key === void 0) { key = "load"; }
-        var group = new Group(opt);
-        function fn() {
-            return group[key].apply(group, arguments);
-        }
-        Object.setPrototypeOf(fn, group);
-        return fn;
-    };
     // 设置默认
-    Group.prototype.setConf = function (opt) {
+    AjaxGroup.prototype.setConf = function (opt) {
         opt && getConf(opt, this.conf);
         return this;
     };
     // 创建一个ajax
-    Group.prototype.create = function (opt) {
+    AjaxGroup.prototype.create = function (opt) {
         return new Ajax(this, opt);
     };
     // 快捷函数
-    Group.prototype.shortcut = function (opt, events) {
+    AjaxGroup.prototype.shortcut = function (opt, events) {
         var _this = this;
         return function (callback, param) {
             return groupLoad.call(_this, opt, callback, param, function (one) {
@@ -277,40 +280,40 @@ var Group = /** @class */ (function (_super) {
         };
     };
     // 创建并加载
-    Group.prototype.load = function () {
+    AjaxGroup.prototype.load = function () {
         return groupLoad.apply(this, arguments);
     };
-    Group.prototype.get = function () {
+    AjaxGroup.prototype.get = function () {
         return groupLoad.apply(this, arguments).setConf({ method: "get" });
     };
-    Group.prototype.post = function () {
+    AjaxGroup.prototype.post = function () {
         return groupLoad.apply(this, arguments).setConf({ method: "post" });
     };
-    Group.prototype.put = function () {
+    AjaxGroup.prototype.put = function () {
         return groupLoad.apply(this, arguments).setConf({ method: "put" });
     };
-    Group.prototype.jsonp = function () {
+    AjaxGroup.prototype.jsonp = function () {
         return groupLoad.apply(this, arguments).setConf({ method: "jsonp" });
     };
     // promise
-    Group.prototype.fetch = function (opt, param) {
+    AjaxGroup.prototype.fetch = function (opt, param) {
         return this.create(opt)
             .send(param)
             .then();
     };
-    Group.prototype.setDate = function (date) {
+    AjaxGroup.prototype.setDate = function (date) {
         if (typeof date == "string") {
             date = new Date(date.replace(/T/, " ").replace(/\.\d+$/, ""));
         }
         this.dateDiff = ajaxDateDiff = date.getTime() - new Date().getTime();
     };
     // 获取 服务器时间
-    Group.prototype.getDate = function () {
+    AjaxGroup.prototype.getDate = function () {
         return new Date(this.dateDiff + new Date().getTime());
     };
-    return Group;
+    return AjaxGroup;
 }(event_1.default));
-exports.Request = Group;
+exports.AjaxGroup = AjaxGroup;
 var Global = /** @class */ (function (_super) {
     __extends(Global, _super);
     function Global() {
@@ -323,7 +326,7 @@ var Global = /** @class */ (function (_super) {
     };
     return Global;
 }(event_1.default));
-exports.theGlobal = new Global();
+exports.ajaxGlobal = new Global();
 // 统一设置参数
 function getConf(_a, val) {
     var _b = _a === void 0 ? {} : _a, baseURL = _b.baseURL, paths = _b.paths, useFetch = _b.useFetch, url = _b.url, method = _b.method, dataType = _b.dataType, resType = _b.resType, _c = _b.param, param = _c === void 0 ? {} : _c, _d = _b.header, header = _d === void 0 ? {} : _d, jsonpKey = _b.jsonpKey, cache = _b.cache, withCredentials = _b.withCredentials;
@@ -373,8 +376,8 @@ function getConf(_a, val) {
     return val;
 }
 // 结束 统一处理返回的数据
-function responseEnd(res) {
-    var req = res.withReq;
+function responseEnd(course) {
+    var req = course.req, res = course.res;
     if (!res.json && res.text) {
         // 尝试格式为 json字符串
         try {
@@ -389,24 +392,23 @@ function responseEnd(res) {
     }
     var date = res.getHeader("Date");
     if (date) {
-        var group = this.parent;
-        group.setDate(date);
+        this.parent.setDate(date);
     }
-    delete this._req;
+    delete this._course;
     // 出发验证事件
-    this.emit("verify", res);
+    this.emit("verify", course);
     if (res.cancel === true) {
         // 验证事件中设置 res.cancel 为false，中断处理
         return;
     }
     // callback事件，可以看做函数回调
-    this.emit("callback", res);
+    this.emit("callback", course);
 }
 // ============================================== jsonp
-function jsonpSend(res) {
+function jsonpSend(course) {
     var _this = this;
     // req
-    var req = res.withReq;
+    var req = course.req, res = course.res;
     // 参数
     var param = req.param;
     // callback
@@ -441,7 +443,7 @@ function jsonpSend(res) {
     // 所有参数都放在url上
     var url = fixedURL(req.url, getParamString(param, req.dataType));
     // 发送事件出发
-    this.emit("send", req);
+    this.emit("send", course);
     // 发送请求
     loadJS(url, function () {
         backFun();
@@ -450,9 +452,9 @@ function jsonpSend(res) {
 /**
  * fetch 发送数据
  */
-function fetchSend(res) {
+function fetchSend(course) {
     var _this = this;
-    var req = res.withReq;
+    var req = course.req, res = course.res;
     // 方法
     var method = String(req.method || "GET").toUpperCase();
     // 参数
@@ -527,14 +529,14 @@ function fetchSend(res) {
         delete req.outFlag;
     }
     // 发送事件处理
-    this.emit("send", req);
+    this.emit("send", course);
     // 发送数据
     window.fetch(req.url, option).then(fetchBack, fetchBack);
 }
 // ===================================================================xhr 发送数据
 // xhr的onload事件
-function onload(res) {
-    var req = res.withReq;
+function onload(course) {
+    var req = course.req, res = course.res;
     var xhr = req.xhr;
     if (xhr && !req.outFlag) {
         // req.outFlag 为true 表示，本次ajax已经中止，无需处理
@@ -578,9 +580,9 @@ function onload(res) {
  * xhr 发送数据
  * @returns {ajax}
  */
-function xhrSend(res) {
+function xhrSend(course) {
     var _this = this;
-    var req = res.withReq;
+    var res = course.res, req = course.req;
     // XHR
     req.xhr = new window.XMLHttpRequest();
     // xhr 请求方法
@@ -615,8 +617,10 @@ function xhrSend(res) {
         // 跨域 加上 progress post请求导致 多发送一个 options 的请求
         // 只有有进度需求的任务,才加上
         try {
-            req.xhr.upload.onprogress = function () {
-                _this.emit("progress", event);
+            req.xhr.upload.onprogress = function (event) {
+                var p = new AjaxCourse();
+                p.progress = event;
+                _this.emit("progress", p);
             };
         }
         catch (e) { }
@@ -625,7 +629,7 @@ function xhrSend(res) {
     // onload事件
     req.xhr.onload = onload.bind(this, res);
     // 发送前出发send事件
-    this.emit("send", req);
+    this.emit("send", course);
     if (["arraybuffer", "blob"].indexOf(req.resType) >= 0) {
         req.xhr.responseType = req.resType;
     }
@@ -637,7 +641,8 @@ function xhrSend(res) {
     req.xhr.send(paramStr);
 }
 // 发送数据整理
-function requestSend(param, req) {
+function requestSend(param, course) {
+    var req = course.req;
     // console.log("xxxx", param, req);
     if (req.outFlag) {
         // 已经中止
@@ -646,11 +651,9 @@ function requestSend(param, req) {
     // 方法
     req.method = String(req.method || "get").toUpperCase();
     // callback中接收的 res
-    var res = new Res();
-    res.withReq = req;
-    res.parent = this;
+    var res = (course.res = new AjaxRes());
     // 之前发出
-    this.emit("before", req);
+    this.emit("before", course);
     req.path = "";
     req.orginURL = req.url;
     // 短路径替换
@@ -677,7 +680,7 @@ function requestSend(param, req) {
         req.formatURL = req.baseURL + req.formatURL;
     }
     // 确认短路径后
-    this.emit("path", req);
+    this.emit("path", course);
     // 是否为 FormData
     var isFormData = false;
     if (window.FormData && param instanceof window.FormData) {
@@ -702,7 +705,7 @@ function requestSend(param, req) {
         assign_1.merge(req.param, param || {});
     }
     // 数据整理完成
-    this.emit("open", req);
+    this.emit("open", course);
     // 还原,防止复写， 防止在 open中重写这些参数
     req.isFormData = isFormData;
     req.dataType = dataType;
@@ -724,15 +727,16 @@ function requestSend(param, req) {
     }
     if (hasFetch && req.useFetch && !this.hasEvent("progress")) {
         //fetch 存在 fetch 并且无上传或者进度回调 只能异步
-        fetchSend.call(this, res);
+        fetchSend.call(this, course);
         return;
     }
     // 走 XMLHttpRequest
-    xhrSend.call(this, res);
+    xhrSend.call(this, course);
 }
 // 中止
 function ajaxAbort(flag) {
-    var req = this._req;
+    var course = this._course;
+    var req = course.req;
     if (req) {
         // 设置outFlag，会中止回调函数的回调
         req.outFlag = true;
@@ -741,14 +745,15 @@ function ajaxAbort(flag) {
             req.xhr.abort();
             req.xhr = null;
         }
-        delete this._req;
-        flag && this.emit("abort", req);
+        delete this._course;
+        flag && this.emit("abort", course);
     }
 }
-var def = Group.create("load");
+var def = new AjaxGroup();
 // 全局
-def.global = exports.theGlobal;
-// 分组类
-def.Request = Group;
+def.global = exports.ajaxGlobal;
 exports.default = def;
+exports.ajaxGlobal.on("callback", function (_a) {
+    var res = _a.res;
+});
 //# sourceMappingURL=index.js.map

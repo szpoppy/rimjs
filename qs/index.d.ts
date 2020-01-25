@@ -15,7 +15,7 @@ declare class QueryString {
      * 解析为 对象输出
      * @param str
      */
-    parse(str: string): object;
+    parse(str: string): any;
     /**
      * 序列化为字符串
      * @param opt
@@ -23,4 +23,6 @@ declare class QueryString {
     stringify(opt: object): string;
 }
 declare let qs: QueryString;
+export declare let parseQS: (str: string) => any;
+export declare let stringifyQS: (opt: object) => string;
 export default qs;

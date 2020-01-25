@@ -80,5 +80,7 @@ var QueryString = /** @class */ (function () {
 }());
 var qs = new QueryString();
 qs.QS = QueryString;
+exports.parseQS = qs.parse;
+exports.stringifyQS = qs.stringify;
 exports.default = qs;
 //# sourceMappingURL=index.js.map

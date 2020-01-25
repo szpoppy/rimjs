@@ -2,24 +2,12 @@
 /**
  * 事件类
  */
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-function emitEvent(events, target, args) {
-    for (var i = 0; i < events.length; i += 1) {
-        events[i].apply(target, args);
-    }
-}
 var Event = /** @class */ (function () {
     function Event(parent) {
         this._events = {};
         if (parent) {
-            this.parent = parent;
+            this._parent = parent;
         }
     }
     /**
@@ -35,7 +23,6 @@ var Event = /** @class */ (function () {
             evs = this._events[type] = [];
         }
         evs[isPre ? "unshift" : "push"](fn);
-        return this;
     };
     /**
      * 移除事件 可以移除全部事件
@@ -45,21 +32,30 @@ var Event = /** @class */ (function () {
     Event.prototype.off = function (type, fn) {
         if (!type) {
             this._events = {};
-            return this;
+            return;
         }
         if (!fn) {
             delete this._events[type];
-            return this;
+            return;
         }
         var evs = this._events[type];
         if (!evs) {
-            return this;
+            return;
         }
         var index = evs.indexOf(fn);
         if (index >= 0) {
             evs.splice(index, 1);
         }
-        return this;
+    };
+    Event.prototype._emit = function (target, type, arg) {
+        if (this._parent && this._parent._emit) {
+            this._parent._emit(target, type, arg);
+        }
+        var evs = this._events[type] || [];
+        for (var i = 0; i < evs.length; i += 1) {
+            evs[i].call(target, arg);
+        }
+        return arg;
     };
     /**
      * 内部调用 事件触发函数
@@ -67,33 +63,22 @@ var Event = /** @class */ (function () {
      * @param type
      * @param args
      */
-    Event.prototype.emit = function (target, type) {
-        var args = [];
-        for (var _i = 2; _i < arguments.length; _i++) {
-            args[_i - 2] = arguments[_i];
-        }
-        if (typeof target == "string") {
-            args.unshift(type);
-            type = target;
-            target = this;
-        }
-        var parent = this.parent;
-        if (parent && parent.emit) {
-            parent.emit.apply(parent, __spreadArrays([target, type], args));
-        }
-        var evs = this._events[type] || [];
-        for (var i = 0; i < evs.length; i += 1) {
-            evs[i].apply(target, args);
-        }
-        return args[0];
+    Event.prototype.emit = function (type, arg) {
+        return this._emit(this, type, arg);
     };
     /**
      * 判断事件是否存在
      * @param type
      */
     Event.prototype.hasEvent = function (type) {
-        var evs = this._events[type] || [];
-        return evs.length > 0;
+        var target = this;
+        do {
+            var evs = target._events[type] || [];
+            if (evs.length > 0) {
+                return true;
+            }
+        } while ((target = target._parent));
+        return false;
     };
     return Event;
 }());

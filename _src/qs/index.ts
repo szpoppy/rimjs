@@ -25,12 +25,12 @@ class QueryString {
      * 解析为 对象输出
      * @param str
      */
-    parse(str: string): object {
+    parse(str: string): any {
         let sep = this.sep
         let eq = this.eq
         let unescape = this.unescape
 
-        let data: object = {}
+        let data: any = {}
         // 去除部分没有的字符
         str.replace(/^[\s#?]+/, "")
             .split(sep)
@@ -88,5 +88,8 @@ class QueryString {
 
 let qs = new QueryString()
 qs.QS = QueryString
+
+export let parseQS = qs.parse
+export let stringifyQS = qs.stringify
 
 export default qs

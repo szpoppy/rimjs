@@ -184,4 +184,9 @@ export class LSClass {
  */
 let ls = new LSClass(":")
 ls.LSClass = LSClass
+
+export let getStorage = ls.getItem
+export let setStorage = ls.setItem
+export let removeStorage = ls.removeItem
+
 export default ls

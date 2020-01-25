@@ -2,23 +2,20 @@
  * 事件类
  */
 
-interface eventObj {
-    [propName: string]: Function[]
+export interface IEventFn<T, A> extends Function {
+    (this: T, arg: A): void
 }
 
-function emitEvent(events:Function[], target:Event, args:any[]):any {
-    for (let i = 0; i < events.length; i += 1) {
-        events[i].apply(target, args)
-    }
+interface IFEventObj<T, A> {
+    [propName: string]: IEventFn<T, A>[]
 }
-
-export default class Event {
-    private _events: eventObj
-    parent?: Event
-    constructor(parent?: Event) {
+export default class Event<T = null, A = any> {
+    private _events?: IFEventObj<T, A>
+    private _parent?: Event<T, A>
+    constructor(parent?: Event<T, A>) {
         this._events = {}
         if (parent) {
-            this.parent = parent
+            this._parent = parent
         }
     }
 
@@ -28,13 +25,12 @@ export default class Event {
      * @param fn 事件函数
      * @param isPre 是否前面插入
      */
-    on(type: string, fn: Function, isPre: boolean = false): Event {
+    on(type: string, fn: IEventFn<T, A>, isPre: boolean = false): void {
         let evs = this._events[type]
         if (!evs) {
             evs = this._events[type] = []
         }
         evs[isPre ? "unshift" : "push"](fn)
-        return this
     }
 
     /**
@@ -42,49 +38,46 @@ export default class Event {
      * @param type
      * @param fn
      */
-    off(type?: string, fn?: Function): Event {
+    off(type?: string, fn?: IEventFn<T, A>): void {
         if (!type) {
             this._events = {}
-            return this
+            return
         }
         if (!fn) {
             delete this._events[type]
-            return this
+            return
         }
         let evs = this._events[type]
         if (!evs) {
-            return this
+            return
         }
         let index = evs.indexOf(fn)
         if (index >= 0) {
             evs.splice(index, 1)
         }
-        return this
+    }
+
+    private _emit(target: Event<T, A>, type: string, arg?: A): A {
+        if (this._parent && this._parent._emit) {
+            this._parent._emit(target, type, arg)
+        }
+
+        let evs = this._events[type] || []
+        for (let i = 0; i < evs.length; i += 1) {
+            evs[i].call(target, arg)
+        }
+
+        return arg
     }
 
     /**
      * 内部调用 事件触发函数
-     * @param target 
-     * @param type 
-     * @param args 
+     * @param target
+     * @param type
+     * @param args
      */
-    emit(target:Event|string, type:string | any, ...args:any[]):any {
-        if(typeof target == "string") {
-            args.unshift(type)
-            type = target
-            target = this
-        }
-
-        let parent = this.parent
-        if (parent && parent.emit) {
-            parent.emit(target, type, ...args)
-        }
-        let evs = this._events[type] || []
-        for (let i = 0; i < evs.length; i += 1) {
-            evs[i].apply(target, args)
-        }
-
-        return args[0]
+    emit(type: string, arg?: A): A {
+        return this._emit(this, type, arg)
     }
 
     /**
@@ -92,7 +85,13 @@ export default class Event {
      * @param type
      */
     hasEvent(type: string): boolean {
-        let evs = this._events[type] || []
-        return evs.length > 0
+        let target: Event<T, A> = this
+        do {
+            let evs = target._events[type] || []
+            if (evs.length > 0) {
+                return true
+            }
+        } while ((target = target._parent))
+        return false
     }
 }

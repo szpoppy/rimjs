@@ -4,10 +4,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * 获取cookie
  * @param {String} key
  */
-function getItem(key) {
+function getCookie(key) {
     return new RegExp("; ?" + key + "=([^;]*);?").test("; " + document.cookie) ? decodeURIComponent(RegExp.$1) : "";
 }
-exports.getItem = getItem;
+exports.getCookie = getCookie;
 /**
  * 设置cookie
  * @param {String} key
@@ -16,7 +16,7 @@ exports.getItem = getItem;
  * @param {String} path 文档路径
  * @param {String} domain 域名，可以设置主域名
  */
-function setItem(key, value, expiration, path, domain) {
+function setCookie(key, value, expiration, path, domain) {
     var str = key + "=" + encodeURIComponent(value);
     if (expiration) {
         if (typeof expiration === "number") {
@@ -39,14 +39,14 @@ function setItem(key, value, expiration, path, domain) {
     }
     document.cookie = str;
 }
-exports.setItem = setItem;
+exports.setCookie = setCookie;
 /**
  * 移除cookie
  * @param {*} key
  * @param {*} path 文档路径
  * @param {*} domain 域名，可以设置主域名
  */
-function removeItem(key, path, domain) {
+function removeCookie(key, path, domain) {
     var str = key + "=; expires=" + new Date(0).toString();
     if (path) {
         str += "; path=" + path;
@@ -56,5 +56,10 @@ function removeItem(key, path, domain) {
     }
     document.cookie = str;
 }
-exports.removeItem = removeItem;
+exports.removeCookie = removeCookie;
+exports.default = {
+    getItem: getCookie,
+    setItem: setCookie,
+    removeItem: removeCookie
+};
 //# sourceMappingURL=index.js.map

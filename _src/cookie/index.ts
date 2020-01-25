@@ -2,7 +2,7 @@
  * 获取cookie
  * @param {String} key
  */
-export function getItem(key: string): string {
+export function getCookie(key: string): string {
     return new RegExp("; ?" + key + "=([^;]*);?").test("; " + document.cookie) ? decodeURIComponent(RegExp.$1) : ""
 }
 
@@ -14,7 +14,7 @@ export function getItem(key: string): string {
  * @param {String} path 文档路径
  * @param {String} domain 域名，可以设置主域名
  */
-export function setItem(key: string, value: string, expiration: number | string | Date, path?: string, domain?: string): void {
+export function setCookie(key: string, value: string, expiration: number | string | Date, path?: string, domain?: string): void {
     let str = key + "=" + encodeURIComponent(value)
     if (expiration) {
         if (typeof expiration === "number") {
@@ -46,7 +46,7 @@ export function setItem(key: string, value: string, expiration: number | string 
  * @param {*} path 文档路径
  * @param {*} domain 域名，可以设置主域名
  */
-export function removeItem(key: string, path?: string, domain?: string): void {
+export function removeCookie(key: string, path?: string, domain?: string): void {
     let str = key + "=; expires=" + new Date(0).toString()
     if (path) {
         str += "; path=" + path
@@ -55,4 +55,10 @@ export function removeItem(key: string, path?: string, domain?: string): void {
         str += "; domain=" + domain
     }
     document.cookie = str
+}
+
+export default {
+    getItem: getCookie,
+    setItem: setCookie,
+    removeItem: removeCookie
 }

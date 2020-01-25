@@ -2,7 +2,7 @@
  * 获取cookie
  * @param {String} key
  */
-export declare function getItem(key: string): string;
+export declare function getCookie(key: string): string;
 /**
  * 设置cookie
  * @param {String} key
@@ -11,11 +11,17 @@ export declare function getItem(key: string): string;
  * @param {String} path 文档路径
  * @param {String} domain 域名，可以设置主域名
  */
-export declare function setItem(key: string, value: string, expiration: number | string | Date, path?: string, domain?: string): void;
+export declare function setCookie(key: string, value: string, expiration: number | string | Date, path?: string, domain?: string): void;
 /**
  * 移除cookie
  * @param {*} key
  * @param {*} path 文档路径
  * @param {*} domain 域名，可以设置主域名
  */
-export declare function removeItem(key: string, path?: string, domain?: string): void;
+export declare function removeCookie(key: string, path?: string, domain?: string): void;
+declare const _default: {
+    getItem: typeof getCookie;
+    setItem: typeof setCookie;
+    removeItem: typeof removeCookie;
+};
+export default _default;
