@@ -99,15 +99,17 @@ function $bind(fn) {
     var type = _toString.call(fn).toLowerCase();
     if (type == "[object object]") {
         var back = {};
-        for (var n in fn) {
-            back[n] = $bind(fn[n]);
+        var ofn = fn;
+        for (var n in ofn) {
+            back[n] = $bind(ofn[n]);
         }
         return back;
     }
     if (type == "[object array]") {
         var back = [];
-        for (var i = 0; i < fn.length; i += 1) {
-            back[i] = $bind(fn[i]);
+        var fns = fn;
+        for (var i = 0; i < fns.length; i += 1) {
+            back[i] = $bind(fns[i]);
         }
         return back;
     }
@@ -139,7 +141,11 @@ function makeLifecycle(inits) {
                 if (!lc) {
                     lc = lifecycles[key] = [];
                 }
-                lc.push(isBind ? $bind(fn) : fn);
+                if (isBind) {
+                    lc.push(fn);
+                    return;
+                }
+                lc.push(fn);
                 return;
             }
             for (var n in key) {
@@ -254,7 +260,7 @@ function removeExt(vm) {
     }
     exts.delete(vm);
 }
-function vueFn(initFn) {
+function vueFn() {
     var initFlag = false;
     var options = {};
     var merges = {};
@@ -272,22 +278,22 @@ function vueFn(initFn) {
     };
     options.methods = {};
     merges.methods = function (key, val) {
-        var _a;
-        var methodObj = typeof key == "function" ? (_a = {}, _a[key] = val, _a) : key;
+        var methodObj = {};
+        if (typeof key == "function") {
+            methodObj[key] = val;
+        }
+        else {
+            Object.assign(methodObj, key);
+        }
         var m = options.methods;
-        var _loop_1 = function (n) {
+        for (var n in methodObj) {
             var fn = methodObj[n];
-            var key_1 = n;
-            if (!fn.__$ext) {
-                key_1 = n.replace(/^:/, function () {
-                    fn = $bind(fn);
-                    return "";
-                });
+            var key_1 = n.replace(/^:/, "");
+            if (key_1 != n && !fn.__$ext) {
+                m[key_1] = $bind(fn);
+                break;
             }
             m[key_1] = fn;
-        };
-        for (var n in methodObj) {
-            _loop_1(n);
         }
     };
     // mixins
@@ -361,7 +367,10 @@ function vueFn(initFn) {
             var _this = this;
             nextDoArr.forEach(function (_a) {
                 var key = _a[0], args = _a[1];
-                _this[key].apply(_this, args);
+                var fn = _this[key];
+                if (typeof fn == "function") {
+                    fn.apply(void 0, args);
+                }
             });
         });
     }
@@ -370,7 +379,7 @@ function vueFn(initFn) {
             return getSafe(key, this);
         },
         set: function (key, val) {
-            var self = this;
+            // let self = this as Vue
             if (typeof key === "string") {
                 var k_1;
                 var pre = key.replace(/\.(.+?)$/, function (s0, s1) {
@@ -378,22 +387,22 @@ function vueFn(initFn) {
                     return "";
                 });
                 if (!k_1) {
-                    self[key] = val;
+                    this[key] = val;
                     return;
                 }
-                var data = getSafe(pre, self);
+                var data = getSafe(pre, this);
                 // console.log("-------------", data, this.touch, pre)
                 if (!data) {
                     return;
                 }
                 if (data[k_1] === undefined) {
-                    self.$set(data, k_1, val);
+                    this.$set(data, k_1, val);
                     return;
                 }
                 data[k_1] = val;
                 return;
             }
-            assignData(self, key);
+            assignData(this, key);
         },
         temp: {}
     };
@@ -423,8 +432,9 @@ function vueFn(initFn) {
                 optSetup[key] = val;
                 return;
             }
-            for (var n in key) {
-                optSetup[n] = key[n];
+            var keyObj = key;
+            for (var n in keyObj) {
+                optSetup[n] = keyObj[n];
             }
         },
         $computed: quickSet("computed"),
@@ -444,6 +454,26 @@ function vueFn(initFn) {
             var _a;
             var opt = typeof key == "string" ? (_a = {}, _a[key] = val, _a) : val;
             assignData(extData, opt);
+        },
+        $export: function (resolve, reject) {
+            if (resolve) {
+                if (reject) {
+                    output();
+                    resolve(options);
+                    return;
+                }
+                // 异步模式
+                var ept = function (fn) {
+                    resolve(function () {
+                        output();
+                        fn(options);
+                    });
+                };
+                ept.options = options;
+                return ept;
+            }
+            output();
+            return options;
         }
     };
     lifecycle.on("beforeCreate", function () {
@@ -451,27 +481,28 @@ function vueFn(initFn) {
         setExt(this, extData);
     });
     var afterArr = [];
+    var pluginArg = {
+        after: function (afterFn) {
+            afterArr.push(afterFn);
+        },
+        fnArg: fnArg,
+        lifecycle: lifecycle,
+        makeLifecycle: makeLifecycle,
+        quickSet: quickSet,
+        quickNext: quickNext,
+        setQuickNextExec: function (key) {
+            nextDoBind = key;
+        },
+        merges: merges,
+        extData: extData
+    };
     pluginArr.forEach(function (pluginFn) {
-        pluginFn({
-            after: function (afterFn) {
-                afterArr.push(afterFn);
-            },
-            fnArg: fnArg,
-            lifecycle: lifecycle,
-            makeLifecycle: makeLifecycle,
-            quickSet: quickSet,
-            quickNext: quickNext,
-            setQuickNextExec: function (key) {
-                nextDoBind = key;
-            },
-            merges: merges,
-            extData: extData
-        });
+        pluginFn(pluginArg);
     });
     function output() {
         if (initFlag) {
             // 防止多次执行
-            return;
+            return null;
         }
         afterArr.forEach(function (afterFn) {
             afterFn(fnArg);
@@ -495,33 +526,8 @@ function vueFn(initFn) {
         // console.log("[options]", options, optData, optSetup)
         return options;
     }
-    if (!initFn) {
-        // output.options = options
-        fnArg.$export = function (resolve, reject) {
-            if (resolve) {
-                if (reject) {
-                    output();
-                    resolve(options);
-                    return;
-                }
-                // 异步模式
-                var ept = function (fn) {
-                    resolve(function () {
-                        output();
-                        fn(options);
-                    });
-                };
-                ept.options = options;
-                return ept;
-            }
-            output();
-            return options;
-        };
-        fnArg.$export.options = options;
-        return fnArg;
-    }
-    initFn && initFn(fnArg);
-    return output();
+    fnArg.$export.options = options;
+    return fnArg;
 }
 exports.vueFn = vueFn;
 vueFn.on = vueFnOn;

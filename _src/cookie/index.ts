@@ -23,7 +23,7 @@ export function setCookie(key: string, value: string, expiration: number | strin
         } else if (typeof expiration === "string") {
             expiration = new Date(
                 expiration
-                    .replace(/\-/g, "/")
+                    .replace(/-/g, "/")
                     .replace(/T/, " ")
                     .replace(/\.\d*$/, "")
             )

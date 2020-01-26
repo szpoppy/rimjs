@@ -38,8 +38,8 @@ function loadJS(url, callback) {
             //防止回调的时候，script还没执行完毕
             // 延时 2s 删除节点
             if (node) {
-                node.parentNode.removeChild(node);
-                node = null;
+                var parent_1 = node.parentNode;
+                parent_1.removeChild(node);
             }
         }, 2000);
     };
@@ -79,7 +79,7 @@ function getParamString(param, dataType) {
     if (!param) {
         return "";
     }
-    if (param instanceof window.FormData) {
+    if (param instanceof FormData) {
         return param;
     }
     if (typeof param == "string") {
@@ -95,9 +95,30 @@ function getDefaultContentType(dataType) {
     }
     return "application/x-www-form-urlencoded";
 }
+var EResType;
+(function (EResType) {
+    EResType["json"] = "json";
+    EResType["text"] = "text";
+})(EResType || (EResType = {}));
 // ==================================================================== 资源返回类
 var AjaxReq = /** @class */ (function () {
     function AjaxReq() {
+        this.paths = {};
+        this.useFetch = true;
+        this.url = "";
+        this.method = "GET";
+        this.dataType = "";
+        this.resType = EResType.text;
+        this.header = {};
+        this.jsonpKey = "";
+        this.cache = false;
+        this.withCredentials = true;
+        this.path = "";
+        this.orginURL = "";
+        this.formatURL = "";
+        this.isFormData = false;
+        this.isCross = false;
+        this.outFlag = false;
     }
     return AjaxReq;
 }());
@@ -118,7 +139,7 @@ var AjaxRes = /** @class */ (function () {
             return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers) ? RegExp["$1"] : "";
         }
         if (this.headers instanceof Headers) {
-            return this.headers.get(key);
+            return this.headers.get(key) || "";
         }
         return "";
     };
@@ -126,7 +147,10 @@ var AjaxRes = /** @class */ (function () {
 }());
 exports.AjaxRes = AjaxRes;
 var AjaxCourse = /** @class */ (function () {
-    function AjaxCourse() {
+    function AjaxCourse(ajax) {
+        this.req = new AjaxReq();
+        this.res = new AjaxRes();
+        this.parent = ajax;
     }
     AjaxCourse.prototype.getDate = function () {
         return this.parent.parent.getDate();
@@ -137,7 +161,8 @@ exports.AjaxCourse = AjaxCourse;
 var Ajax = /** @class */ (function (_super) {
     __extends(Ajax, _super);
     function Ajax(parent, opt) {
-        var _this = _super.call(this) || this;
+        var _this = _super.call(this, parent) || this;
+        _this.parent = parent;
         _this.conf = assign_1.merge({}, exports.ajaxGlobal.conf, parent.conf, getConf(opt));
         return _this;
     }
@@ -165,7 +190,7 @@ var Ajax = /** @class */ (function (_super) {
     };
     // 中止 请求
     Ajax.prototype.abort = function () {
-        ajaxAbort.call(this, true);
+        ajaxAbort(this, true);
         return this;
     };
     // 超时
@@ -173,12 +198,14 @@ var Ajax = /** @class */ (function (_super) {
         var _this = this;
         setTimeout(function () {
             var course = _this._course;
-            var req = course.req;
-            if (req) {
-                // 超时 设置中止
-                ajaxAbort.call(_this);
-                // 出发超时事件
-                _this.emit("timeout", course);
+            if (course) {
+                var req = course.req;
+                if (req) {
+                    // 超时 设置中止
+                    ajaxAbort(_this);
+                    // 出发超时事件
+                    _this.emit("timeout", course);
+                }
             }
         }, time);
         callback && this.on("timeout", callback);
@@ -198,9 +225,8 @@ var Ajax = /** @class */ (function (_super) {
             this.abort();
         }
         // 制造 req
-        var course = new AjaxCourse();
-        course.parent = this;
-        var req = (course.req = new AjaxReq());
+        var course = new AjaxCourse(this);
+        var req = course.req;
         this._course = course;
         // 异步，settime 部分参数可以后置设置生效
         setTimeout(function () {
@@ -229,13 +255,13 @@ var Ajax = /** @class */ (function (_super) {
     return Ajax;
 }(event_1.default));
 exports.Ajax = Ajax;
-function groupLoad(url, callback, param, onNew) {
+function groupLoad(target, url, callback, param, onNew) {
     var opt = typeof url == "string" ? { url: url } : url;
     if (callback && typeof callback != "function") {
         param = callback;
-        callback = null;
+        callback = undefined;
     }
-    var one = new Ajax(this, opt);
+    var one = new Ajax(target, opt);
     onNew && onNew(one);
     if (typeof callback == "function") {
         one.on("callback", callback);
@@ -249,6 +275,7 @@ var AjaxGroup = /** @class */ (function (_super) {
     function AjaxGroup(opt) {
         var _this = _super.call(this, exports.ajaxGlobal) || this;
         _this.dateDiff = ajaxDateDiff;
+        _this.conf = {};
         _this.conf = {};
         opt && _this.setConf(opt);
         return _this;
@@ -266,7 +293,7 @@ var AjaxGroup = /** @class */ (function (_super) {
     AjaxGroup.prototype.shortcut = function (opt, events) {
         var _this = this;
         return function (callback, param) {
-            return groupLoad.call(_this, opt, callback, param, function (one) {
+            return groupLoad(_this, opt, callback, param, function (one) {
                 if (events) {
                     if (typeof events == "function") {
                         one.on("callback", events);
@@ -280,20 +307,8 @@ var AjaxGroup = /** @class */ (function (_super) {
         };
     };
     // 创建并加载
-    AjaxGroup.prototype.load = function () {
-        return groupLoad.apply(this, arguments);
-    };
-    AjaxGroup.prototype.get = function () {
-        return groupLoad.apply(this, arguments).setConf({ method: "get" });
-    };
-    AjaxGroup.prototype.post = function () {
-        return groupLoad.apply(this, arguments).setConf({ method: "post" });
-    };
-    AjaxGroup.prototype.put = function () {
-        return groupLoad.apply(this, arguments).setConf({ method: "put" });
-    };
-    AjaxGroup.prototype.jsonp = function () {
-        return groupLoad.apply(this, arguments).setConf({ method: "jsonp" });
+    AjaxGroup.prototype.load = function (url, callback, param) {
+        return groupLoad(this, url, callback, param);
     };
     // promise
     AjaxGroup.prototype.fetch = function (opt, param) {
@@ -318,7 +333,7 @@ var Global = /** @class */ (function (_super) {
     __extends(Global, _super);
     function Global() {
         var _this = _super.call(this) || this;
-        _this.conf = { useFetch: true, resType: "json", jsonpKey: "callback", cache: true };
+        _this.conf = { useFetch: true, resType: EResType.json, jsonpKey: "callback", cache: true };
         return _this;
     }
     Global.prototype.setConf = function (conf) {
@@ -410,17 +425,17 @@ function jsonpSend(course) {
     // req
     var req = course.req, res = course.res;
     // 参数
-    var param = req.param;
+    var param = req.param || {};
     // callback
     var key = req.jsonpKey;
     // jsonp回调字符串
-    var backFunKey = param[key];
+    var backFunKey = param[key] || "";
     if (!backFunKey) {
         // 没设置，自动设置一个
         param[key] = backFunKey = "jsonp_" + sole_1.default();
     }
     // 控制，只出发一次回调
-    var backFunFlag;
+    var backFunFlag = false;
     // 回调函数
     var backFun = function (data) {
         if (!backFunFlag) {
@@ -433,7 +448,7 @@ function jsonpSend(course) {
             res.err = data ? null : "http error";
             if (!req.outFlag) {
                 // outFlag 就中止
-                responseEnd.call(_this, res);
+                responseEnd.call(_this, course);
             }
         }
     };
@@ -468,7 +483,8 @@ function fetchSend(course) {
     var paramStr = getParamString(param, req.dataType);
     if (method == "GET") {
         req.url = fixedURL(req.url, paramStr);
-        option.body = param = null;
+        option.body = null;
+        param = undefined;
     }
     else {
         option.body = paramStr || null;
@@ -494,12 +510,11 @@ function fetchSend(course) {
         option.credentials = "same-origin";
     }
     // response.text then回调函数
-    var fetchData = function (_a) {
-        var text = _a[0], result = _a[1];
-        res.text = text;
-        res.result = result;
+    var fetchData = function (data) {
+        res.text = data[0];
+        res.result = data[1] || {};
         // 统一处理 返回数据
-        responseEnd.call(_this, res);
+        responseEnd.call(_this, course);
     };
     // fetch then回调函数
     function fetchBack(response) {
@@ -513,16 +528,13 @@ function fetchSend(course) {
             res.text = "";
             // 是否有错误
             res.err = response.ok ? null : "http error [" + res.status + "]";
-            var results = ["", null];
+            var results = [];
             try {
                 results[0] = response.text();
             }
             catch (e) { }
-            if (["json", "text"].indexOf(req.resType) < 0) {
-                try {
-                    results[1] = response[req.resType]();
-                }
-                catch (e) { }
+            if (req.resType != "text" && req.resType != "json") {
+                results[1] = response[req.resType]();
             }
             Promise.all(results).then(fetchData, fetchData);
         }
@@ -571,7 +583,7 @@ function onload(course) {
         // 默认只有当 正确的status才是 null， 否则是错误
         res.err = (s >= 200 && s < 300) || s === 304 || s === 1223 ? null : "http error [" + s + "]";
         // 统一后处理
-        responseEnd.call(this, res);
+        responseEnd.call(this, course);
     }
     delete req.xhr;
     delete req.outFlag;
@@ -584,7 +596,7 @@ function xhrSend(course) {
     var _this = this;
     var res = course.res, req = course.req;
     // XHR
-    req.xhr = new window.XMLHttpRequest();
+    req.xhr = new XMLHttpRequest();
     // xhr 请求方法
     var method = String(req.method || "GET").toUpperCase();
     if (req.withCredentials) {
@@ -610,7 +622,8 @@ function xhrSend(course) {
     }
     // XDR 不能设置 header
     each_1.default(req.header, function (v, k) {
-        req.xhr.setRequestHeader(k, v);
+        var xhr = req.xhr;
+        xhr.setRequestHeader(k, v);
     });
     res.status = 0;
     if (this.hasEvent("progress")) {
@@ -618,16 +631,15 @@ function xhrSend(course) {
         // 只有有进度需求的任务,才加上
         try {
             req.xhr.upload.onprogress = function (event) {
-                var p = new AjaxCourse();
-                p.progress = event;
-                _this.emit("progress", p);
+                course.progress = event;
+                _this.emit("progress", course);
             };
         }
         catch (e) { }
     }
     //发送请求
     // onload事件
-    req.xhr.onload = onload.bind(this, res);
+    req.xhr.onload = onload.bind(this, course);
     // 发送前出发send事件
     this.emit("send", course);
     if (["arraybuffer", "blob"].indexOf(req.resType) >= 0) {
@@ -650,12 +662,11 @@ function requestSend(param, course) {
     }
     // 方法
     req.method = String(req.method || "get").toUpperCase();
-    // callback中接收的 res
-    var res = (course.res = new AjaxRes());
     // 之前发出
     this.emit("before", course);
     req.path = "";
-    req.orginURL = req.url;
+    req.orginURL = req.url || "";
+    // let paths = req.paths || {}
     // 短路径替换
     req.formatURL = req.orginURL
         // 自定义req属性
@@ -683,7 +694,7 @@ function requestSend(param, course) {
     this.emit("path", course);
     // 是否为 FormData
     var isFormData = false;
-    if (window.FormData && param instanceof window.FormData) {
+    if (FormData && param instanceof FormData) {
         isFormData = true;
     }
     req.isFormData = isFormData;
@@ -692,8 +703,8 @@ function requestSend(param, course) {
     if (isFormData) {
         // FormData 将参数都添加到 FormData中
         each_1.default(req.param, function (value, key) {
-            ;
-            param.append(key, value);
+            var fd = param;
+            fd.append(key, value);
         });
         req.param = param;
     }
@@ -722,7 +733,7 @@ function requestSend(param, course) {
     req.url = req.formatURL;
     if (method == "JSONP") {
         // jsonp 获取数据
-        jsonpSend.call(this, res);
+        jsonpSend.call(this, course);
         return;
     }
     if (hasFetch && req.useFetch && !this.hasEvent("progress")) {
@@ -734,26 +745,24 @@ function requestSend(param, course) {
     xhrSend.call(this, course);
 }
 // 中止
-function ajaxAbort(flag) {
-    var course = this._course;
-    var req = course.req;
-    if (req) {
+function ajaxAbort(target, flag) {
+    if (flag === void 0) { flag = false; }
+    var course = target._course;
+    if (course) {
+        var req = course.req;
         // 设置outFlag，会中止回调函数的回调
         req.outFlag = true;
         if (req.xhr) {
             // xhr 可以原声支持 中止
             req.xhr.abort();
-            req.xhr = null;
+            req.xhr = undefined;
         }
-        delete this._course;
-        flag && this.emit("abort", course);
+        delete target._course;
+        flag && target.emit("abort", course);
     }
 }
 var def = new AjaxGroup();
 // 全局
 def.global = exports.ajaxGlobal;
 exports.default = def;
-exports.ajaxGlobal.on("callback", function (_a) {
-    var res = _a.res;
-});
 //# sourceMappingURL=index.js.map

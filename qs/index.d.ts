@@ -4,8 +4,11 @@ interface initOpt {
     unescape?: Function;
     escape?: Function;
 }
+interface QueryStringConstructor {
+    new (opt?: initOpt): QueryString;
+}
 declare class QueryString {
-    QS: Function;
+    QS?: QueryStringConstructor;
     sep: string;
     eq: string;
     unescape: Function;
@@ -20,9 +23,9 @@ declare class QueryString {
      * 序列化为字符串
      * @param opt
      */
-    stringify(opt: object): string;
+    stringify(opt: any): string;
 }
 declare let qs: QueryString;
 export declare let parseQS: (str: string) => any;
-export declare let stringifyQS: (opt: object) => string;
+export declare let stringifyQS: (opt: any) => string;
 export default qs;

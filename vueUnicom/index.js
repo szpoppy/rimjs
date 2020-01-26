@@ -156,6 +156,11 @@ var VueUnicom = /** @class */ (function () {
         var _b = _a === void 0 ? {} : _a, id = _b.id, group = _b.group, target = _b.target;
         // 事件存放
         this._instruct_ = {};
+        // 唯一的id
+        this.id = "";
+        // 私有属性
+        // eslint-disable-next-line
+        this._monitor_back_ = 0;
         var _instruct_ = this._instruct_;
         this._instruct_ = {};
         if (_instruct_) {
@@ -163,7 +168,9 @@ var VueUnicom = /** @class */ (function () {
             // 通过 Unicom.prototype.on() 会把事件写入 Unicom.prototype._instruct_
             // 所以要重写，防止全局冲突
             for (var n in _instruct_) {
-                this._instruct_[n] = [].concat(_instruct_[n]);
+                var arr = [];
+                arr.push.apply(arr, _instruct_[n]);
+                this._instruct_[n] = arr;
             }
         }
         // 绑定的目标对象
@@ -185,6 +192,7 @@ var VueUnicom = /** @class */ (function () {
     VueUnicom.prototype.monitorBack = function () {
         var _this = this;
         clearTimeout(this._monitor_back_);
+        // eslint-disable-next-line
         this._monitor_back_ = setTimeout(function () {
             monitorExec(_this);
         }, 1);
@@ -214,8 +222,8 @@ var VueUnicom = /** @class */ (function () {
         // 销毁队列
         removeUnicomGroup(this);
         // 移除
-        updateUnicomGroupByID(this, null, this.id);
-        updateUnicomGroupByName(this, null, this.group);
+        updateUnicomGroupByID(this, "", this.id);
+        updateUnicomGroupByName(this, [], this.group);
         // 监控销毁
         this.monitorOff();
         // 订阅销毁
@@ -298,7 +306,7 @@ var VueUnicom = /** @class */ (function () {
             return data;
         }
         // 以下是全局触发发布
-        var type, target, instruct;
+        var type = "", target = "", instruct = "";
         instruct = query.replace(/([@#])([^@#]*)$/, function (s0, s1, s2) {
             target = s2;
             type = s1;
@@ -337,6 +345,7 @@ function vueUnicomInstall(vue, _a) {
             return s0.toUpperCase();
         });
     }
+    ;
     vue[VueUnicomClassName] = VueUnicom;
     // unicom-id
     var unicomIdName = unicomId || name + "Id";
@@ -364,15 +373,13 @@ function vueUnicomInstall(vue, _a) {
             _b),
         watch: (_c = {},
             _c[unicomIdName] = function (nv) {
-                var self = this;
-                var unicom = self._unicom_data_ && self._unicom_data_.unicom;
+                var unicom = this._unicom_data_ && this._unicom_data_.unicom;
                 if (unicom) {
                     unicom.setId(nv);
                 }
             },
             _c[unicomGroupName] = function () {
-                var self = this;
-                var unicom = self._unicom_data_ && self._unicom_data_.unicom;
+                var unicom = this._unicom_data_ && this._unicom_data_.unicom;
                 if (unicom) {
                     unicom.setGroup(getGroup(self));
                 }
@@ -380,15 +387,15 @@ function vueUnicomInstall(vue, _a) {
             _c),
         // 创建的时候，加入事件机制
         beforeCreate: function () {
-            var self = this;
             // 屏蔽不需要融合的 节点
-            var isIgnore = !self.$vnode || /-transition$/.test(self.$vnode.tag);
+            var isIgnore = !this.$vnode || /-transition$/.test(this.$vnode.tag);
             // unicomData 数据存放
             var unicomData = {
                 // 不需要，忽略
                 isIgnore: isIgnore
             };
-            self._unicom_data_ = unicomData;
+            // eslint-disable-next-line
+            this._unicom_data_ = unicomData;
             if (isIgnore) {
                 return;
             }
@@ -399,16 +406,16 @@ function vueUnicomInstall(vue, _a) {
             // unicomData.self = new Unicom({target: this})
         },
         created: function () {
-            var self = this;
-            var unicomData = self._unicom_data_;
+            var unicomData = this._unicom_data_;
             if (unicomData.isIgnore) {
                 // 忽略
                 return;
             }
             // 初始化
-            var unicom = (unicomData.unicom = new VueUnicom({ target: self, id: self[unicomIdName], group: getGroup(self) }));
+            var unicom = (unicomData.unicom = new VueUnicom({ target: this, id: this[unicomIdName], group: getGroup(this) }));
             // 订阅事件
-            unicomData.instructs.forEach(function (subs) {
+            var instructs = unicomData.instructs || [];
+            instructs.forEach(function (subs) {
                 for (var n in subs) {
                     unicom.on(n, subs[n]);
                 }
@@ -416,14 +423,16 @@ function vueUnicomInstall(vue, _a) {
         },
         // 全局混合， 销毁实例的时候，销毁事件
         destroyed: function () {
-            var self = this;
             var unicomData = this._unicom_data_;
             if (unicomData.isIgnore) {
                 // 忽略
                 return;
             }
             // 销毁 unicom 对象
-            unicomData.unicom.destroy();
+            var unicom = unicomData.unicom;
+            if (unicom) {
+                unicom.destroy();
+            }
         }
     });
     // 自定义属性合并策略

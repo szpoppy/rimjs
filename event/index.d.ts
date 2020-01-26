@@ -5,9 +5,9 @@ export interface IEventFn<T, A> extends Function {
     (this: T, arg: A): void;
 }
 export default class Event<T = null, A = any> {
-    private _events?;
-    private _parent?;
-    constructor(parent?: Event<T, A>);
+    private _events;
+    private _parent;
+    constructor(parent?: any);
     /**
      * 绑定事件
      * @param type 事件名称
@@ -28,7 +28,7 @@ export default class Event<T = null, A = any> {
      * @param type
      * @param args
      */
-    emit(type: string, arg?: A): A;
+    emit(type: string, arg: A): A;
     /**
      * 判断事件是否存在
      * @param type

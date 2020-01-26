@@ -11,27 +11,27 @@ export declare function parse(date?: dateType, isWipe?: boolean): Date;
  * @param date
  * @param formatStr
  */
-export declare function get(date?: dateType, formatStr?: string): string | object;
+export declare function get(date?: dateType, formatStr?: string): any;
+interface diffOut {
+    D: number;
+    ms: number;
+    h: number;
+    s: number;
+}
 /**
  * date1 和 date2之间的时间差
- * @param date1
- * @param date2
- * @param formatStr 格式化
+ * @param arg1
+ * @param arg2
+ * @param arg3 格式化
  */
-export declare function diff(date1: dateType, date2: dateType, formatStr?: string): string | object;
-/**
- * 对ms毫秒数格式化输出
- * @param ms
- * @param formatStr
- */
-export declare function diff(ms: number, formatStr?: string): string | object;
+export declare function diff(arg1: dateType | number, arg2: dateType | string, arg3?: string): string | diffOut;
 /**
  * 在date上增加时间
  * @param n
  * @param date
  * @param formatStr
  */
-export declare function append(n: string | number, date: dateType, formatStr?: string): string | object;
+export declare function append(n: string | number, date: dateType, formatStr?: string): any;
 declare const _default: {
     parse: typeof parse;
     get: typeof get;

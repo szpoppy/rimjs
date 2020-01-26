@@ -25,7 +25,7 @@ function setCookie(key, value, expiration, path, domain) {
         }
         else if (typeof expiration === "string") {
             expiration = new Date(expiration
-                .replace(/\-/g, "/")
+                .replace(/-/g, "/")
                 .replace(/T/, " ")
                 .replace(/\.\d*$/, ""));
         }

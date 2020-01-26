@@ -27,7 +27,9 @@ function getHookLife(that) {
     var id = that._life_id_;
     if (!id) {
         lifeIndexNum += 1;
-        id = that._life_id_ = "$" + lifeIndexNum.toString();
+        id = "$" + lifeIndexNum.toString();
+        // eslint-disable-next-line
+        that._life_id_ = id;
     }
     var life = hookLifes[id];
     if (!life) {
@@ -117,7 +119,7 @@ function _hookExec(key, life, data) {
     }
 }
 function hookEmit(key, data, that) {
-    var hookData = getHookEmitData(null, that);
+    var hookData = getHookEmitData("", that);
     hookData[key] = {
         data: data
     };

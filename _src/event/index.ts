@@ -10,9 +10,9 @@ interface IFEventObj<T, A> {
     [propName: string]: IEventFn<T, A>[]
 }
 export default class Event<T = null, A = any> {
-    private _events?: IFEventObj<T, A>
-    private _parent?: Event<T, A>
-    constructor(parent?: Event<T, A>) {
+    private _events: IFEventObj<T, A> = {}
+    private _parent: any = null
+    constructor(parent?: any) {
         this._events = {}
         if (parent) {
             this._parent = parent
@@ -57,7 +57,7 @@ export default class Event<T = null, A = any> {
         }
     }
 
-    private _emit(target: Event<T, A>, type: string, arg?: A): A {
+    private _emit(target: Event<T, A>, type: string, arg: A): A {
         if (this._parent && this._parent._emit) {
             this._parent._emit(target, type, arg)
         }
@@ -76,7 +76,7 @@ export default class Event<T = null, A = any> {
      * @param type
      * @param args
      */
-    emit(type: string, arg?: A): A {
+    emit(type: string, arg: A): A {
         return this._emit(this, type, arg)
     }
 

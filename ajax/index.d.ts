@@ -6,19 +6,9 @@ interface IFParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean>;
 }
 declare type sendParam = IFParam | FormData | string;
-interface IFAjaxEventFn<T1, T2 = null> {
-    (this: T1, arg?: T2): void;
-}
-export interface IFAjaxEvent<T> {
-    callback?: IFAjaxEventFn<T, AjaxRes>[];
-    verify?: IFAjaxEventFn<T, AjaxRes>[];
-    timeout?: IFAjaxEventFn<T>[];
-    send?: IFAjaxEventFn<T, AjaxReq>[];
-    open?: IFAjaxEventFn<T, AjaxReq>[];
-    path?: IFAjaxEventFn<T, AjaxReq>[];
-    abort?: IFAjaxEventFn<T>[];
-    progress?: IFAjaxEventFn<T, ProgressEvent>[];
-    [propName: string]: IFAjaxEventFn<T, any>[];
+declare enum EResType {
+    json = "json",
+    text = "text"
 }
 export interface IFAjaxConf {
     baseURL?: string;
@@ -27,7 +17,7 @@ export interface IFAjaxConf {
     url?: string;
     method?: string;
     dataType?: string;
-    resType?: string;
+    resType?: EResType;
     param?: IFParam | string;
     header?: IFStrObj;
     jsonpKey?: string;
@@ -36,24 +26,24 @@ export interface IFAjaxConf {
 }
 export declare class AjaxReq {
     baseURL?: string;
-    paths?: IFStrObj;
-    useFetch?: boolean;
-    url?: string;
-    method?: string;
-    dataType?: string;
-    resType?: string;
+    paths: IFStrObj;
+    useFetch: boolean;
+    url: string;
+    method: string;
+    dataType: string;
+    resType: EResType;
     param?: IFParam | string | FormData;
-    header?: IFStrObj;
-    jsonpKey?: string;
-    cache?: boolean;
-    withCredentials?: boolean;
+    header: IFStrObj;
+    jsonpKey: string;
+    cache: boolean;
+    withCredentials: boolean;
     xhr?: XMLHttpRequest;
-    path?: string;
-    orginURL?: string;
-    formatURL?: string;
-    isFormData?: boolean;
-    isCross?: boolean;
-    outFlag?: boolean;
+    path: string;
+    orginURL: string;
+    formatURL: string;
+    isFormData: boolean;
+    isCross: boolean;
+    outFlag: boolean;
     [propName: string]: any;
     constructor();
 }
@@ -72,17 +62,18 @@ export declare class AjaxRes {
     getHeader(key: string): string;
 }
 export declare class AjaxCourse {
-    req?: AjaxReq;
-    res?: AjaxRes;
+    req: AjaxReq;
+    res: AjaxRes;
     progress?: ProgressEvent;
-    parent?: Ajax;
-    getDate(): Date;
+    parent: Ajax;
+    getDate(this: AjaxCourse): Date;
+    constructor(ajax: Ajax);
 }
 export declare class Ajax extends Event<Ajax, AjaxCourse> {
     _course?: AjaxCourse;
-    conf?: IFAjaxConf;
-    parent?: AjaxGroup;
-    constructor(parent: AjaxGroup, opt: IFAjaxConf);
+    conf: IFAjaxConf;
+    parent: AjaxGroup;
+    constructor(parent: AjaxGroup, opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): Ajax;
     assign(...args: any): Ajax;
     abort(): Ajax;
@@ -96,25 +87,21 @@ interface shortcutEventObj {
 }
 declare type shortcutEvent = shortcutEventObj | IEventOnFn;
 export declare class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
-    dateDiff?: number;
-    conf?: IFAjaxConf;
+    dateDiff: number;
+    conf: IFAjaxConf;
     global?: Global;
     parent?: Global;
     constructor(opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): AjaxGroup;
     create(opt?: IFAjaxConf): Ajax;
-    shortcut(this: AjaxGroup, opt: IFAjaxConf, events?: shortcutEvent): (callback: Function, param: string | FormData | IFParam) => Ajax;
-    load(this: AjaxGroup): Ajax;
-    get(this: AjaxGroup): Ajax;
-    post(this: AjaxGroup): Ajax;
-    put(this: AjaxGroup): Ajax;
-    jsonp(this: AjaxGroup): Ajax;
-    fetch(this: AjaxGroup, opt?: IFAjaxConf, param?: sendParam): Promise<any>;
+    shortcut(opt: IFAjaxConf, events?: shortcutEvent): (callback: string | FormData | IFParam | IEventOnFn, param: string | FormData | IFParam) => Ajax;
+    load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam): Ajax;
+    fetch(opt?: IFAjaxConf, param?: sendParam): Promise<any>;
     setDate(date: string | Date): void;
     getDate(): Date;
 }
 declare class Global extends Event<Global, AjaxCourse> {
-    conf?: IFAjaxConf;
+    conf: IFAjaxConf;
     constructor();
     setConf(conf: IFAjaxConf): void;
 }

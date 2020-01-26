@@ -9,12 +9,16 @@ interface initOpt {
     escape?: Function
 }
 
+interface QueryStringConstructor {
+    new (opt?: initOpt): QueryString
+}
+
 class QueryString {
-    QS: Function
+    QS?: QueryStringConstructor
     sep: string = "&"
     eq: string = "="
-    unescape: Function = window.decodeURIComponent
-    escape: Function = window.encodeURIComponent
+    unescape: Function = decodeURIComponent
+    escape: Function = encodeURIComponent
     constructor(opt?: initOpt) {
         if (opt) {
             Object.assign(this, opt)
@@ -61,7 +65,7 @@ class QueryString {
      * 序列化为字符串
      * @param opt
      */
-    stringify(opt: object): string {
+    stringify(opt: any): string {
         let sep = this.sep
         let eq = this.eq
         let escape = this.escape
@@ -75,7 +79,7 @@ class QueryString {
             let key: string = escape(n)
             if (item && item.constructor == Array) {
                 // 数组要转化为多个相同kv
-                item.forEach(function(one) {
+                item.forEach(function(one: string) {
                     arr.push(key + eq + escape(one))
                 })
             } else {

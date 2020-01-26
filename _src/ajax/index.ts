@@ -26,8 +26,8 @@ function loadJS(url: string, callback: Function): HTMLScriptElement {
             //防止回调的时候，script还没执行完毕
             // 延时 2s 删除节点
             if (node) {
-                node.parentNode.removeChild(node)
-                node = null
+                let parent = node.parentNode as HTMLElement
+                parent.removeChild(node)
             }
         }, 2000)
     }
@@ -46,7 +46,7 @@ function getFullUrl(url: string): string {
 }
 
 // ===================================================================== 安全获取子对象数据
-function getSafeData(data: object, property: string): any {
+function getSafeData(data: any, property: string): any {
     if (property && data) {
         property.split(".").forEach(function(item) {
             data = data[item]
@@ -71,7 +71,7 @@ function getParamString(param?: FormData | IFParam | string, dataType?: string):
     if (!param) {
         return ""
     }
-    if (param instanceof window.FormData) {
+    if (param instanceof FormData) {
         return param
     }
     if (typeof param == "string") {
@@ -99,20 +99,9 @@ interface IFParam {
 
 type sendParam = IFParam | FormData | string
 
-interface IFAjaxEventFn<T1, T2 = null> {
-    (this: T1, arg?: T2): void
-}
-
-export interface IFAjaxEvent<T> {
-    callback?: IFAjaxEventFn<T, AjaxRes>[]
-    verify?: IFAjaxEventFn<T, AjaxRes>[]
-    timeout?: IFAjaxEventFn<T>[]
-    send?: IFAjaxEventFn<T, AjaxReq>[]
-    open?: IFAjaxEventFn<T, AjaxReq>[]
-    path?: IFAjaxEventFn<T, AjaxReq>[]
-    abort?: IFAjaxEventFn<T>[]
-    progress?: IFAjaxEventFn<T, ProgressEvent>[]
-    [propName: string]: IFAjaxEventFn<T, any>[]
+enum EResType {
+    json = "json",
+    text = "text"
 }
 
 export interface IFAjaxConf {
@@ -122,7 +111,7 @@ export interface IFAjaxConf {
     url?: string
     method?: string
     dataType?: string
-    resType?: string
+    resType?: EResType
     param?: IFParam | string
     header?: IFStrObj
     jsonpKey?: string
@@ -133,26 +122,25 @@ export interface IFAjaxConf {
 
 export class AjaxReq {
     baseURL?: string
-    paths?: IFStrObj
-    useFetch?: boolean
-    url?: string
-    method?: string
-    dataType?: string
-    resType?: string
+    paths: IFStrObj = {}
+    useFetch: boolean = true
+    url: string = ""
+    method: string = "GET"
+    dataType: string = ""
+    resType: EResType = EResType.text
     param?: IFParam | string | FormData
-    header?: IFStrObj
-    jsonpKey?: string
-    cache?: boolean
-    withCredentials?: boolean
+    header: IFStrObj = {}
+    jsonpKey: string = ""
+    cache: boolean = false
+    withCredentials: boolean = true
 
     xhr?: XMLHttpRequest
-    path?: string
-    orginURL?: string
-    formatURL?: string
-    isFormData?: boolean
-    isCross?: boolean
-
-    outFlag?: boolean;
+    path: string = ""
+    orginURL: string = ""
+    formatURL: string = ""
+    isFormData: boolean = false
+    isCross: boolean = false
+    outFlag: boolean = false;
 
     [propName: string]: any
 
@@ -185,30 +173,35 @@ export class AjaxRes {
             return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers as string) ? RegExp["$1"] : ""
         }
         if (this.headers instanceof Headers) {
-            return this.headers.get(key)
+            return this.headers.get(key) || ""
         }
         return ""
     }
 }
 
 export class AjaxCourse {
-    req?: AjaxReq
-    res?: AjaxRes
+    req: AjaxReq = new AjaxReq()
+    res: AjaxRes = new AjaxRes()
     progress?: ProgressEvent
-    parent?: Ajax
+    parent: Ajax
 
-    getDate(): Date {
+    getDate(this: AjaxCourse): Date {
         return this.parent.parent.getDate()
+    }
+
+    constructor(ajax: Ajax) {
+        this.parent = ajax
     }
 }
 
 export class Ajax extends Event<Ajax, AjaxCourse> {
     _course?: AjaxCourse
-    conf?: IFAjaxConf
-    parent?: AjaxGroup
+    conf: IFAjaxConf
+    parent: AjaxGroup
 
-    constructor(parent: AjaxGroup, opt: IFAjaxConf) {
-        super()
+    constructor(parent: AjaxGroup, opt?: IFAjaxConf) {
+        super(parent)
+        this.parent = parent
         this.conf = merge({}, ajaxGlobal.conf, parent.conf, getConf(opt))
     }
 
@@ -231,7 +224,7 @@ export class Ajax extends Event<Ajax, AjaxCourse> {
 
     // 中止 请求
     abort(): Ajax {
-        ajaxAbort.call(this, true)
+        ajaxAbort(this, true)
         return this
     }
 
@@ -239,12 +232,14 @@ export class Ajax extends Event<Ajax, AjaxCourse> {
     timeout(this: Ajax, time: number, callback: IEventOnFn): Ajax {
         setTimeout(() => {
             let course = this._course
-            let { req } = course
-            if (req) {
-                // 超时 设置中止
-                ajaxAbort.call(this)
-                // 出发超时事件
-                this.emit("timeout", course)
+            if (course) {
+                let { req } = course
+                if (req) {
+                    // 超时 设置中止
+                    ajaxAbort(this)
+                    // 出发超时事件
+                    this.emit("timeout", course)
+                }
             }
         }, time)
         callback && this.on("timeout", callback)
@@ -264,9 +259,8 @@ export class Ajax extends Event<Ajax, AjaxCourse> {
         }
 
         // 制造 req
-        let course = new AjaxCourse()
-        course.parent = this
-        let req = (course.req = new AjaxReq())
+        let course = new AjaxCourse(this)
+        let req = course.req
         this._course = course
         // 异步，settime 部分参数可以后置设置生效
         setTimeout(() => {
@@ -299,15 +293,15 @@ interface shortcutEventObj {
 }
 type shortcutEvent = shortcutEventObj | IEventOnFn
 
-function groupLoad(this: AjaxGroup, url: string | IFAjaxConf, callback: IEventOnFn | sendParam, param: sendParam, onNew?: Function) {
+function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam, onNew?: Function) {
     let opt = typeof url == "string" ? { url } : url
 
     if (callback && typeof callback != "function") {
         param = callback
-        callback = null
+        callback = undefined
     }
 
-    let one = new Ajax(this, opt)
+    let one = new Ajax(target, opt)
     onNew && onNew(one)
     if (typeof callback == "function") {
         one.on("callback", callback)
@@ -319,8 +313,8 @@ function groupLoad(this: AjaxGroup, url: string | IFAjaxConf, callback: IEventOn
 let ajaxDateDiff: number = 0
 
 export class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
-    dateDiff?: number = ajaxDateDiff
-    conf?: IFAjaxConf
+    dateDiff: number = ajaxDateDiff
+    conf: IFAjaxConf = {}
 
     global?: Global
 
@@ -344,9 +338,9 @@ export class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
     }
 
     // 快捷函数
-    shortcut(this: AjaxGroup, opt: IFAjaxConf, events?: shortcutEvent) {
-        return (callback: Function, param: sendParam): Ajax => {
-            return groupLoad.call(this, opt, callback, param, function(one: Ajax) {
+    shortcut(opt: IFAjaxConf, events?: shortcutEvent) {
+        return (callback: IEventOnFn | sendParam, param: sendParam): Ajax => {
+            return groupLoad(this, opt, callback, param, function(one: Ajax) {
                 if (events) {
                     if (typeof events == "function") {
                         one.on("callback", events)
@@ -361,25 +355,12 @@ export class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
     }
 
     // 创建并加载
-    load(this: AjaxGroup): Ajax {
-        return groupLoad.apply(this, arguments)
-    }
-
-    get(this: AjaxGroup): Ajax {
-        return groupLoad.apply(this, arguments).setConf({ method: "get" })
-    }
-    post(this: AjaxGroup): Ajax {
-        return groupLoad.apply(this, arguments).setConf({ method: "post" })
-    }
-    put(this: AjaxGroup): Ajax {
-        return groupLoad.apply(this, arguments).setConf({ method: "put" })
-    }
-    jsonp(this: AjaxGroup): Ajax {
-        return groupLoad.apply(this, arguments).setConf({ method: "jsonp" })
+    load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam): Ajax {
+        return groupLoad(this, url, callback, param)
     }
 
     // promise
-    fetch(this: AjaxGroup, opt?: IFAjaxConf, param?: sendParam): Promise<any> {
+    fetch(opt?: IFAjaxConf, param?: sendParam): Promise<any> {
         return this.create(opt)
             .send(param)
             .then()
@@ -398,7 +379,7 @@ export class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
 }
 
 class Global extends Event<Global, AjaxCourse> {
-    conf?: IFAjaxConf = { useFetch: true, resType: "json", jsonpKey: "callback", cache: true }
+    conf: IFAjaxConf = { useFetch: true, resType: EResType.json, jsonpKey: "callback", cache: true }
 
     constructor() {
         super()
@@ -507,19 +488,19 @@ function jsonpSend(this: Ajax, course: AjaxCourse): void {
     let { req, res } = course
 
     // 参数
-    let param = req.param
+    let param: any = req.param || {}
 
     // callback
-    let key = req.jsonpKey
+    let key = req.jsonpKey as string
     // jsonp回调字符串
-    let backFunKey = param[key]
+    let backFunKey = param[key] || ""
     if (!backFunKey) {
         // 没设置，自动设置一个
         param[key] = backFunKey = "jsonp_" + getUUID()
     }
 
     // 控制，只出发一次回调
-    let backFunFlag
+    let backFunFlag: boolean = false
     // 回调函数
     let backFun = (data?: any) => {
         if (!backFunFlag) {
@@ -532,7 +513,7 @@ function jsonpSend(this: Ajax, course: AjaxCourse): void {
             res.err = data ? null : "http error"
             if (!req.outFlag) {
                 // outFlag 就中止
-                responseEnd.call(this, res)
+                responseEnd.call(this, course)
             }
         }
     }
@@ -574,7 +555,8 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
 
     if (method == "GET") {
         req.url = fixedURL(req.url, paramStr as string)
-        option.body = param = null
+        option.body = null
+        param = undefined
     } else {
         option.body = paramStr || null
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
@@ -601,15 +583,15 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
     }
 
     // response.text then回调函数
-    let fetchData = ([text, result]) => {
-        res.text = text
-        res.result = result
+    let fetchData = (data: any[]) => {
+        res.text = data[0] as string
+        res.result = data[1] || {}
         // 统一处理 返回数据
-        responseEnd.call(this, res)
+        responseEnd.call(this, course)
     }
 
     // fetch then回调函数
-    function fetchBack(response) {
+    function fetchBack(response: Response) {
         if (!req.outFlag) {
             // outFlag 为true，表示 中止了
             // 设置 headers 方便获取
@@ -621,15 +603,13 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
             res.text = ""
             // 是否有错误
             res.err = response.ok ? null : "http error [" + res.status + "]"
-            let results = ["", null]
+            let results: Promise<any>[] = []
             try {
                 results[0] = response.text()
             } catch (e) {}
 
-            if (["json", "text"].indexOf(req.resType) < 0) {
-                try {
-                    results[1] = response[req.resType]()
-                } catch (e) {}
+            if (req.resType != "text" && req.resType != "json") {
+                results[1] = response[req.resType]()
             }
 
             Promise.all(results).then(fetchData, fetchData)
@@ -679,7 +659,7 @@ function onload(this: Ajax, course: AjaxCourse): void {
         // 默认只有当 正确的status才是 null， 否则是错误
         res.err = (s >= 200 && s < 300) || s === 304 || s === 1223 ? null : "http error [" + s + "]"
         // 统一后处理
-        responseEnd.call(this, res)
+        responseEnd.call(this, course)
     }
     delete req.xhr
     delete req.outFlag
@@ -692,7 +672,7 @@ function onload(this: Ajax, course: AjaxCourse): void {
 function xhrSend(this: Ajax, course: AjaxCourse): void {
     let { res, req } = course
     // XHR
-    req.xhr = new window.XMLHttpRequest()
+    req.xhr = new XMLHttpRequest()
 
     // xhr 请求方法
     let method = String(req.method || "GET").toUpperCase()
@@ -702,7 +682,7 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
         req.xhr.withCredentials = true
     }
 
-    let paramStr = getParamString(req.param, req.dataType)
+    let paramStr: string | FormData | null = getParamString(req.param, req.dataType)
 
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
@@ -722,7 +702,8 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
 
     // XDR 不能设置 header
     forEach(req.header, function(v: string, k: string) {
-        req.xhr.setRequestHeader(k, v)
+        let xhr = req.xhr as XMLHttpRequest
+        xhr.setRequestHeader(k, v)
     })
     res.status = 0
 
@@ -731,9 +712,8 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
         // 只有有进度需求的任务,才加上
         try {
             req.xhr.upload.onprogress = event => {
-                let p = new AjaxCourse()
-                p.progress = event
-                this.emit("progress", p)
+                course.progress = event
+                this.emit("progress", course)
             }
         } catch (e) {}
     }
@@ -741,7 +721,7 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
     //发送请求
 
     // onload事件
-    req.xhr.onload = onload.bind(this, res)
+    req.xhr.onload = onload.bind(this, course)
 
     // 发送前出发send事件
     this.emit("send", course)
@@ -770,14 +750,14 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
     // 方法
     req.method = String(req.method || "get").toUpperCase()
 
-    // callback中接收的 res
-    let res = (course.res = new AjaxRes())
-
     // 之前发出
     this.emit("before", course)
 
     req.path = ""
-    req.orginURL = req.url
+    req.orginURL = req.url || ""
+
+    // let paths = req.paths || {}
+
     // 短路径替换
     req.formatURL = req.orginURL
         // 自定义req属性
@@ -808,7 +788,7 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     // 是否为 FormData
     let isFormData = false
-    if (window.FormData && param instanceof window.FormData) {
+    if (FormData && param instanceof FormData) {
         isFormData = true
     }
     req.isFormData = isFormData
@@ -818,8 +798,9 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     if (isFormData) {
         // FormData 将参数都添加到 FormData中
-        forEach(req.param, function(value, key) {
-            ;(<FormData>param).append(key, value)
+        forEach(req.param, function(value: any, key: string) {
+            let fd = <FormData>param
+            fd.append(key, value)
         })
         req.param = param
     } else {
@@ -852,7 +833,7 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
     req.url = req.formatURL
     if (method == "JSONP") {
         // jsonp 获取数据
-        jsonpSend.call(this, res)
+        jsonpSend.call(this, course)
         return
     }
 
@@ -867,19 +848,19 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 }
 
 // 中止
-function ajaxAbort(this: Ajax, flag: boolean): void {
-    let course = this._course
-    let { req } = course
-    if (req) {
+function ajaxAbort(target: Ajax, flag: boolean = false): void {
+    let course = target._course
+    if (course) {
+        let { req } = course
         // 设置outFlag，会中止回调函数的回调
         req.outFlag = true
         if (req.xhr) {
             // xhr 可以原声支持 中止
             req.xhr.abort()
-            req.xhr = null
+            req.xhr = undefined
         }
-        delete this._course
-        flag && this.emit("abort", course)
+        delete target._course
+        flag && target.emit("abort", course)
     }
 }
 
@@ -889,5 +870,3 @@ let def = new AjaxGroup()
 def.global = ajaxGlobal
 
 export default def
-
-ajaxGlobal.on("callback", function({ res }) {})

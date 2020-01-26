@@ -11,7 +11,7 @@ function forPush(arr: any[], v: any): void {
 }
 
 // 对象增加k-v
-function forAppend(obj: object, v: any, k: string): void {
+function forAppend(obj: any, v: any, k: string): void {
     obj[k] = v
 }
 
@@ -27,7 +27,7 @@ const forTypes = "-[object array]-[object nodelist]-[object htmlcollection]-[obj
  * @param fn 运行函数
  * @param exe 返回的值
  */
-export default function each(arr: any, fn: Function, exe?: any[] | object): any[] | object {
+export default function each<T = any>(arr: any, fn: Function, exe?: T): T | undefined {
     // 终止循环
     let isStop: boolean = false
     function stop(): void {
@@ -36,7 +36,7 @@ export default function each(arr: any, fn: Function, exe?: any[] | object): any[
     if (arr) {
         let doExe: Function = forBack
         if (exe) {
-            doExe = typeof (exe as Array<any>).push == "function" ? forPush : forAppend
+            doExe = exe instanceof Array ? forPush : forAppend
         }
 
         let len: number = arr.length

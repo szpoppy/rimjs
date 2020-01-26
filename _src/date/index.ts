@@ -60,7 +60,7 @@ export function parse(date?: dateType, isWipe?: boolean): Date {
         .replace(/^(\d{4})(\d{2})(\d{2})(\d{2})?(\d{2})?(\d{2})?$/, function(str, Y, M, D, h, m, s) {
             return Y + "/" + M + "/" + D + " " + (h || "00") + ":" + (m || "00") + ":" + (s || "00")
         })
-        .replace(/\-/g, "/")
+        .replace(/-/g, "/")
         .replace(/T/, " ")
         .replace(/\.\d+$/, "")
 
@@ -69,7 +69,7 @@ export function parse(date?: dateType, isWipe?: boolean): Date {
 }
 
 // 格式化
-function format(str?: string, arr: Array<string> = [], info: object = {}): string | object {
+function format(str?: string, arr: Array<string> = [], info: any = {}): any {
     if (!str) {
         // 无格式化字符串
         return info
@@ -151,27 +151,30 @@ export function get(date?: dateType, formatStr: string = "") {
     })
 }
 
+interface diffOut {
+    D: number
+    ms: number
+    h: number
+    s: number
+}
+
 // 时间间隔差
 const diffIntervalArr = "D,ms,h,m,s".split(",")
 /**
  * date1 和 date2之间的时间差
- * @param date1
- * @param date2
- * @param formatStr 格式化
+ * @param arg1
+ * @param arg2
+ * @param arg3 格式化
  */
-export function diff(date1: dateType, date2: dateType, formatStr?: string): string | object
-/**
- * 对ms毫秒数格式化输出
- * @param ms
- * @param formatStr
- */
-export function diff(ms: number, formatStr?: string): string | object
-export function diff(arg1: dateType | number, arg2: dateType | string, arg3?: string): string | object {
+export function diff(arg1: dateType | number, arg2: dateType | string, arg3?: string): string | diffOut {
     let num: number
-    let formatStr: string
-    if (typeof arg1 != "number") {
-        num = parse(num).getTime() - parse(arg2).getTime()
-        formatStr = arg3
+    let outStr: string
+    if (typeof arg1 == "number") {
+        num = arg1
+        outStr = arg2 as string
+    } else {
+        num = parse(arg1).getTime() - parse(arg2).getTime()
+        outStr = arg3 as string
     }
 
     let mm: number = Math.abs(num)
@@ -186,7 +189,7 @@ export function diff(arg1: dateType | number, arg2: dateType | string, arg3?: st
     let h = mm % 24
     let D = Math.floor(mm / 24)
 
-    return format(formatStr, diffIntervalArr, {
+    return format(outStr, diffIntervalArr, {
         D: D,
         ms: ms,
         h: h,
@@ -196,7 +199,7 @@ export function diff(arg1: dateType | number, arg2: dateType | string, arg3?: st
 }
 
 // 日期上增加特定时间
-const appendTimeOpt = {
+const appendTimeOpt: any = {
     s: 1000,
     m: 60 * 1000,
     h: 60 * 60 * 1000,

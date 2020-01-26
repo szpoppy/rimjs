@@ -1,15 +1,130 @@
-import Vue, { VueConstructor, ComponentOptions } from "vue"
+import Vue, { VueConstructor, ComponentOptions, Component, AsyncComponent, DirectiveFunction, DirectiveOptions, PropOptions, ComputedOptions, WatchOptionsWithHandler, WatchHandler } from "vue"
 
 const _hasOwnProperty = Object.prototype.hasOwnProperty
 const _toString = Object.prototype.toString
 
+interface IVue extends Vue {
+    [propName: string]: any
+}
+
+interface IPluginArg {
+    after(afterFn: IFnArgFn): void
+    fnArg: IFnArgs
+    lifecycle: any
+    makeLifecycle: any
+    quickSet: any
+    quickNext: any
+    setQuickNextExec: (key: string) => void
+    merges: any
+    extData: any
+}
+
+interface IPluginFn {
+    (pluginArg: IPluginArg): void
+}
+
+interface IFnArgFn {
+    (arg: IFnArgs): void
+}
+
+interface IModel {
+    prop?: string
+    event?: string
+}
+
+interface IOptions<T> {
+    (key: string | Record<string, T>, val?: T): void
+}
+
+interface ILifecycle {
+    (fn: (this: IVue, ext?: IVueFnExtVal) => void, isExt?: boolean): void
+}
+
+interface ILifecycleByKey {
+    (key: string, fn: ILifecycle): void
+}
+
+type Accessors<T> = {
+    [K in keyof T]: (() => T[K]) | ComputedOptions<T[K]>
+}
+
+interface IFnArgs {
+    // 通用
+    $set: (prot?: string | execOptions, val?: any) => execOptions | undefined
+    $name: (name: string) => void
+    $mixins: (mixin: ComponentOptions<Vue> | typeof Vue) => void
+    $components: IOptions<Component<any, any, any, any> | AsyncComponent<any, any, any, any>>
+    $directives: IOptions<DirectiveFunction | DirectiveOptions>
+
+    // 参数
+    $props: IOptions<PropOptions<any>>
+    $data: IOptions<any>
+    $setup: IOptions<any>
+    $computed: IOptions<Accessors<{ [key: string]: any }>>
+    // $computed: <T>(key: string | IComputedOptionsObj<T>, prop?: ComputedOptions<T>) => void
+    $filters: IOptions<Function>
+    $model: (model: IModel) => void
+    $watch: IOptions<WatchOptionsWithHandler<any> | WatchHandler<any> | string>
+    $methods: IOptions<(this: IVue, ...args: any[]) => any>
+
+    $lifecycle: ILifecycleByKey
+    $created: ILifecycle
+    $mounted: ILifecycle
+    $destroyed: ILifecycle
+
+    $nextTick: (callback: () => void) => void
+    $emit: (...args: any) => void
+
+    $: (fn: IBindInFn | IBindInFnObj | IBindInFn[]) => IBindFn | IBindFnObj | IBindFn[]
+    $getExt: (vm: IVue) => IVueFnExtVal | null
+    $setExt: (key: string | IAnyObj, val?: any) => void
+
+    $export: exportFn
+}
+
+interface IFnObj {
+    [propName: string]: Function
+}
+interface IFnObjArr {
+    [propName: string]: Function[]
+}
+interface IBindInFn {
+    (ext: IVueFnExtVal, ...args: any[]): any
+}
+interface IBindInFnObj {
+    [propName: string]: IBindInFn
+}
+interface IBindFn extends Function {
+    __$ext?: boolean
+}
+interface IBindFnObj {
+    [propName: string]: IBindFn
+}
+
+type bindxFn = IBindFn | IBindInFn
+interface bindxFnObj {
+    [propName: string]: bindxFn
+}
+
+interface IAnyObj {
+    [propName: string]: any
+}
+
+export interface IVueFnExtVal {
+    vm: IVue
+    temp: IAnyObj
+    get: (key: string) => any
+    set: (key: string, val: any) => void
+    [propName: string]: any
+}
+
 // 插件模式 存储
-let pluginArr: Function[] = []
+let pluginArr: IPluginFn[] = []
 /**
  * 插件注册
  * @param initFn
  */
-export function vueFnOn(initFn: Function): void {
+export function vueFnOn(initFn: IPluginFn): void {
     pluginArr.push(initFn)
 }
 /**
@@ -17,7 +132,7 @@ export function vueFnOn(initFn: Function): void {
  * @param key
  * @param opt
  */
-function getSafe(key: string, opt: any): any {
+function getSafe(this: any, key: string, opt: any): any {
     if (opt === undefined) {
         opt = this
     }
@@ -32,20 +147,16 @@ function getSafe(key: string, opt: any): any {
     return opt
 }
 
-interface anyObj {
-    [propName: string]: any
-}
-
 /**
  * Vue 数据整合
  * @param data1
  * @param data2
  * @param vm
  */
-function assignData(data1: Vue | anyObj, data2: anyObj, vm?: Vue): void {
+function assignData(data1: IVue | any, data2: any, vm?: IVue): void {
     if (!vm) {
         if (data1.$set) {
-            vm = data1 as Vue
+            vm = data1 as IVue
         }
     }
     for (let n in data2) {
@@ -71,39 +182,27 @@ function assignData(data1: Vue | anyObj, data2: anyObj, vm?: Vue): void {
  * @param vue
  * @param initFn
  */
-export function vueFnInstall(vue: VueConstructor, initFn: Function) {
+export function vueFnInstall(vue: VueConstructor, initFn?: IPluginFn) {
     if (initFn) {
         vueFnOn(initFn)
     }
 }
 
 // 错误提示
-const msgOpt = {
+const msgOpt: any = {
     before: "vue已经初始化，请在初始化之前调用"
 }
 function warn(key: string = "", msg: string = "before") {
     console.warn(key, msgOpt[msg] || msg || "")
 }
 
-interface fnObj {
-    [propName: string]: Function
-}
-interface fnObjArr {
-    [propName: string]: Function[]
-}
-interface bindFn extends Function {
-    __$ext?: boolean
-}
-interface bindFnObj {
-    [propName: string]: bindFn
-}
 /**
  * 绑定方法的第一个参数
  * @param fn
  */
-function $bind(fn: Function | fnObj | Function[]): Function | fnObj | Function[] | any {
+function $bind(fn: IBindInFn | IBindInFnObj | IBindInFn[]): IBindFn | IBindFnObj | IBindFn[] {
     if (typeof fn == "function") {
-        let bind: bindFn = function(...args: any) {
+        let bind: IBindFn = function(this: IVue, ...args: any) {
             args.unshift(getExt(this))
             // console.log("bind", this, getExt(this), args)
             return fn.apply(this, args)
@@ -114,17 +213,19 @@ function $bind(fn: Function | fnObj | Function[]): Function | fnObj | Function[]
 
     let type = _toString.call(fn).toLowerCase()
     if (type == "[object object]") {
-        let back = {}
-        for (let n in fn) {
-            back[n] = $bind(fn[n])
+        let back: IBindFnObj = {}
+        let ofn = fn as IBindInFnObj
+        for (let n in ofn) {
+            back[n] = $bind(ofn[n]) as IBindFn
         }
         return back
     }
 
     if (type == "[object array]") {
-        let back = []
-        for (let i = 0; i < fn.length; i += 1) {
-            back[i] = $bind(fn[i])
+        let back: IBindFn[] = []
+        let fns = fn as IBindInFn[]
+        for (let i = 0; i < fns.length; i += 1) {
+            back[i] = $bind(fns[i]) as IBindInFn
         }
         return back
     }
@@ -134,7 +235,7 @@ function $bind(fn: Function | fnObj | Function[]): Function | fnObj | Function[]
 
 // 生命周期
 function lifecycleExec(fns: Function[]): Function {
-    return function(): void {
+    return function(this: IVue): void {
         for (let i = 0; i < fns.length; i += 1) {
             fns[i].apply(this, arguments)
         }
@@ -142,23 +243,27 @@ function lifecycleExec(fns: Function[]): Function {
 }
 
 function makeLifecycle(inits?: string[]) {
-    let lifecycles: fnObjArr = {}
+    let lifecycles: IFnObjArr = {}
     if (inits) {
         inits.forEach(function(key) {
             lifecycles[key] = []
         })
     }
     let back = {
-        get(): fnObjArr {
+        get(): IFnObjArr {
             return lifecycles
         },
-        on(key: string | fnObj, fn?: boolean | Function, isBind: boolean = false): void {
+        on(key: string | IFnObj, fn?: boolean | IBindInFn | Function, isBind: boolean = false): void {
             if (typeof key == "string") {
                 let lc = lifecycles[key]
                 if (!lc) {
                     lc = lifecycles[key] = []
                 }
-                lc.push(isBind ? $bind(fn as Function) : fn)
+                if (isBind) {
+                    lc.push(fn as IBindInFn)
+                    return
+                }
+                lc.push(fn as Function)
                 return
             }
             for (let n in key) {
@@ -167,7 +272,7 @@ function makeLifecycle(inits?: string[]) {
 
             return
         },
-        make(opt: any = {}, exec: Function = lifecycleExec): any {
+        make(opt: any = {}, exec: (fns: Function[]) => void = lifecycleExec): any {
             for (let n in lifecycles) {
                 let fn = exec(lifecycles[n])
                 if (_toString.call(opt[n]).toLowerCase() == "[object array]") {
@@ -178,13 +283,13 @@ function makeLifecycle(inits?: string[]) {
             }
             return opt
         },
-        emit(vm: Vue, type: string, ...args: any): void {
+        emit(vm: IVue, type: string, ...args: any): void {
             let fns = lifecycles[type] || []
             for (let i = 0; i < fns.length; i += 1) {
                 fns[i].apply(vm, args)
             }
         },
-        currying(key: string): Function {
+        currying(key: string): any {
             if (lifecycles[key] === undefined) {
                 lifecycles[key] = []
             }
@@ -203,27 +308,21 @@ function makeLifecycle(inits?: string[]) {
     return back
 }
 
-interface extVal {
-    vm?: Vue
-    temp?: object
-    [propName: string]: any
-}
-
-let exts: Map<Vue, extVal> = new Map()
-function getExt(vm: Vue): extVal | null {
+let exts: Map<IVue, IVueFnExtVal> = new Map()
+function getExt(vm: IVue): IVueFnExtVal | null {
     return exts.get(vm) || null
 }
 
-function assignExt(vm: Vue, opt: any): extVal {
+function assignExt(vm: IVue, opt: any): any {
     if (typeof opt == "function") {
-        return function(...args): any {
+        return function(...args: any): any {
             // args.unshift(getExt(vm))
             return opt.apply(vm, args)
         }
     }
     let type = _toString.call(opt).toLowerCase()
     if (type == "[object object]") {
-        let back = {}
+        let back: any = {}
         for (let n in opt) {
             back[n] = assignExt(vm, opt[n])
         }
@@ -240,19 +339,19 @@ function assignExt(vm: Vue, opt: any): extVal {
     return opt
 }
 
-function setExt(vm: Vue, opt: any): void {
+function setExt(vm: IVue, opt: IVueFnExtVal): void {
     // debugger
     let data = Object.assign({}, opt)
     let temp = data.temp
     delete data.temp
-    let ext: extVal = assignExt(vm, opt)
+    let ext: IVueFnExtVal = assignExt(vm, opt)
     ext.vm = vm
     ext.temp = temp
     exts.set(vm, ext)
 }
 
-function removeExt(vm: Vue) {
-    let data: extVal = getExt(vm)
+function removeExt(vm: IVue): void {
+    let data: IVueFnExtVal | null = getExt(vm)
     if (!data) {
         return
     }
@@ -287,78 +386,49 @@ interface exportFn extends Function {
     options?: execOptions
 }
 
-export interface fnArgs {
-    // 通用
-    $set: Function
-    $name: Function
-    $mixins: Function
-    $components: Function
-    $directives: Function
-
-    // 参数
-    $props: Function
-    $data: Function
-    $setup: Function
-    $computed: Function
-    $filters: Function
-    $model: Function
-    $watch: Function
-    $methods: Function
-
-    $lifecycle: Function
-    $created: Function
-    $mounted: Function
-    $destroyed: Function
-
-    $nextTick: Function
-    $emit: Function
-
-    $: Function
-    $getExt: Function
-    $setExt: Function
-
-    $export?: exportFn
-}
-
-export function vueFn(initFn: Function): fnArgs | execOptions {
+export function vueFn(): IFnArgs {
     let initFlag = false
-    let options: anyObj = {}
-    let merges: fnObj = {}
+    let options: IAnyObj = {}
+    let merges: IFnObj = {}
 
     // data 数据收集
     let optData = {}
-    merges.data = function(val: anyObj) {
+    merges.data = function(val: IAnyObj) {
         assignData(optData, val)
     }
 
     // 官方函数式编程
-    let optSetup = {}
-    merges.setup = function(val: fnObj) {
+    let optSetup: any = {}
+    merges.setup = function(val: IFnObj) {
         for (let n in val) {
             optSetup[n] = val[n]
         }
     }
     options.methods = {}
-    merges.methods = function(key: string | bindFnObj, val?: bindFn) {
-        let methodObj: bindFnObj = typeof key == "function" ? { [key]: val } : (key as bindFnObj)
+    merges.methods = function(key: string | bindxFnObj, val?: bindxFn) {
+        let methodObj: bindxFnObj = {}
+        if (typeof key == "function") {
+            methodObj[key] = val as bindxFn
+        } else {
+            Object.assign(methodObj, key)
+        }
+
         let m = options.methods
         for (let n in methodObj) {
-            let fn = methodObj[n]
-            let key = n
-            if (!fn.__$ext) {
-                key = n.replace(/^:/, function() {
-                    fn = $bind(fn)
-                    return ""
-                })
+            let fn: IBindFn = methodObj[n]
+            let key = n.replace(/^:/, "")
+            if (key != n && !fn.__$ext) {
+                m[key] = $bind(fn as IBindInFn)
+                break
             }
-            m[key] = fn as Function
+            m[key] = fn
         }
     }
 
     // mixins
     options.mixins = []
 
-    function $set(prot?: string | execOptions, val?: any): execOptions {
+    function $set(prot?: string | execOptions, val?: any): execOptions | undefined {
         if (initFlag) {
             warn("[$set]")
             return
@@ -400,7 +470,7 @@ export function vueFn(initFn: Function): fnArgs | execOptions {
         return options
     }
 
-    function quickSet(prot: string, formatFn?: Function): Function {
+    function quickSet(prot: string, formatFn?: Function): any {
         if (formatFn) {
             merges[prot] = formatFn
         }
@@ -431,19 +501,22 @@ export function vueFn(initFn: Function): fnArgs | execOptions {
 
     let nextDoBind: string = "mounted"
     function quickNextExec(): void {
-        lifecycle.on(nextDoBind, function() {
+        lifecycle.on(nextDoBind, function(this: any) {
             nextDoArr.forEach(([key, args]) => {
-                this[key](...args)
+                let fn = this[key]
+                if (typeof fn == "function") {
+                    fn(...args)
+                }
             })
         })
     }
 
-    let extData = {
+    let extData: any = {
         get(key: string): any {
-            return getSafe(key, this as Vue)
+            return getSafe(key, this)
         },
-        set(key: string, val: any) {
-            let self = this as Vue
+        set(this: IVue, key: string, val: any) {
+            // let self = this as Vue
             if (typeof key === "string") {
                 let k
                 let pre = key.replace(/\.(.+?)$/, function(s0, s1) {
@@ -451,27 +524,27 @@ export function vueFn(initFn: Function): fnArgs | execOptions {
                     return ""
                 })
                 if (!k) {
-                    self[key] = val
+                    this[key] = val
                     return
                 }
-                let data = getSafe(pre, self)
+                let data = getSafe(pre, this)
                 // console.log("-------------", data, this.touch, pre)
                 if (!data) {
                     return
                 }
                 if (data[k] === undefined) {
-                    self.$set(data, k, val)
+                    this.$set(data, k, val)
                     return
                 }
                 data[k] = val
                 return
             }
-            assignData(self, key)
+            assignData(this, key)
         },
         temp: {}
     }
 
-    let fnArg: fnArgs = {
+    let fnArg: IFnArgs = {
         // 通用
         $set,
         $name: quickSet("name"),
@@ -481,23 +554,24 @@ export function vueFn(initFn: Function): fnArgs | execOptions {
 
         // 参数
         $props: quickSet("props"),
-        $data(key: string | anyObj, val: Vue | any, vm?: Vue): void {
-            let opt: anyObj
+        $data(key: string | IAnyObj, val: IVue | any, vm?: IVue): void {
+            let opt: IAnyObj
             if (typeof key == "string") {
                 opt = { [key]: val }
             } else {
                 opt = key
-                vm = val as Vue
+                vm = val as IVue
             }
             assignData(vm || optData, opt)
         },
-        $setup(key: string | anyObj, val: any): void {
+        $setup(key: string | IAnyObj, val: any): void {
             if (val !== undefined) {
                 optSetup[key as string] = val
                 return
             }
-            for (let n in key as anyObj) {
-                optSetup[n] = key[n]
+            let keyObj = key as IAnyObj
+            for (let n in keyObj) {
+                optSetup[n] = keyObj[n]
             }
         },
         $computed: quickSet("computed"),
@@ -516,75 +590,11 @@ export function vueFn(initFn: Function): fnArgs | execOptions {
 
         $: $bind,
         $getExt: getExt,
-        $setExt(key: string | anyObj, val?: any): void {
+        $setExt(key: string | IAnyObj, val?: any): void {
             let opt = typeof key == "string" ? { [key]: val } : val
             assignData(extData, opt)
-        }
-    }
-
-    lifecycle.on("beforeCreate", function() {
-        // console.log("beforeC", this)
-        setExt(this, extData)
-    })
-
-    let afterArr: Function[] = []
-    pluginArr.forEach(function(pluginFn) {
-        pluginFn({
-            after(afterFn: Function) {
-                afterArr.push(afterFn)
-            },
-            fnArg,
-            lifecycle,
-            makeLifecycle,
-            quickSet,
-            quickNext,
-            setQuickNextExec(key: string) {
-                nextDoBind = key
-            },
-            merges,
-            extData
-        })
-    })
-
-    function output(): execOptions {
-        if (initFlag) {
-            // 防止多次执行
-            return
-        }
-        afterArr.forEach(function(afterFn) {
-            afterFn(fnArg)
-        })
-
-        // 快捷 执行方式
-        quickNextExec()
-
-        options.data = function() {
-            return optData
-        }
-        options.setup = function() {
-            return optSetup
-        }
-
-        lifecycle.make(options)
-
-        lifecycle.on("destroyed", function() {
-            // console.log("destroyed", this)
-            removeExt(this)
-        })
-
-        initFlag = true
-        // console.log("[options]", options)
-        // fn && fn(options)
-        // console.log("[options]", options, optData, optSetup)
-        return options
-    }
-
-    if (!initFn) {
-        interface eptFn extends Function {
-            options?: execOptions
-        }
-        // output.options = options
-        fnArg.$export = function(resolve?: Function, reject?: Function) {
+        },
+        $export(resolve?: Function, reject?: Function) {
             if (resolve) {
                 if (reject) {
                     output()
@@ -604,13 +614,71 @@ export function vueFn(initFn: Function): fnArgs | execOptions {
             output()
             return options
         }
-        fnArg.$export.options = options
-        return fnArg
     }
 
-    initFn && initFn(fnArg)
+    lifecycle.on("beforeCreate", function(this: IVue) {
+        // console.log("beforeC", this)
+        setExt(this, extData)
+    })
 
-    return output()
+    let afterArr: Function[] = []
+    let pluginArg: IPluginArg = {
+        after(afterFn: Function) {
+            afterArr.push(afterFn)
+        },
+        fnArg: fnArg,
+        lifecycle,
+        makeLifecycle,
+        quickSet,
+        quickNext,
+        setQuickNextExec(key: string) {
+            nextDoBind = key
+        },
+        merges,
+        extData
+    }
+    pluginArr.forEach(function(pluginFn) {
+        pluginFn(pluginArg)
+    })
+
+    function output(): execOptions | null {
+        if (initFlag) {
+            // 防止多次执行
+            return null
+        }
+        afterArr.forEach(function(afterFn) {
+            afterFn(fnArg)
+        })
+
+        // 快捷 执行方式
+        quickNextExec()
+
+        options.data = function() {
+            return optData
+        }
+        options.setup = function() {
+            return optSetup
+        }
+
+        lifecycle.make(options)
+
+        lifecycle.on("destroyed", function(this: IVue) {
+            // console.log("destroyed", this)
+            removeExt(this)
+        })
+
+        initFlag = true
+        // console.log("[options]", options)
+        // fn && fn(options)
+        // console.log("[options]", options, optData, optSetup)
+        return options
+    }
+
+    interface eptFn extends Function {
+        options?: execOptions
+    }
+    fnArg.$export.options = options
+    return fnArg
 }
 
 vueFn.on = vueFnOn

@@ -15,61 +15,48 @@ function getOne(): string {
     return parseInt(rnd + "" + soleCount.toString()).toString(36)
 }
 
-interface sStorage {
-    getItem(key: string): string
-    setItem(key: string, val: string): void
-    removeItem(key: string): void
+// 本地存储引用
+// 无本地存储，模拟本地实现
+// 数据存储本地，无法长期存储
+// 缓解无痕模式无法存储的问题
+let LSStore: any = {}
+let LS: any = {
+    getItem(key: string): string {
+        return LSStore[key]
+    },
+    setItem(key: string, val: string): void {
+        LSStore[key] = val
+    },
+    removeItem(key: string): void {
+        try {
+            delete LSStore[key]
+        } catch (e) {}
+    }
 }
 
-// 本地存储引用
-let LS: sStorage = window.localStorage
-let SS: sStorage = window.sessionStorage
+let SSStore: any = {}
+let SS: any = {
+    getItem(key: string): string {
+        return SSStore[key]
+    },
+    setItem(key: string, val: string): void {
+        SSStore[key] = val
+    },
+    removeItem(key: string): void {
+        try {
+            delete SSStore[key]
+        } catch (e) {}
+    }
+}
 
 // 本地存储是否可以使用
-let canLS: boolean = true
 try {
-    LS.setItem("ls_can", "1")
-    if (LS.getItem("ls_can") != "1") {
-        canLS = false
+    window.localStorage.setItem("ls_can", "1")
+    if (window.localStorage.getItem("ls_can") == "1") {
+        LS = window.localStorage
+        SS = window.sessionStorage
     }
-} catch (e) {
-    canLS = false
-}
-
-if (!canLS) {
-    // 无本地存储，模拟本地实现
-    // 数据存储本地，无法长期存储
-    // 缓解无痕模式无法存储的问题
-    let LSStore = {}
-    LS = {
-        getItem(key: string): string {
-            return LSStore[key]
-        },
-        setItem(key: string, val: string): void {
-            LSStore[key] = val
-        },
-        removeItem(key: string): void {
-            try {
-                delete LSStore[key]
-            } catch (e) {}
-        }
-    }
-
-    let SSStore = {}
-    SS = {
-        getItem(key: string): string {
-            return SSStore[key]
-        },
-        setItem(key: string, val: string): void {
-            SSStore[key] = val
-        },
-        removeItem(key: string): void {
-            try {
-                delete SSStore[key]
-            } catch (e) {}
-        }
-    }
-}
+} catch (e) {}
 
 let sKeyKey: string = ":store-s-key"
 let sKey: string = SS.getItem(sKeyKey)
@@ -106,35 +93,36 @@ export class LSClass {
     getItem(key: string): any {
         key = this.preposition + key
         let val = LS.getItem(key)
-        let json: storeData
+        let json: storeData | null
         try {
             json = JSON.parse(val)
-        } catch (e) {}
-        if (!json) {
-            // 非
-            return null
+        } catch (e) {
+            return
         }
-
-        // 检测是否过期
-        let expiration = json.expiration
-        let isOut: boolean = false
-        if (expiration) {
-            let now = new Date().getTime()
-            if (expiration !== -1 && now > expiration) {
+        if (json) {
+            // 检测是否过期
+            let expiration = json.expiration
+            let isOut: boolean = false
+            if (expiration) {
+                let now = new Date().getTime()
+                if (expiration !== -1 && now > expiration) {
+                    // 过期
+                    isOut = true
+                }
+            }
+            let session = json.session
+            if (!isOut && session && session != sKey) {
                 // 过期
                 isOut = true
             }
+            if (isOut) {
+                remove(key)
+                return null
+            }
+            return json.item
         }
-        let session = json.session
-        if (!isOut && session && session != sKey) {
-            // 过期
-            isOut = true
-        }
-        if (isOut) {
-            remove(key)
-            return null
-        }
-        return json.item
+
+        return null
     }
 
     /**
@@ -159,7 +147,7 @@ export class LSClass {
             if (typeof expiration == "string") {
                 expiration = new Date(
                     expiration
-                        .replace(/\-/g, "/")
+                        .replace(/-/g, "/")
                         .replace(/T/, " ")
                         .replace(/\.\d*$/, "")
                 )

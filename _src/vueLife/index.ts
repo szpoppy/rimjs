@@ -1,4 +1,4 @@
-import { VueConstructor } from "vue"
+import { VueConstructor, ComponentOptions } from "vue"
 
 /**
  * 初始化传入参数
@@ -50,14 +50,16 @@ let lifeIndexNum: number = 100
  * @param that
  */
 function getHookLife(that: any): vueLiveHook {
-    let id = that._life_id_
+    let id: string = that._life_id_
     if (!id) {
         lifeIndexNum += 1
-        id = that._life_id_ = "$" + lifeIndexNum.toString()
+        id = "$" + lifeIndexNum.toString()
+        // eslint-disable-next-line
+        that._life_id_ = id
     }
     let life: vueLiveHook = hookLifes[id]
     if (!life) {
-        let data = {}
+        let data: any = {}
         for (let n in hookEmitData) {
             data[n] = hookEmitData[n]
         }
@@ -118,7 +120,7 @@ function hookEmitEvent(life: vueLiveHook, key: string): vueLiveHookEvent {
          * 加入到ready后执行
          * @param callback
          */
-        then(callback) {
+        then(callback?: Function) {
             if (life.ready[hookDef]) {
                 callback && callback()
                 return
@@ -148,7 +150,7 @@ function _hookExec(key: string, life: vueLiveHook, data?: any): void {
 }
 
 function hookEmit(key: string, data: any, that?: any) {
-    let hookData = getHookEmitData(null, that)
+    let hookData = getHookEmitData("", that)
     hookData[key] = {
         data: data
     }
@@ -189,7 +191,7 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | vueLiveInit
     function hookExecByVM(that: any, lifeName: string): void {
         let life = addHookLifes(that, lifeName)
         let lifes = that.$options[defName] || []
-        let readys = {}
+        let readys: any = {}
         for (let i = 0; i < lifes.length; i += 1) {
             for (let k in lifes[i]) {
                 if (!readys[k] && (hooks[k] || hookDef) == lifeName) {
@@ -201,9 +203,9 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | vueLiveInit
     }
 
     function hooksFn(key: string): Function {
-        return function() {
+        return function(this: Vue) {
             // console.log("$$++++", key, hooks)
-            var life = this.$options[defName]
+            let life = (this.$options as any)[defName]
             if (life) {
                 if (hooks.prepose == key) {
                     // prepose 触发 emit

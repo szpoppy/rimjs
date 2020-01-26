@@ -4,8 +4,8 @@ var QueryString = /** @class */ (function () {
     function QueryString(opt) {
         this.sep = "&";
         this.eq = "=";
-        this.unescape = window.decodeURIComponent;
-        this.escape = window.encodeURIComponent;
+        this.unescape = decodeURIComponent;
+        this.escape = encodeURIComponent;
         if (opt) {
             Object.assign(this, opt);
         }

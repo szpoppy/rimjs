@@ -53,7 +53,7 @@ function parse(date, isWipe) {
         .replace(/^(\d{4})(\d{2})(\d{2})(\d{2})?(\d{2})?(\d{2})?$/, function (str, Y, M, D, h, m, s) {
         return Y + "/" + M + "/" + D + " " + (h || "00") + ":" + (m || "00") + ":" + (s || "00");
     })
-        .replace(/\-/g, "/")
+        .replace(/-/g, "/")
         .replace(/T/, " ")
         .replace(/\.\d+$/, "");
     // 防止报错
@@ -145,12 +145,22 @@ function get(date, formatStr) {
 exports.get = get;
 // 时间间隔差
 var diffIntervalArr = "D,ms,h,m,s".split(",");
+/**
+ * date1 和 date2之间的时间差
+ * @param arg1
+ * @param arg2
+ * @param arg3 格式化
+ */
 function diff(arg1, arg2, arg3) {
     var num;
-    var formatStr;
-    if (typeof arg1 != "number") {
-        num = parse(num).getTime() - parse(arg2).getTime();
-        formatStr = arg3;
+    var outStr;
+    if (typeof arg1 == "number") {
+        num = arg1;
+        outStr = arg2;
+    }
+    else {
+        num = parse(arg1).getTime() - parse(arg2).getTime();
+        outStr = arg3;
     }
     var mm = Math.abs(num);
     // 毫秒
@@ -163,7 +173,7 @@ function diff(arg1, arg2, arg3) {
     mm = Math.floor(mm / 60);
     var h = mm % 24;
     var D = Math.floor(mm / 24);
-    return format(formatStr, diffIntervalArr, {
+    return format(outStr, diffIntervalArr, {
         D: D,
         ms: ms,
         h: h,

@@ -32,7 +32,7 @@ function each(arr, fn, exe) {
     if (arr) {
         var doExe = forBack;
         if (exe) {
-            doExe = typeof exe.push == "function" ? forPush : forAppend;
+            doExe = exe instanceof Array ? forPush : forAppend;
         }
         var len = arr.length;
         if (forTypes.indexOf("-" + _toString.call(arr).toLowerCase() + "-") > -1 || "[object htmlcollection]" == String(arr).toLowerCase()) {

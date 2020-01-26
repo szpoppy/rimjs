@@ -3,7 +3,7 @@ import forEach from "../each"
 // 用于类型判断
 const _toString: Function = Object.prototype.toString
 
-function _assign(target: object, objs: Array<object>, flag = false): object {
+function _assign(target: any, objs: Array<any>, flag = false): any {
     forEach(objs, function(source: object) {
         forEach(source, function(item: any, n: string): void {
             if (item) {
@@ -18,14 +18,14 @@ function _assign(target: object, objs: Array<object>, flag = false): object {
                         if (!flag && targetType != type) {
                             target[n] = []
                         }
-                        _assign(target[n], item, flag)
+                        _assign(target[n], [item], flag)
                         return
                     }
                     if (type == "[object object]") {
                         if (!flag && targetType != type) {
                             target[n] = {}
                         }
-                        _assign(target[n], item, flag)
+                        _assign(target[n], [item], flag)
                         return
                     }
                 }
@@ -39,18 +39,18 @@ function _assign(target: object, objs: Array<object>, flag = false): object {
 /**
  * 深度混合 对象
  * @param  target
- * @param  objs 每个单元应该同　target 的数据类型一致
+ * @param  objs 每个单元应该同target 的数据类型一致
  */
-export function merge(target: object, ...objs: Array<object>): object {
-    return _assign(target, objs, true)
+export function merge(target: any, ...objs: Array<any>): any {
+    return _assign(target, objs)
 }
 
 /**
  * 深度克隆 对象
  * @param target
- * @param objs 每个单元应该同　target 的数据类型一致
+ * @param objs 每个单元应该同target 的数据类型一致
  */
-export function assign(target: object, ...objs: Array<object>): object {
+export function assign(target: any, ...objs: Array<any>): any {
     return _assign(target, objs, false)
 }
 

@@ -10,54 +10,48 @@ function getOne() {
     return parseInt(rnd + "" + soleCount.toString()).toString(36);
 }
 // 本地存储引用
-var LS = window.localStorage;
-var SS = window.sessionStorage;
+// 无本地存储，模拟本地实现
+// 数据存储本地，无法长期存储
+// 缓解无痕模式无法存储的问题
+var LSStore = {};
+var LS = {
+    getItem: function (key) {
+        return LSStore[key];
+    },
+    setItem: function (key, val) {
+        LSStore[key] = val;
+    },
+    removeItem: function (key) {
+        try {
+            delete LSStore[key];
+        }
+        catch (e) { }
+    }
+};
+var SSStore = {};
+var SS = {
+    getItem: function (key) {
+        return SSStore[key];
+    },
+    setItem: function (key, val) {
+        SSStore[key] = val;
+    },
+    removeItem: function (key) {
+        try {
+            delete SSStore[key];
+        }
+        catch (e) { }
+    }
+};
 // 本地存储是否可以使用
-var canLS = true;
 try {
-    LS.setItem("ls_can", "1");
-    if (LS.getItem("ls_can") != "1") {
-        canLS = false;
+    window.localStorage.setItem("ls_can", "1");
+    if (window.localStorage.getItem("ls_can") == "1") {
+        LS = window.localStorage;
+        SS = window.sessionStorage;
     }
 }
-catch (e) {
-    canLS = false;
-}
-if (!canLS) {
-    // 无本地存储，模拟本地实现
-    // 数据存储本地，无法长期存储
-    // 缓解无痕模式无法存储的问题
-    var LSStore_1 = {};
-    LS = {
-        getItem: function (key) {
-            return LSStore_1[key];
-        },
-        setItem: function (key, val) {
-            LSStore_1[key] = val;
-        },
-        removeItem: function (key) {
-            try {
-                delete LSStore_1[key];
-            }
-            catch (e) { }
-        }
-    };
-    var SSStore_1 = {};
-    SS = {
-        getItem: function (key) {
-            return SSStore_1[key];
-        },
-        setItem: function (key, val) {
-            SSStore_1[key] = val;
-        },
-        removeItem: function (key) {
-            try {
-                delete SSStore_1[key];
-            }
-            catch (e) { }
-        }
-    };
-}
+catch (e) { }
 var sKeyKey = ":store-s-key";
 var sKey = SS.getItem(sKeyKey);
 if (!sKey) {
@@ -93,31 +87,32 @@ var LSClass = /** @class */ (function () {
         try {
             json = JSON.parse(val);
         }
-        catch (e) { }
-        if (!json) {
-            // 非
-            return null;
+        catch (e) {
+            return;
         }
-        // 检测是否过期
-        var expiration = json.expiration;
-        var isOut = false;
-        if (expiration) {
-            var now = new Date().getTime();
-            if (expiration !== -1 && now > expiration) {
+        if (json) {
+            // 检测是否过期
+            var expiration = json.expiration;
+            var isOut = false;
+            if (expiration) {
+                var now = new Date().getTime();
+                if (expiration !== -1 && now > expiration) {
+                    // 过期
+                    isOut = true;
+                }
+            }
+            var session = json.session;
+            if (!isOut && session && session != sKey) {
                 // 过期
                 isOut = true;
             }
+            if (isOut) {
+                remove(key);
+                return null;
+            }
+            return json.item;
         }
-        var session = json.session;
-        if (!isOut && session && session != sKey) {
-            // 过期
-            isOut = true;
-        }
-        if (isOut) {
-            remove(key);
-            return null;
-        }
-        return json.item;
+        return null;
     };
     /**
      * 设置本地存储
@@ -143,7 +138,7 @@ var LSClass = /** @class */ (function () {
         else {
             if (typeof expiration == "string") {
                 expiration = new Date(expiration
-                    .replace(/\-/g, "/")
+                    .replace(/-/g, "/")
                     .replace(/T/, " ")
                     .replace(/\.\d*$/, ""));
             }

@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Event = /** @class */ (function () {
     function Event(parent) {
         this._events = {};
+        this._parent = null;
+        this._events = {};
         if (parent) {
             this._parent = parent;
         }
