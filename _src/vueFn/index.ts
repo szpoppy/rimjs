@@ -1,4 +1,4 @@
-import Vue, { VueConstructor, ComponentOptions, Component, AsyncComponent, DirectiveFunction, DirectiveOptions, PropOptions, ComputedOptions, WatchOptionsWithHandler, WatchHandler } from "vue"
+import Vue, { ComponentOptions, Component, AsyncComponent, DirectiveFunction, DirectiveOptions, PropOptions, ComputedOptions, WatchOptionsWithHandler, WatchHandler } from "vue"
 
 const _hasOwnProperty = Object.prototype.hasOwnProperty
 const _toString = Object.prototype.toString
@@ -7,9 +7,12 @@ interface IVue extends Vue {
     [propName: string]: any
 }
 
-interface IPluginArg {
-    after(afterFn: IFnArgFn): void
-    fnArg: IFnArgs
+interface IOnExportFn {
+    (): void
+}
+
+export interface IVueFnPluginArg {
+    onExport(fn: IOnExportFn): void
     lifecycle: any
     makeLifecycle: any
     quickSet: any
@@ -17,14 +20,6 @@ interface IPluginArg {
     setQuickNextExec: (key: string) => void
     merges: any
     extData: any
-}
-
-interface IPluginFn {
-    (pluginArg: IPluginArg): void
-}
-
-interface IFnArgFn {
-    (arg: IFnArgs): void
 }
 
 interface IModel {
@@ -48,7 +43,8 @@ type Accessors<T> = {
     [K in keyof T]: (() => T[K]) | ComputedOptions<T[K]>
 }
 
-interface IFnArgs {
+export interface IVueFnArg {
+    plugin: <T>(plug: (plug: IVueFnPluginArg, arg: IVueFnArg) => T) => T
     // 通用
     $set: (prot?: string | execOptions, val?: any) => execOptions | undefined
     $name: (name: string) => void
@@ -80,6 +76,8 @@ interface IFnArgs {
     $setExt: (key: string | IAnyObj, val?: any) => void
 
     $export: exportFn
+
+    [propName: string]: any
 }
 
 interface IFnObj {
@@ -118,15 +116,6 @@ export interface IVueFnExtVal {
     [propName: string]: any
 }
 
-// 插件模式 存储
-let pluginArr: IPluginFn[] = []
-/**
- * 插件注册
- * @param initFn
- */
-export function vueFnOn(initFn: IPluginFn): void {
-    pluginArr.push(initFn)
-}
 /**
  * 获取安全数据
  * @param key
@@ -174,17 +163,6 @@ function assignData(data1: IVue | any, data2: any, vm?: IVue): void {
 
             data1[n] = data2[n]
         }
-    }
-}
-
-/**
- * vue install 函数
- * @param vue
- * @param initFn
- */
-export function vueFnInstall(vue: VueConstructor, initFn?: IPluginFn) {
-    if (initFn) {
-        vueFnOn(initFn)
     }
 }
 
@@ -386,7 +364,11 @@ interface exportFn extends Function {
     options?: execOptions
 }
 
-export function vueFn(): IFnArgs {
+interface eptFn extends Function {
+    options?: execOptions
+}
+
+export function vueFn(): IVueFnArg {
     let initFlag = false
     let options: IAnyObj = {}
     let merges: IFnObj = {}
@@ -543,8 +525,26 @@ export function vueFn(): IFnArgs {
         },
         temp: {}
     }
+    let onExports: (() => void)[] = []
+    let pluginArg: IVueFnPluginArg = {
+        onExport(fn) {
+            onExports.push(fn)
+        },
+        lifecycle,
+        makeLifecycle,
+        quickSet,
+        quickNext,
+        setQuickNextExec(key) {
+            nextDoBind = key
+        },
+        merges,
+        extData
+    }
 
-    let fnArg: IFnArgs = {
+    let fnArg: IVueFnArg = {
+        plugin(plug) {
+            return plug(pluginArg, fnArg)
+        },
         // 通用
         $set,
         $name: quickSet("name"),
@@ -621,34 +621,11 @@ export function vueFn(): IFnArgs {
         setExt(this, extData)
     })
 
-    let afterArr: Function[] = []
-    let pluginArg: IPluginArg = {
-        after(afterFn: Function) {
-            afterArr.push(afterFn)
-        },
-        fnArg: fnArg,
-        lifecycle,
-        makeLifecycle,
-        quickSet,
-        quickNext,
-        setQuickNextExec(key: string) {
-            nextDoBind = key
-        },
-        merges,
-        extData
-    }
-    pluginArr.forEach(function(pluginFn) {
-        pluginFn(pluginArg)
-    })
-
     function output(): execOptions | null {
         if (initFlag) {
             // 防止多次执行
             return null
         }
-        afterArr.forEach(function(afterFn) {
-            afterFn(fnArg)
-        })
 
         // 快捷 执行方式
         quickNextExec()
@@ -660,12 +637,17 @@ export function vueFn(): IFnArgs {
             return optSetup
         }
 
-        lifecycle.make(options)
-
         lifecycle.on("destroyed", function(this: IVue) {
             // console.log("destroyed", this)
             removeExt(this)
         })
+
+        while (onExports.length) {
+            let fn = onExports.shift()
+            fn && fn()
+        }
+
+        lifecycle.make(options)
 
         initFlag = true
         // console.log("[options]", options)
@@ -674,14 +656,8 @@ export function vueFn(): IFnArgs {
         return options
     }
 
-    interface eptFn extends Function {
-        options?: execOptions
-    }
     fnArg.$export.options = options
     return fnArg
 }
-
-vueFn.on = vueFnOn
-vueFn.install = vueFnInstall
 
 export default vueFn

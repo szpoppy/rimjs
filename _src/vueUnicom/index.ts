@@ -166,9 +166,14 @@ interface vueUnicomInstruct {
     [propName: string]: Function[] // 任意类型
 }
 
+export interface IVueUnicomBackOption {
+    [propName: string]: (arg: VueUnicomEvent) => void
+}
+export type IVueUnicomBackFn = (key: string, fn: (arg: VueUnicomEvent) => void) => void
+
 // 通讯基础类
 export class VueUnicom {
-    static install: Function = vueUnicomInstall
+    static install = vueUnicomInstall
     // 事件存放
     private _instruct_: vueUnicomInstruct = {}
     // 绑定目标 可以是vue的vm 也可以是任意
@@ -300,21 +305,21 @@ export class VueUnicom {
     }
 
     // 订阅消息
-    on(type: string, fun: Function): VueUnicom {
+    on(type: string, fn: IVueUnicomBackFn): VueUnicom {
         let instruct = this._instruct_ || (this._instruct_ = {})
         instruct[type] || (instruct[type] = [])
-        instruct[type].push(fun)
+        instruct[type].push(fn)
         return this
     }
 
     // 移除订阅
-    off(type?: string, fun?: Function): VueUnicom {
+    off(type?: string, fn?: IVueUnicomBackFn): VueUnicom {
         let instruct = this._instruct_
         if (instruct) {
-            if (fun) {
+            if (fn) {
                 let es = instruct[type as string]
                 if (es) {
-                    let index = es.indexOf(fun)
+                    let index = es.indexOf(fn)
                     if (index > -1) {
                         es.splice(index, 1)
                     }
@@ -370,7 +375,7 @@ export interface vueUnicomInstallArg {
 
 // vue中指令
 interface vueInstruct {
-    [propName: string]: Function
+    [propName: string]: IVueUnicomBackFn
 }
 // vue临时存储数据
 interface vueUnicomData {

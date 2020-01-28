@@ -1,4 +1,4 @@
-import { VueConstructor, ComponentOptions } from "vue"
+import { VueConstructor } from "vue"
 
 /**
  * 初始化传入参数
@@ -17,16 +17,31 @@ export interface vueLiveInitObj {
     // 参数
     args?: Array<any> | any
 }
-export interface vueLiveHook {
+interface vueLiveHook {
     that: any
     ready: any
     data: any
     callback?: Function
 }
-export interface vueLiveHookEvent {
-    data: any
-    emit: Function
-    then: Function
+export interface IVueLiveHookEvent<T = any> {
+    data: T
+    emit: (key: string, data: any) => void
+    then: (fn: () => void) => void
+}
+
+export interface IVueLiveHookOptionFn<T = any> {
+    (arg: IVueLiveHookEvent<T>): void
+}
+export interface IVueLiveHookOption<T = any> {
+    [propName: string]: IVueLiveHookOptionFn<T>
+}
+
+export interface IVueLifeInitFnArg {
+    emit<T>(key: string, data?: T): T | undefined
+    hooks: {
+        [propName: string]: string
+    }
+    vue: VueConstructor
 }
 
 // 插件默认名称
@@ -105,7 +120,7 @@ function addHookLifes(that: any, vueLifeName: string): vueLiveHook {
  * @param life
  * @param key
  */
-function hookEmitEvent(life: vueLiveHook, key: string): vueLiveHookEvent {
+function hookEmitEvent(life: vueLiveHook, key: string): IVueLiveHookEvent {
     return {
         data: life.data[key],
         /**
@@ -113,8 +128,8 @@ function hookEmitEvent(life: vueLiveHook, key: string): vueLiveHookEvent {
          * @param key
          * @param value
          */
-        emit(key: string, value: any) {
-            hookEmit(key, value, life.that)
+        emit(key, data) {
+            hookEmit(key, data, life.that)
         },
         /**
          * 加入到ready后执行
@@ -227,16 +242,15 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | vueLiveInit
     }
 
     if (initFn) {
-        initFn(
-            {
-                emit(key: string, data: any) {
-                    hookEmit(key, data)
-                },
-                hooks,
-                vue: Vue
+        let arg: IVueLifeInitFnArg = {
+            emit(key, data) {
+                hookEmit(key, data)
+                return data
             },
-            ...initArgs
-        )
+            hooks,
+            vue: Vue
+        }
+        initFn(arg, ...initArgs)
     }
 
     let mixinOpt: any = {}

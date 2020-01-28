@@ -67,7 +67,7 @@ function fixedURL(url: string, paramStr: string): string {
 }
 
 // ===================================================================== 参数转为 字符串
-function getParamString(param?: FormData | IFParam | string, dataType?: string): string | FormData {
+function getParamString(param?: FormData | IParam | string, dataType?: string): string | FormData {
     if (!param) {
         return ""
     }
@@ -93,11 +93,11 @@ function getDefaultContentType(dataType?: string): string {
 interface IFStrObj {
     [propName: string]: string
 }
-interface IFParam {
+interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean>
 }
 
-type sendParam = IFParam | FormData | string
+type sendParam = IParam | FormData | string
 
 enum EResType {
     json = "json",
@@ -112,7 +112,7 @@ export interface IFAjaxConf {
     method?: string
     dataType?: string
     resType?: EResType
-    param?: IFParam | string
+    param?: IParam | string
     header?: IFStrObj
     jsonpKey?: string
     cache?: boolean
@@ -128,7 +128,7 @@ export class AjaxReq {
     method: string = "GET"
     dataType: string = ""
     resType: EResType = EResType.text
-    param?: IFParam | string | FormData
+    param?: IParam | string | FormData
     header: IFStrObj = {}
     jsonpKey: string = ""
     cache: boolean = false
@@ -271,10 +271,10 @@ export class Ajax extends Event<Ajax, AjaxCourse> {
     }
 
     // 返回Promist
-    then(thenFn?: () => any): Promise<any> {
+    then(thenFn?: (course: AjaxCourse) => any): Promise<any> {
         let pse: Promise<any> = new Promise((resolve, reject) => {
-            this.on("callback", function({ res }) {
-                resolve(res)
+            this.on("callback", function(course) {
+                resolve(course)
             })
             this.on("timeout", function() {
                 reject({ err: "访问超时", errType: 1 })
@@ -808,7 +808,7 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
             // 参数为字符串，自动格式化为 object，后面合并后在序列化
             param = dataType == "json" ? JSON.parse(param) : qs.parse(param)
         }
-        merge(req.param as IFParam, (param as IFParam) || {})
+        merge(req.param as IParam, (param as IParam) || {})
     }
 
     // 数据整理完成
@@ -820,7 +820,7 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     let method = String(req.method || "get").toUpperCase()
     if (method == "GET") {
-        let para = req.param as IFParam
+        let para = req.param as IParam
         if (para && req.cache === false && !para._r_) {
             // 加随机数，去缓存
             para._r_ = getUUID()
