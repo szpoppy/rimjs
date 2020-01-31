@@ -3,7 +3,7 @@ import { VueConstructor } from "vue"
 /**
  * 初始化传入参数
  */
-export interface vueLiveInitObj {
+export interface IVueLiveInitObj {
     // 初始化函数
     init: Function
     // 默认
@@ -12,8 +12,6 @@ export interface vueLiveInitObj {
     hooks?: object
     // prepose 同什么事件绑定
     prepose?: string
-    // 混入名称
-    lifeName?: string
     // 参数
     args?: Array<any> | any
 }
@@ -29,11 +27,11 @@ export interface IVueLiveHookEvent<T = any> {
     then: (fn: () => void) => void
 }
 
-export interface IVueLiveHookOptionFn<T = any> {
-    (arg: IVueLiveHookEvent<T>): void
+export interface IVueLiveHookOptionFn {
+    <T>(arg: IVueLiveHookEvent<T>): void
 }
-export interface IVueLiveHookOption<T = any> {
-    [propName: string]: IVueLiveHookOptionFn<T>
+export interface IVueLiveHookOption {
+    [propName: string]: IVueLiveHookOptionFn
 }
 
 export interface IVueLifeInitFnArg {
@@ -42,6 +40,12 @@ export interface IVueLifeInitFnArg {
         [propName: string]: string
     }
     vue: VueConstructor
+}
+
+declare module "vue/types/options" {
+    interface ComponentOptions<V extends Vue> {
+        life?: IVueLiveHookOption
+    }
 }
 
 // 插件默认名称
@@ -179,7 +183,7 @@ function hookEmit(key: string, data: any, that?: any) {
     }
 }
 
-export function vueLifeInstall(Vue: VueConstructor, init: Function | vueLiveInitObj) {
+export function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveInitObj) {
     // 初始化函数
     if (typeof init == "function") {
         init = {
@@ -194,11 +198,6 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | vueLiveInit
     // prepose
     if (!hooks.prepose) {
         hooks.prepose = "beforeCreate"
-    }
-
-    // ready 名称
-    if (init.lifeName) {
-        defName = init.lifeName
     }
 
     let initArgs: Array<any> = init.args == null ? [] : Object.prototype.toString.call(init.args).toLowerCase() != "[object array]" ? [init.args] : init.args

@@ -4,6 +4,7 @@
  * [2019-07-21] 重构,以事件模型为基础,多组件之间 订阅者和发布者来制作
  */
 
+// eslint-disable-next-line
 import Vue, { VueConstructor } from "vue"
 
 interface vueUnicomGather {
@@ -92,16 +93,16 @@ function removeUnicomGroup(target: VueUnicom): void {
 }
 
 // 发布指令时产生的事件的类
-export class VueUnicomEvent {
+export class VueUnicomEvent<D = any, T = any> {
     from: any
-    target: any
-    data: any;
+    target: T
+    data: D;
     [propName: string]: any
     constructor(from: any, args: Array<any>) {
         // 来自
-        this.from = from
+        this.from = from || null
         // 目标绑定的对象，vue中代表vue的实例
-        this.target = from.target
+        this.target = (from && from.target) || null
         // 第一号数据
         this.data = args[0]
         // 多个数据 使用 $index 表示
@@ -111,8 +112,19 @@ export class VueUnicomEvent {
     }
 }
 
-// 发布事件
-function emitAll(self: any, type: string, target: string, instruct: string, args: Array<any>): VueUnicomEvent | VueUnicom | Array<VueUnicom> {
+export type VueUnicomEmitBack<D, T = any> = VueUnicomEvent<D, T> | VueUnicom | VueUnicom[]
+
+function _unicomEmit<D, T extends Vue = Vue>(self: T, query: string, data?: D, args: any[] = []): VueUnicomEmitBack<D, T> {
+    // 以下是全局触发发布
+    let type: string = ""
+    let target: string = ""
+    let instruct: string = ""
+    instruct = query.replace(/([@#])([^@#]*)$/, function(s0, s1, s2) {
+        target = s2
+        type = s1
+        return ""
+    })
+
     let targetUnicom: Array<VueUnicom> = []
     if (type == "#") {
         // 目标唯一
@@ -137,12 +149,17 @@ function emitAll(self: any, type: string, target: string, instruct: string, args
     } else {
         targetUnicom.push(...unicomGroup)
     }
-    let uniEvent = new VueUnicomEvent(self, args)
+    args.unshift(data)
+    let uniEvent = new VueUnicomEvent<D, T>(self, args)
     targetUnicom.forEach(function(emit) {
         // 每个都触发一遍
-        emit.emit(instruct, uniEvent, ...args)
+        emit.emit<VueUnicomEvent>(instruct, uniEvent)
     })
     return uniEvent
+}
+
+export function unicomEmit<D>(query: string, data?: D, args: any[] = []): VueUnicomEmitBack<D, any> {
+    return _unicomEmit<D, any>(null, query, data, args)
 }
 
 // 监控数据
@@ -169,6 +186,23 @@ interface vueUnicomInstruct {
 export interface IVueUnicomBackOption {
     [propName: string]: (arg: VueUnicomEvent) => void
 }
+
+declare module "vue/types/options" {
+    interface ComponentOptions<V extends Vue> {
+        unicomId?: string
+        unicomName?: string | string[]
+        unicom?: IVueUnicomBackOption
+    }
+}
+
+declare module "vue/types/vue" {
+    interface Vue {
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>
+        // eslint-disable-next-line
+        _unicom_data_?: vueUnicomData
+    }
+}
+
 export type IVueUnicomBackFn = (key: string, fn: (arg: VueUnicomEvent) => void) => void
 
 // 通讯基础类
@@ -182,6 +216,9 @@ export class VueUnicom {
     id: string = ""
     // 属于的分组
     group: Array<string>
+
+    static emit = unicomEmit
+
     // 私有属性
     // eslint-disable-next-line
     private _monitor_back_: number = 0
@@ -337,41 +374,23 @@ export class VueUnicom {
     }
 
     // 触发订阅
-    emit(query: string, ...args: any): any {
-        let data = args[0]
-        if (data && data.constructor == VueUnicomEvent) {
+    emit<D>(query: string, data?: D, ...args: any): VueUnicomEmitBack<D> {
+        if (data && data instanceof VueUnicomEvent) {
             // 只需要负责自己
             let es = (this._instruct_ && this._instruct_[query]) || []
             es.forEach(channelFn => {
-                channelFn.apply(this.target || this, args)
+                channelFn.call(this.target || this, data)
             })
             return data
         }
 
         // 以下是全局触发发布
-        let type: string = "",
-            target: string = "",
-            instruct: string = ""
-        instruct = query.replace(/([@#])([^@#]*)$/, function(s0, s1, s2) {
-            target = s2
-            type = s1
-            return ""
-        })
-
-        return emitAll(this, type, target, instruct, args)
+        return _unicomEmit<D>(this.target, query, data, args)
     }
 }
 
 // vue 安装插槽
 let unicomInstalled: boolean = false
-// install 参数
-export interface vueUnicomInstallArg {
-    name?: string
-    unicomName?: string
-    unicomId?: string
-    unicomEmit?: string
-    unicomClass?: string
-}
 
 // vue中指令
 interface vueInstruct {
@@ -387,36 +406,25 @@ interface vueUnicomData {
     // 绑定的unicom对象
     unicom?: VueUnicom
 }
-interface vueVM extends Vue {
-    // eslint-disable-next-line
-    _unicom_data_: vueUnicomData
-    [propName: string]: any
-}
-export function vueUnicomInstall(vue: VueConstructor, { name = "unicom", unicomName, unicomId, unicomEmit, unicomClass }: vueUnicomInstallArg = {}) {
+
+export function vueUnicomInstall(vue: VueConstructor) {
     if (unicomInstalled) {
         // 防止重复install
         return
     }
     unicomInstalled = true
 
+    let name = "unicom"
+
     // 添加原型方法
-    let unicomEmitName = unicomEmit || name
-    vue.prototype["$" + unicomEmitName] = function(query: string, ...args: any) {
+    vue.prototype["$" + name] = function(query: string, ...args: any) {
         return this._unicom_data_.unicom.emit(query, ...args)
     }
-    // 方便插件中引入
-    let VueUnicomClassName = unicomClass
-    if (!VueUnicomClassName) {
-        VueUnicomClassName = name.replace(/^\w/, function(s0) {
-            return s0.toUpperCase()
-        })
-    }
-    ;(vue as any)[VueUnicomClassName] = VueUnicom
 
     // unicom-id
-    let unicomIdName = unicomId || name + "Id"
+    let unicomIdName = name + "Id"
     // 分组  unicom-name
-    let unicomGroupName = unicomName || name + "Name"
+    let unicomGroupName = name + "Name"
 
     // 组合分组
     function getGroup(target: any) {
@@ -440,21 +448,21 @@ export function vueUnicomInstall(vue: VueConstructor, { name = "unicom", unicomN
             }
         },
         watch: {
-            [unicomIdName](this: vueVM, nv) {
-                let unicom = this._unicom_data_ && this._unicom_data_.unicom
-                if (unicom) {
-                    unicom.setId(nv)
+            [unicomIdName](nv) {
+                let ud = this._unicom_data_ as any
+                if (ud && ud.unicom) {
+                    ud.unicom.setId(nv)
                 }
             },
-            [unicomGroupName](this: vueVM) {
-                let unicom = this._unicom_data_ && this._unicom_data_.unicom
-                if (unicom) {
-                    unicom.setGroup(getGroup(self))
+            [unicomGroupName]() {
+                let ud = this._unicom_data_ as any
+                if (ud && ud.unicom) {
+                    ud.unicom.setGroup(getGroup(this))
                 }
             }
         },
         // 创建的时候，加入事件机制
-        beforeCreate(this: vueVM) {
+        beforeCreate() {
             // 屏蔽不需要融合的 节点
             let isIgnore = !this.$vnode || /-transition$/.test(this.$vnode.tag as string)
             // unicomData 数据存放
@@ -475,8 +483,8 @@ export function vueUnicomInstall(vue: VueConstructor, { name = "unicom", unicomN
             // 触发器
             // unicomData.self = new Unicom({target: this})
         },
-        created(this: vueVM) {
-            let unicomData = this._unicom_data_
+        created(this: any) {
+            let unicomData = this._unicom_data_ as vueUnicomData
             if (unicomData.isIgnore) {
                 // 忽略
                 return
@@ -494,8 +502,8 @@ export function vueUnicomInstall(vue: VueConstructor, { name = "unicom", unicomN
             })
         },
         // 全局混合， 销毁实例的时候，销毁事件
-        destroyed(this: vueVM) {
-            let unicomData = this._unicom_data_
+        destroyed(this: any) {
+            let unicomData = this._unicom_data_ as vueUnicomData
             if (unicomData.isIgnore) {
                 // 忽略
                 return

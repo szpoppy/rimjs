@@ -3,6 +3,18 @@ import Vue, { ComponentOptions, Component, AsyncComponent, DirectiveFunction, Di
 const _hasOwnProperty = Object.prototype.hasOwnProperty
 const _toString = Object.prototype.toString
 
+interface IAnyObj {
+    [propName: string]: any
+}
+
+export interface IVueFnExtVal {
+    vm: IVue
+    temp: IAnyObj
+    get: (key: string) => any
+    set: (key: string | IAnyObj, val?: any) => void
+    [propName: string]: any
+}
+
 interface IVue extends Vue {
     [propName: string]: any
 }
@@ -16,8 +28,6 @@ export interface IVueFnPluginArg {
     lifecycle: any
     makeLifecycle: any
     quickSet: any
-    quickNext: any
-    setQuickNextExec: (key: string) => void
     merges: any
     extData: any
 }
@@ -32,11 +42,15 @@ interface IOptions<T> {
 }
 
 interface ILifecycle {
-    (fn: (this: IVue, ext?: IVueFnExtVal) => void, isExt?: boolean): void
+    (fn: (this: IVue, ext: IVueFnExtVal) => void, isExt: true): void
+    (fn: (this: IVue) => void, isExt: false): void
+    (fn: (this: IVue) => void): void
 }
 
 interface ILifecycleByKey {
-    (key: string, fn: ILifecycle): void
+    (key: string, fn: (this: IVue, ext: IVueFnExtVal) => void, isExt: true): void
+    (key: string, fn: (this: IVue) => void, isExt: false): void
+    (key: string, fn: (this: IVue) => void): void
 }
 
 type Accessors<T> = {
@@ -68,14 +82,11 @@ export interface IVueFnArg {
     $mounted: ILifecycle
     $destroyed: ILifecycle
 
-    $nextTick: (callback: () => void) => void
-    $emit: (...args: any) => void
-
     $: (fn: IBindInFn | IBindInFnObj | IBindInFn[]) => IBindFn | IBindFnObj | IBindFn[]
     $getExt: (vm: IVue) => IVueFnExtVal | null
     $setExt: (key: string | IAnyObj, val?: any) => void
 
-    $export: exportFn
+    $export: () => ComputedOptions<IVue>
 
     [propName: string]: any
 }
@@ -102,18 +113,6 @@ interface IBindFnObj {
 type bindxFn = IBindFn | IBindInFn
 interface bindxFnObj {
     [propName: string]: bindxFn
-}
-
-interface IAnyObj {
-    [propName: string]: any
-}
-
-export interface IVueFnExtVal {
-    vm: IVue
-    temp: IAnyObj
-    get: (key: string) => any
-    set: (key: string, val: any) => void
-    [propName: string]: any
 }
 
 /**
@@ -237,8 +236,8 @@ function makeLifecycle(inits?: string[]) {
                 if (!lc) {
                     lc = lifecycles[key] = []
                 }
-                if (isBind) {
-                    lc.push(fn as IBindInFn)
+                if (isBind === true) {
+                    lc.push($bind(fn as IBindInFn) as Function)
                     return
                 }
                 lc.push(fn as Function)
@@ -360,14 +359,6 @@ interface execOptions extends ComponentOptions<Vue> {
     [propName: string]: any
 }
 
-interface exportFn extends Function {
-    options?: execOptions
-}
-
-interface eptFn extends Function {
-    options?: execOptions
-}
-
 export function vueFn(): IVueFnArg {
     let initFlag = false
     let options: IAnyObj = {}
@@ -375,8 +366,8 @@ export function vueFn(): IVueFnArg {
 
     // data 数据收集
     let optData = {}
-    merges.data = function(val: IAnyObj) {
-        assignData(optData, val)
+    merges.data = function(val: object) {
+        Object.assign(optData, val)
     }
 
     // 官方函数式编程
@@ -464,40 +455,11 @@ export function vueFn(): IVueFnArg {
 
     let lifecycle = makeLifecycle()
 
-    interface nextDoItem extends Array<any> {
-        [0]: string
-        [1]: any
-    }
-
-    // the Next
-    let nextDoArr: nextDoItem[] = []
-    function quickNext(key: string) {
-        return function(...args: any): void {
-            if (initFlag) {
-                warn("[" + key + "]")
-                return
-            }
-            nextDoArr.push([key, args])
-        }
-    }
-
-    let nextDoBind: string = "mounted"
-    function quickNextExec(): void {
-        lifecycle.on(nextDoBind, function(this: any) {
-            nextDoArr.forEach(([key, args]) => {
-                let fn = this[key]
-                if (typeof fn == "function") {
-                    fn(...args)
-                }
-            })
-        })
-    }
-
     let extData: any = {
         get(key: string): any {
             return getSafe(key, this)
         },
-        set(this: IVue, key: string, val: any) {
+        set(this: IVue, key: string, val?: any) {
             // let self = this as Vue
             if (typeof key === "string") {
                 let k
@@ -533,10 +495,6 @@ export function vueFn(): IVueFnArg {
         lifecycle,
         makeLifecycle,
         quickSet,
-        quickNext,
-        setQuickNextExec(key) {
-            nextDoBind = key
-        },
         merges,
         extData
     }
@@ -585,32 +543,13 @@ export function vueFn(): IVueFnArg {
         $mounted: lifecycle.currying("mounted"),
         $destroyed: lifecycle.currying("destroyed"),
 
-        $nextTick: quickNext("$nextTick"),
-        $emit: quickNext("$emit"),
-
         $: $bind,
         $getExt: getExt,
         $setExt(key: string | IAnyObj, val?: any): void {
             let opt = typeof key == "string" ? { [key]: val } : val
             assignData(extData, opt)
         },
-        $export(resolve?: Function, reject?: Function) {
-            if (resolve) {
-                if (reject) {
-                    output()
-                    resolve(options)
-                    return
-                }
-                // 异步模式
-                let ept: eptFn = function(fn: Function) {
-                    resolve(function() {
-                        output()
-                        fn(options)
-                    })
-                }
-                ept.options = options
-                return ept
-            }
+        $export() {
             output()
             return options
         }
@@ -626,9 +565,6 @@ export function vueFn(): IVueFnArg {
             // 防止多次执行
             return null
         }
-
-        // 快捷 执行方式
-        quickNextExec()
 
         options.data = function() {
             return optData
@@ -655,8 +591,6 @@ export function vueFn(): IVueFnArg {
         // console.log("[options]", options, optData, optSetup)
         return options
     }
-
-    fnArg.$export.options = options
     return fnArg
 }
 

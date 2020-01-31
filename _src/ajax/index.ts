@@ -183,21 +183,25 @@ export class AjaxCourse {
     req: AjaxReq = new AjaxReq()
     res: AjaxRes = new AjaxRes()
     progress?: ProgressEvent
-    parent: Ajax
+    ajax: Ajax
 
     getDate(this: AjaxCourse): Date {
-        return this.parent.parent.getDate()
+        return this.ajax.parent.getDate()
     }
 
     constructor(ajax: Ajax) {
-        this.parent = ajax
+        this.ajax = ajax
     }
 }
 
-export class Ajax extends Event<Ajax, AjaxCourse> {
+export class Ajax extends Event {
     _course?: AjaxCourse
     conf: IFAjaxConf
     parent: AjaxGroup
+
+    on(type: string, fn: (arg: AjaxCourse) => void, isPre: boolean = false): void {
+        this[":on"]<Ajax>(type, fn, isPre)
+    }
 
     constructor(parent: AjaxGroup, opt?: IFAjaxConf) {
         super(parent)
@@ -312,13 +316,17 @@ function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEven
 
 let ajaxDateDiff: number = 0
 
-export class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
+export class AjaxGroup extends Event {
     dateDiff: number = ajaxDateDiff
     conf: IFAjaxConf = {}
 
     global?: Global
 
     parent?: Global
+
+    on(type: string, fn: (arg: AjaxCourse) => void, isPre: boolean = false): void {
+        this[":on"]<AjaxGroup>(type, fn, isPre)
+    }
 
     constructor(opt?: IFAjaxConf) {
         super(ajaxGlobal)
@@ -378,8 +386,12 @@ export class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
     }
 }
 
-class Global extends Event<Global, AjaxCourse> {
+class Global extends Event {
     conf: IFAjaxConf = { useFetch: true, resType: EResType.json, jsonpKey: "callback", cache: true }
+
+    on(type: string, fn: (arg: AjaxCourse) => void, isPre: boolean = false): void {
+        this[":on"]<Global>(type, fn, isPre)
+    }
 
     constructor() {
         super()
