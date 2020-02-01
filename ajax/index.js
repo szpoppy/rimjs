@@ -150,10 +150,10 @@ var AjaxCourse = /** @class */ (function () {
     function AjaxCourse(ajax) {
         this.req = new AjaxReq();
         this.res = new AjaxRes();
-        this.parent = ajax;
+        this.ajax = ajax;
     }
     AjaxCourse.prototype.getDate = function () {
-        return this.parent.parent.getDate();
+        return this.ajax.parent.getDate();
     };
     return AjaxCourse;
 }());
@@ -166,6 +166,10 @@ var Ajax = /** @class */ (function (_super) {
         _this.conf = assign_1.merge({}, exports.ajaxGlobal.conf, parent.conf, getConf(opt));
         return _this;
     }
+    Ajax.prototype.on = function (type, fn, isPre) {
+        if (isPre === void 0) { isPre = false; }
+        this[":on"](type, fn, isPre);
+    };
     // 设置参数
     Ajax.prototype.setConf = function (opt) {
         if (opt === void 0) { opt = {}; }
@@ -239,9 +243,8 @@ var Ajax = /** @class */ (function (_super) {
     Ajax.prototype.then = function (thenFn) {
         var _this = this;
         var pse = new Promise(function (resolve, reject) {
-            _this.on("callback", function (_a) {
-                var res = _a.res;
-                resolve(res);
+            _this.on("callback", function (course) {
+                resolve(course);
             });
             _this.on("timeout", function () {
                 reject({ err: "访问超时", errType: 1 });
@@ -280,6 +283,10 @@ var AjaxGroup = /** @class */ (function (_super) {
         opt && _this.setConf(opt);
         return _this;
     }
+    AjaxGroup.prototype.on = function (type, fn, isPre) {
+        if (isPre === void 0) { isPre = false; }
+        this[":on"](type, fn, isPre);
+    };
     // 设置默认
     AjaxGroup.prototype.setConf = function (opt) {
         opt && getConf(opt, this.conf);
@@ -336,6 +343,10 @@ var Global = /** @class */ (function (_super) {
         _this.conf = { useFetch: true, resType: EResType.json, jsonpKey: "callback", cache: true };
         return _this;
     }
+    Global.prototype.on = function (type, fn, isPre) {
+        if (isPre === void 0) { isPre = false; }
+        this[":on"](type, fn, isPre);
+    };
     Global.prototype.setConf = function (conf) {
         getConf(conf, this.conf);
     };

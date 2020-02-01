@@ -2,10 +2,10 @@ import Event from "../event";
 interface IFStrObj {
     [propName: string]: string;
 }
-interface IFParam {
+interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean>;
 }
-declare type sendParam = IFParam | FormData | string;
+declare type sendParam = IParam | FormData | string;
 declare enum EResType {
     json = "json",
     text = "text"
@@ -18,7 +18,7 @@ export interface IFAjaxConf {
     method?: string;
     dataType?: string;
     resType?: EResType;
-    param?: IFParam | string;
+    param?: IParam | string;
     header?: IFStrObj;
     jsonpKey?: string;
     cache?: boolean;
@@ -32,7 +32,7 @@ export declare class AjaxReq {
     method: string;
     dataType: string;
     resType: EResType;
-    param?: IFParam | string | FormData;
+    param?: IParam | string | FormData;
     header: IFStrObj;
     jsonpKey: string;
     cache: boolean;
@@ -65,43 +65,46 @@ export declare class AjaxCourse {
     req: AjaxReq;
     res: AjaxRes;
     progress?: ProgressEvent;
-    parent: Ajax;
+    ajax: Ajax;
     getDate(this: AjaxCourse): Date;
     constructor(ajax: Ajax);
 }
-export declare class Ajax extends Event<Ajax, AjaxCourse> {
+export declare class Ajax extends Event {
     _course?: AjaxCourse;
     conf: IFAjaxConf;
     parent: AjaxGroup;
+    on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor(parent: AjaxGroup, opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): Ajax;
     assign(...args: any): Ajax;
     abort(): Ajax;
     timeout(this: Ajax, time: number, callback: IEventOnFn): Ajax;
     send(this: Ajax, param?: sendParam, over?: boolean): Ajax;
-    then(thenFn?: () => any): Promise<any>;
+    then(thenFn?: (course: AjaxCourse) => any): Promise<any>;
 }
 declare type IEventOnFn = (this: Ajax, arg: AjaxCourse) => void;
 interface shortcutEventObj {
     [propName: string]: IEventOnFn;
 }
 declare type shortcutEvent = shortcutEventObj | IEventOnFn;
-export declare class AjaxGroup extends Event<AjaxGroup, AjaxCourse> {
+export declare class AjaxGroup extends Event {
     dateDiff: number;
     conf: IFAjaxConf;
     global?: Global;
     parent?: Global;
+    on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor(opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): AjaxGroup;
     create(opt?: IFAjaxConf): Ajax;
-    shortcut(opt: IFAjaxConf, events?: shortcutEvent): (callback: string | FormData | IFParam | IEventOnFn, param: string | FormData | IFParam) => Ajax;
+    shortcut(opt: IFAjaxConf, events?: shortcutEvent): (callback: string | FormData | IParam | IEventOnFn, param: string | FormData | IParam) => Ajax;
     load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam): Ajax;
     fetch(opt?: IFAjaxConf, param?: sendParam): Promise<any>;
     setDate(date: string | Date): void;
     getDate(): Date;
 }
-declare class Global extends Event<Global, AjaxCourse> {
+declare class Global extends Event {
     conf: IFAjaxConf;
+    on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor();
     setConf(conf: IFAjaxConf): void;
 }

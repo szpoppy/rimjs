@@ -3,25 +3,45 @@
  * 目的，提供vue 全局的转发机制
  * [2019-07-21] 重构,以事件模型为基础,多组件之间 订阅者和发布者来制作
  */
-import { VueConstructor } from "vue";
-export declare class VueUnicomEvent {
+import Vue, { VueConstructor } from "vue";
+export declare class VueUnicomEvent<D = any, T = any> {
     from: any;
-    target: any;
-    data: any;
+    target: T;
+    data: D;
     [propName: string]: any;
     constructor(from: any, args: Array<any>);
 }
+export declare type VueUnicomEmitBack<D, T = any> = VueUnicomEvent<D, T> | VueUnicom | VueUnicom[];
+export declare function unicomEmit<D>(query: string, data?: D, args?: any[]): VueUnicomEmitBack<D, any>;
 export interface vueUnicomArg {
     id?: string;
     group?: string | Array<string>;
     target?: any;
 }
+export interface IVueUnicomBackOption {
+    [propName: string]: (arg: VueUnicomEvent) => void;
+}
+declare module "vue/types/options" {
+    interface ComponentOptions<V extends Vue> {
+        unicomId?: string;
+        unicomName?: string | string[];
+        unicom?: IVueUnicomBackOption;
+    }
+}
+declare module "vue/types/vue" {
+    interface Vue {
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>;
+        _unicom_data_?: vueUnicomData;
+    }
+}
+export declare type IVueUnicomBackFn = (key: string, fn: (arg: VueUnicomEvent) => void) => void;
 export declare class VueUnicom {
-    static install: Function;
+    static install: typeof vueUnicomInstall;
     private _instruct_;
     target: any;
     id: string;
     group: Array<string>;
+    static emit: typeof unicomEmit;
     private _monitor_back_;
     constructor({ id, group, target }?: vueUnicomArg);
     monitorBack(): VueUnicom;
@@ -31,16 +51,18 @@ export declare class VueUnicom {
     setId(id: string): VueUnicom;
     setGroup(group: string | string[]): this;
     has(type: string): boolean;
-    on(type: string, fun: Function): VueUnicom;
-    off(type?: string, fun?: Function): VueUnicom;
-    emit(query: string, ...args: any): any;
+    on(type: string, fn: IVueUnicomBackFn): VueUnicom;
+    off(type?: string, fn?: IVueUnicomBackFn): VueUnicom;
+    emit<D>(query: string, data?: D, ...args: any): VueUnicomEmitBack<D>;
 }
-export interface vueUnicomInstallArg {
-    name?: string;
-    unicomName?: string;
-    unicomId?: string;
-    unicomEmit?: string;
-    unicomClass?: string;
+interface vueInstruct {
+    [propName: string]: IVueUnicomBackFn;
 }
-export declare function vueUnicomInstall(vue: VueConstructor, { name, unicomName, unicomId, unicomEmit, unicomClass }?: vueUnicomInstallArg): void;
+interface vueUnicomData {
+    isIgnore: boolean;
+    initGroup?: Array<string>;
+    instructs?: Array<vueInstruct>;
+    unicom?: VueUnicom;
+}
+export declare function vueUnicomInstall(vue: VueConstructor): void;
 export default VueUnicom;

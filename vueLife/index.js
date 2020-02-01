@@ -84,8 +84,8 @@ function hookEmitEvent(life, key) {
          * @param key
          * @param value
          */
-        emit: function (key, value) {
-            hookEmit(key, value, life.that);
+        emit: function (key, data) {
+            hookEmit(key, data, life.that);
         },
         /**
          * 加入到ready后执行
@@ -147,10 +147,6 @@ function vueLifeInstall(Vue, init) {
     if (!hooks.prepose) {
         hooks.prepose = "beforeCreate";
     }
-    // ready 名称
-    if (init.lifeName) {
-        defName = init.lifeName;
-    }
     var initArgs = init.args == null ? [] : Object.prototype.toString.call(init.args).toLowerCase() != "[object array]" ? [init.args] : init.args;
     function hookExecByVM(that, lifeName) {
         var life = addHookLifes(that, lifeName);
@@ -188,13 +184,15 @@ function vueLifeInstall(Vue, init) {
         return val;
     };
     if (initFn) {
-        initFn.apply(void 0, __spreadArrays([{
-                emit: function (key, data) {
-                    hookEmit(key, data);
-                },
-                hooks: hooks,
-                vue: Vue
-            }], initArgs));
+        var arg = {
+            emit: function (key, data) {
+                hookEmit(key, data);
+                return data;
+            },
+            hooks: hooks,
+            vue: Vue
+        };
+        initFn.apply(void 0, __spreadArrays([arg], initArgs));
     }
     var mixinOpt = {};
     for (var n in hooks) {

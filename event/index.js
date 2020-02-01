@@ -12,13 +12,17 @@ var Event = /** @class */ (function () {
             this._parent = parent;
         }
     }
+    Event.prototype.on = function (type, fn, isPre) {
+        if (isPre === void 0) { isPre = false; }
+        this[":on"](type, fn, isPre);
+    };
     /**
      * 绑定事件
      * @param type 事件名称
      * @param fn 事件函数
      * @param isPre 是否前面插入
      */
-    Event.prototype.on = function (type, fn, isPre) {
+    Event.prototype[":on"] = function (type, fn, isPre) {
         if (isPre === void 0) { isPre = false; }
         var evs = this._events[type];
         if (!evs) {
@@ -49,7 +53,7 @@ var Event = /** @class */ (function () {
             evs.splice(index, 1);
         }
     };
-    Event.prototype._emit = function (target, type, arg) {
+    Event.prototype[":emit"] = function (target, type, arg) {
         if (this._parent && this._parent._emit) {
             this._parent._emit(target, type, arg);
         }
@@ -66,7 +70,7 @@ var Event = /** @class */ (function () {
      * @param args
      */
     Event.prototype.emit = function (type, arg) {
-        return this._emit(this, type, arg);
+        return this[":emit"](this, type, arg);
     };
     /**
      * 判断事件是否存在

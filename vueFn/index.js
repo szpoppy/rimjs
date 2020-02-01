@@ -2,16 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var _hasOwnProperty = Object.prototype.hasOwnProperty;
 var _toString = Object.prototype.toString;
-// 插件模式 存储
-var pluginArr = [];
-/**
- * 插件注册
- * @param initFn
- */
-function vueFnOn(initFn) {
-    pluginArr.push(initFn);
-}
-exports.vueFnOn = vueFnOn;
 /**
  * 获取安全数据
  * @param key
@@ -58,17 +48,6 @@ function assignData(data1, data2, vm) {
         }
     }
 }
-/**
- * vue install 函数
- * @param vue
- * @param initFn
- */
-function vueFnInstall(vue, initFn) {
-    if (initFn) {
-        vueFnOn(initFn);
-    }
-}
-exports.vueFnInstall = vueFnInstall;
 // 错误提示
 var msgOpt = {
     before: "vue已经初始化，请在初始化之前调用"
@@ -141,8 +120,8 @@ function makeLifecycle(inits) {
                 if (!lc) {
                     lc = lifecycles[key] = [];
                 }
-                if (isBind) {
-                    lc.push(fn);
+                if (isBind === true) {
+                    lc.push($bind(fn));
                     return;
                 }
                 lc.push(fn);
@@ -267,7 +246,7 @@ function vueFn() {
     // data 数据收集
     var optData = {};
     merges.data = function (val) {
-        assignData(optData, val);
+        Object.assign(optData, val);
     };
     // 官方函数式编程
     var optSetup = {};
@@ -346,34 +325,6 @@ function vueFn() {
         };
     }
     var lifecycle = makeLifecycle();
-    // the Next
-    var nextDoArr = [];
-    function quickNext(key) {
-        return function () {
-            var args = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                args[_i] = arguments[_i];
-            }
-            if (initFlag) {
-                warn("[" + key + "]");
-                return;
-            }
-            nextDoArr.push([key, args]);
-        };
-    }
-    var nextDoBind = "mounted";
-    function quickNextExec() {
-        lifecycle.on(nextDoBind, function () {
-            var _this = this;
-            nextDoArr.forEach(function (_a) {
-                var key = _a[0], args = _a[1];
-                var fn = _this[key];
-                if (typeof fn == "function") {
-                    fn.apply(void 0, args);
-                }
-            });
-        });
-    }
     var extData = {
         get: function (key) {
             return getSafe(key, this);
@@ -406,7 +357,21 @@ function vueFn() {
         },
         temp: {}
     };
+    var onExports = [];
+    var pluginArg = {
+        onExport: function (fn) {
+            onExports.push(fn);
+        },
+        lifecycle: lifecycle,
+        makeLifecycle: makeLifecycle,
+        quickSet: quickSet,
+        merges: merges,
+        extData: extData
+    };
     var fnArg = {
+        plugin: function (plug) {
+            return plug(pluginArg, fnArg);
+        },
         // 通用
         $set: $set,
         $name: quickSet("name"),
@@ -446,8 +411,6 @@ function vueFn() {
         $created: lifecycle.currying("created"),
         $mounted: lifecycle.currying("mounted"),
         $destroyed: lifecycle.currying("destroyed"),
-        $nextTick: quickNext("$nextTick"),
-        $emit: quickNext("$emit"),
         $: $bind,
         $getExt: getExt,
         $setExt: function (key, val) {
@@ -455,23 +418,7 @@ function vueFn() {
             var opt = typeof key == "string" ? (_a = {}, _a[key] = val, _a) : val;
             assignData(extData, opt);
         },
-        $export: function (resolve, reject) {
-            if (resolve) {
-                if (reject) {
-                    output();
-                    resolve(options);
-                    return;
-                }
-                // 异步模式
-                var ept = function (fn) {
-                    resolve(function () {
-                        output();
-                        fn(options);
-                    });
-                };
-                ept.options = options;
-                return ept;
-            }
+        $export: function () {
             output();
             return options;
         }
@@ -480,57 +427,34 @@ function vueFn() {
         // console.log("beforeC", this)
         setExt(this, extData);
     });
-    var afterArr = [];
-    var pluginArg = {
-        after: function (afterFn) {
-            afterArr.push(afterFn);
-        },
-        fnArg: fnArg,
-        lifecycle: lifecycle,
-        makeLifecycle: makeLifecycle,
-        quickSet: quickSet,
-        quickNext: quickNext,
-        setQuickNextExec: function (key) {
-            nextDoBind = key;
-        },
-        merges: merges,
-        extData: extData
-    };
-    pluginArr.forEach(function (pluginFn) {
-        pluginFn(pluginArg);
-    });
     function output() {
         if (initFlag) {
             // 防止多次执行
             return null;
         }
-        afterArr.forEach(function (afterFn) {
-            afterFn(fnArg);
-        });
-        // 快捷 执行方式
-        quickNextExec();
         options.data = function () {
             return optData;
         };
         options.setup = function () {
             return optSetup;
         };
-        lifecycle.make(options);
         lifecycle.on("destroyed", function () {
             // console.log("destroyed", this)
             removeExt(this);
         });
+        while (onExports.length) {
+            var fn = onExports.shift();
+            fn && fn();
+        }
+        lifecycle.make(options);
         initFlag = true;
         // console.log("[options]", options)
         // fn && fn(options)
         // console.log("[options]", options, optData, optSetup)
         return options;
     }
-    fnArg.$export.options = options;
     return fnArg;
 }
 exports.vueFn = vueFn;
-vueFn.on = vueFnOn;
-vueFn.install = vueFnInstall;
 exports.default = vueFn;
 //# sourceMappingURL=index.js.map
