@@ -21,7 +21,7 @@ export type dateType = boolean | number | string | Date
  * @param isWipe 是否去除时分秒
  * @return 返回新的时间对象（local）
  */
-export function parse(date?: dateType, isWipe?: boolean): Date {
+export function parseDate(date?: dateType, isWipe?: boolean): Date {
     if (typeof date == "boolean") {
         isWipe = date
         date = undefined
@@ -51,7 +51,7 @@ export function parse(date?: dateType, isWipe?: boolean): Date {
     if (/^\d{13,}$/.test(date)) {
         date = parseInt(date)
         if (gmt) {
-            return parse((get(date, "YYYY/MM/DD hh:mm:ss") as string) + gmt, isWipe)
+            return parseDate((getDate(date, "YYYY/MM/DD hh:mm:ss") as string) + gmt, isWipe)
         }
         return wipeOut(new Date(date), isWipe)
     }
@@ -95,8 +95,8 @@ let parseArr: Array<string> = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".spl
  * @param date
  * @param formatStr
  */
-export function get(date?: dateType, formatStr: string = "") {
-    let theDate: Date = parse(date)
+export function getDate(date?: dateType, formatStr: string = "") {
+    let theDate: Date = parseDate(date)
     let tZone: number = 0
     formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function(match, n, uni) {
         tZone = parseInt(n)
@@ -126,7 +126,7 @@ export function get(date?: dateType, formatStr: string = "") {
     let FW = weekDayArrF[w]
     let W = weekDayArr[w]
 
-    let diff = wipeOut(theDate, true).getTime() - parse(true).getTime()
+    let diff = wipeOut(theDate, true).getTime() - parseDate(true).getTime()
     let X = diff == 86400000 ? "明天" : diff == 0 ? "今天" : W
 
     return format(formatStr, parseArr, {
@@ -166,14 +166,14 @@ const diffIntervalArr = "D,ms,h,m,s".split(",")
  * @param arg2
  * @param arg3 格式化
  */
-export function diff(arg1: dateType | number, arg2: dateType | string, arg3?: string): string | diffOut {
+export function diffDate(arg1: dateType | number, arg2: dateType | string, arg3?: string): string | diffOut {
     let num: number
     let outStr: string
     if (typeof arg1 == "number") {
         num = arg1
         outStr = arg2 as string
     } else {
-        num = parse(arg1).getTime() - parse(arg2).getTime()
+        num = parseDate(arg1).getTime() - parseDate(arg2).getTime()
         outStr = arg3 as string
     }
 
@@ -211,7 +211,7 @@ const appendTimeOpt: any = {
  * @param date
  * @param formatStr
  */
-export function append(n: string | number, date: dateType, formatStr?: string) {
+export function appendDate(n: string | number, date: dateType, formatStr?: string) {
     let num: number = n as number
     if (typeof n == "string") {
         if (/^(-?\d+)([a-z])$/i.test(n)) {
@@ -221,16 +221,16 @@ export function append(n: string | number, date: dateType, formatStr?: string) {
         }
     }
 
-    let val = new Date(parse(date).getTime() + num)
+    let val = new Date(parseDate(date).getTime() + num)
     if (formatStr) {
-        return get(val, formatStr)
+        return getDate(val, formatStr)
     }
     return val
 }
 
 export default {
-    parse,
-    get,
-    diff,
-    append
+    parse: parseDate,
+    get: getDate,
+    diff: diffDate,
+    append: appendDate
 }

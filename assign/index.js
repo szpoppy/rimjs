@@ -36,31 +36,22 @@ function _assign(target, objs, flag) {
     });
     return target;
 }
-/**
- * 深度混合 对象
- * @param  target
- * @param  objs 每个单元应该同target 的数据类型一致
- */
 function merge(target) {
-    var objs = [];
+    var sources = [];
     for (var _i = 1; _i < arguments.length; _i++) {
-        objs[_i - 1] = arguments[_i];
+        sources[_i - 1] = arguments[_i];
     }
-    return _assign(target, objs);
+    return _assign(target, sources);
 }
 exports.merge = merge;
-/**
- * 深度克隆 对象
- * @param target
- * @param objs 每个单元应该同target 的数据类型一致
- */
 function assign(target) {
-    var objs = [];
+    var sources = [];
     for (var _i = 1; _i < arguments.length; _i++) {
-        objs[_i - 1] = arguments[_i];
+        sources[_i - 1] = arguments[_i];
     }
-    return _assign(target, objs, false);
+    return _assign(target, sources, false);
 }
 exports.assign = assign;
+Object.assign;
 exports.default = assign;
 //# sourceMappingURL=index.js.map

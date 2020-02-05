@@ -41,8 +41,11 @@ function _assign(target: any, objs: Array<any>, flag = false): any {
  * @param  target
  * @param  objs 每个单元应该同target 的数据类型一致
  */
-export function merge(target: any, ...objs: Array<any>): any {
-    return _assign(target, objs)
+export function merge<T, U>(target: T, source: U): T & U
+export function merge<T, U, V>(target: T, source1: U, source2: V): T & U & V
+export function merge<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
+export function merge(target: object, ...sources: any[]): any {
+    return _assign(target, sources)
 }
 
 /**
@@ -50,8 +53,13 @@ export function merge(target: any, ...objs: Array<any>): any {
  * @param target
  * @param objs 每个单元应该同target 的数据类型一致
  */
-export function assign(target: any, ...objs: Array<any>): any {
-    return _assign(target, objs, false)
+export function assign<T, U>(target: T, source: U): T & U
+export function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V
+export function assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
+export function assign(target: object, ...sources: any[]): any {
+    return _assign(target, sources, false)
 }
+
+Object.assign
 
 export default assign

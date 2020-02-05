@@ -7,4 +7,4 @@
  * @param fn 运行函数
  * @param exe 返回的值
  */
-export default function each<T = any>(arr: any, fn: Function, exe?: T): T | undefined;
+export default function each<T>(arr: any, fn: (item: any, index: number | string, stop: () => void) => any, exe?: T): T | undefined;

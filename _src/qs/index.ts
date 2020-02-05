@@ -17,8 +17,8 @@ class QueryString {
     QS?: QueryStringConstructor
     sep: string = "&"
     eq: string = "="
-    unescape: Function = decodeURIComponent
-    escape: Function = encodeURIComponent
+    unescape = decodeURIComponent
+    escape = encodeURIComponent
     constructor(opt?: initOpt) {
         if (opt) {
             Object.assign(this, opt)
@@ -29,7 +29,7 @@ class QueryString {
      * 解析为 对象输出
      * @param str
      */
-    parse(str: string): any {
+    parse(str: string): Record<string, any> {
         let sep = this.sep
         let eq = this.eq
         let unescape = this.unescape
@@ -65,7 +65,7 @@ class QueryString {
      * 序列化为字符串
      * @param opt
      */
-    stringify(opt: any): string {
+    stringify(opt: Record<string, any>): string {
         let sep = this.sep
         let eq = this.eq
         let escape = this.escape

@@ -20,7 +20,7 @@ function wipeOut(date, isWipe) {
  * @param isWipe 是否去除时分秒
  * @return 返回新的时间对象（local）
  */
-function parse(date, isWipe) {
+function parseDate(date, isWipe) {
     if (typeof date == "boolean") {
         isWipe = date;
         date = undefined;
@@ -45,7 +45,7 @@ function parse(date, isWipe) {
     if (/^\d{13,}$/.test(date)) {
         date = parseInt(date);
         if (gmt) {
-            return parse(get(date, "YYYY/MM/DD hh:mm:ss") + gmt, isWipe);
+            return parseDate(getDate(date, "YYYY/MM/DD hh:mm:ss") + gmt, isWipe);
         }
         return wipeOut(new Date(date), isWipe);
     }
@@ -59,7 +59,7 @@ function parse(date, isWipe) {
     // 防止报错
     return wipeOut(new Date(date + gmt), isWipe);
 }
-exports.parse = parse;
+exports.parseDate = parseDate;
 // 格式化
 function format(str, arr, info) {
     if (arr === void 0) { arr = []; }
@@ -88,9 +88,9 @@ var parseArr = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",");
  * @param date
  * @param formatStr
  */
-function get(date, formatStr) {
+function getDate(date, formatStr) {
     if (formatStr === void 0) { formatStr = ""; }
-    var theDate = parse(date);
+    var theDate = parseDate(date);
     var tZone = 0;
     formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function (match, n, uni) {
         tZone = parseInt(n);
@@ -119,7 +119,7 @@ function get(date, formatStr) {
     var EW = weekDayArrE[w];
     var FW = weekDayArrF[w];
     var W = weekDayArr[w];
-    var diff = wipeOut(theDate, true).getTime() - parse(true).getTime();
+    var diff = wipeOut(theDate, true).getTime() - parseDate(true).getTime();
     var X = diff == 86400000 ? "明天" : diff == 0 ? "今天" : W;
     return format(formatStr, parseArr, {
         date: date,
@@ -142,7 +142,7 @@ function get(date, formatStr) {
         X: X
     });
 }
-exports.get = get;
+exports.getDate = getDate;
 // 时间间隔差
 var diffIntervalArr = "D,ms,h,m,s".split(",");
 /**
@@ -151,7 +151,7 @@ var diffIntervalArr = "D,ms,h,m,s".split(",");
  * @param arg2
  * @param arg3 格式化
  */
-function diff(arg1, arg2, arg3) {
+function diffDate(arg1, arg2, arg3) {
     var num;
     var outStr;
     if (typeof arg1 == "number") {
@@ -159,7 +159,7 @@ function diff(arg1, arg2, arg3) {
         outStr = arg2;
     }
     else {
-        num = parse(arg1).getTime() - parse(arg2).getTime();
+        num = parseDate(arg1).getTime() - parseDate(arg2).getTime();
         outStr = arg3;
     }
     var mm = Math.abs(num);
@@ -181,7 +181,7 @@ function diff(arg1, arg2, arg3) {
         s: s
     });
 }
-exports.diff = diff;
+exports.diffDate = diffDate;
 // 日期上增加特定时间
 var appendTimeOpt = {
     s: 1000,
@@ -195,7 +195,7 @@ var appendTimeOpt = {
  * @param date
  * @param formatStr
  */
-function append(n, date, formatStr) {
+function appendDate(n, date, formatStr) {
     var num = n;
     if (typeof n == "string") {
         if (/^(-?\d+)([a-z])$/i.test(n)) {
@@ -205,17 +205,17 @@ function append(n, date, formatStr) {
             num = 0;
         }
     }
-    var val = new Date(parse(date).getTime() + num);
+    var val = new Date(parseDate(date).getTime() + num);
     if (formatStr) {
-        return get(val, formatStr);
+        return getDate(val, formatStr);
     }
     return val;
 }
-exports.append = append;
+exports.appendDate = appendDate;
 exports.default = {
-    parse: parse,
-    get: get,
-    diff: diff,
-    append: append
+    parse: parseDate,
+    get: getDate,
+    diff: diffDate,
+    append: appendDate
 };
 //# sourceMappingURL=index.js.map
