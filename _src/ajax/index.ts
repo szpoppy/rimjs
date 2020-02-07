@@ -100,7 +100,9 @@ interface IParam {
 type sendParam = IParam | FormData | string
 
 enum EResType {
+    // eslint-disable-next-line
     json = "json",
+    // eslint-disable-next-line
     text = "text"
 }
 
@@ -713,9 +715,9 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
     }
 
     // XDR 不能设置 header
-    forEach(req.header, function(v: string, k: string) {
+    forEach(req.header, function(v, k) {
         let xhr = req.xhr as XMLHttpRequest
-        xhr.setRequestHeader(k, v)
+        xhr.setRequestHeader(k as string, v)
     })
     res.status = 0
 
@@ -810,9 +812,9 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     if (isFormData) {
         // FormData 将参数都添加到 FormData中
-        forEach(req.param, function(value: any, key: string) {
+        forEach(req.param, function(value, key) {
             let fd = <FormData>param
-            fd.append(key, value)
+            fd.append(key as string, value)
         })
         req.param = param
     } else {

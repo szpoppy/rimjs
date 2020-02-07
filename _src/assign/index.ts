@@ -5,7 +5,7 @@ const _toString: Function = Object.prototype.toString
 
 function _assign(target: any, objs: Array<any>, flag = false): any {
     forEach(objs, function(source: object) {
-        forEach(source, function(item: any, n: string): void {
+        forEach(source, function(item, n): void {
             if (item) {
                 let type = _toString.call(item).toLowerCase()
                 if (type == "[object date]") {
