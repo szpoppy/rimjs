@@ -97,7 +97,9 @@ function getDefaultContentType(dataType) {
 }
 var EResType;
 (function (EResType) {
+    // eslint-disable-next-line
     EResType["json"] = "json";
+    // eslint-disable-next-line
     EResType["text"] = "text";
 })(EResType || (EResType = {}));
 // ==================================================================== 资源返回类
