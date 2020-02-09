@@ -62,8 +62,8 @@ export default class Event {
     }
 
     private ":emit"<R, T>(target: T, type: string, arg: R): R {
-        if (this._parent && this._parent._emit) {
-            this._parent._emit(target, type, arg)
+        if (this._parent && this._parent[":emit"]) {
+            this._parent[":emit"](target, type, arg)
         }
 
         let evs = this._events[type] || []

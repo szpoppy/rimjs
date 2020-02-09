@@ -217,17 +217,6 @@ export class Ajax extends Event {
         return this
     }
 
-    // 扩展
-    assign(...args: any): Ajax {
-        if (typeof args[0] === "string") {
-            this.assign({ [args[0]]: args[1] })
-        } else {
-            args.unshift(this)
-            merge.apply(Object, args)
-        }
-        return this
-    }
-
     // 中止 请求
     abort(): Ajax {
         ajaxAbort(this, true)
@@ -318,6 +307,10 @@ function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEven
 
 let ajaxDateDiff: number = 0
 
+interface AjaxGroupConstructor {
+    new (opt?: IFAjaxConf): AjaxGroup
+}
+
 export class AjaxGroup extends Event {
     dateDiff: number = ajaxDateDiff
     conf: IFAjaxConf = {}
@@ -325,6 +318,8 @@ export class AjaxGroup extends Event {
     global?: Global
 
     parent?: Global
+
+    Group?: AjaxGroupConstructor
 
     on(type: string, fn: (arg: AjaxCourse) => void, isPre: boolean = false): void {
         this[":on"]<AjaxGroup>(type, fn, isPre)
@@ -882,5 +877,6 @@ let def = new AjaxGroup()
 
 // 全局
 def.global = ajaxGlobal
+def.Group = AjaxGroup
 
 export default def
