@@ -54,8 +54,8 @@ var Event = /** @class */ (function () {
         }
     };
     Event.prototype[":emit"] = function (target, type, arg) {
-        if (this._parent && this._parent._emit) {
-            this._parent._emit(target, type, arg);
+        if (this._parent && this._parent[":emit"]) {
+            this._parent[":emit"](target, type, arg);
         }
         var evs = this._events[type] || [];
         for (var i = 0; i < evs.length; i += 1) {

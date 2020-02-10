@@ -178,22 +178,6 @@ var Ajax = /** @class */ (function (_super) {
         getConf(opt, this.conf);
         return this;
     };
-    // 扩展
-    Ajax.prototype.assign = function () {
-        var _a;
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        if (typeof args[0] === "string") {
-            this.assign((_a = {}, _a[args[0]] = args[1], _a));
-        }
-        else {
-            args.unshift(this);
-            assign_1.merge.apply(Object, args);
-        }
-        return this;
-    };
     // 中止 请求
     Ajax.prototype.abort = function () {
         ajaxAbort(this, true);
@@ -777,5 +761,6 @@ function ajaxAbort(target, flag) {
 var def = new AjaxGroup();
 // 全局
 def.global = exports.ajaxGlobal;
+def.Group = AjaxGroup;
 exports.default = def;
 //# sourceMappingURL=index.js.map

@@ -76,7 +76,6 @@ export declare class Ajax extends Event {
     on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor(parent: AjaxGroup, opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): Ajax;
-    assign(...args: any): Ajax;
     abort(): Ajax;
     timeout(this: Ajax, time: number, callback: IEventOnFn): Ajax;
     send(this: Ajax, param?: sendParam, over?: boolean): Ajax;
@@ -87,11 +86,15 @@ interface shortcutEventObj {
     [propName: string]: IEventOnFn;
 }
 declare type shortcutEvent = shortcutEventObj | IEventOnFn;
+interface AjaxGroupConstructor {
+    new (opt?: IFAjaxConf): AjaxGroup;
+}
 export declare class AjaxGroup extends Event {
     dateDiff: number;
     conf: IFAjaxConf;
     global?: Global;
     parent?: Global;
+    Group?: AjaxGroupConstructor;
     on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor(opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): AjaxGroup;
