@@ -36,8 +36,6 @@ Vue.use(VueLife, {
     hooks: {
         user: "created"
     },
-    // 默认的宽展字段 默认为 life
-    lifeName: "life",
     // 运行 init 函数时赋予的额外参数
     args: []
 })
@@ -68,10 +66,6 @@ Vue.use(VueLife, {
 
 ```
 
-## 获取安装
-
-> npm install vue-life
-
 ## 实例
 
 > 下面两个 ajax 触发时间都可以发生在 vue 本省生命周期函数过度期间运行，加快页面加载速度
@@ -83,7 +77,7 @@ Vue.use(VueLife, {
 ### 初始化
 
 ```js
-import VueLife from "vue-life"
+import VueLife from "rimjs/vueLife"
 Vue.use(VueLife, {
     // 完成回调
     init({ emit, hooks }) {
@@ -107,10 +101,10 @@ Vue.use(VueLife, {
         life: {
             user({ then, data }) {
                 /*
-                这里的会在 beforeCreate 之后触发
-                由于首次加载，可能由于ajax原因，会延后触发
-                data 即为 上面的 ajax回调参数 res
-            */
+                    这里的会在 beforeCreate 之后触发
+                    由于首次加载，可能由于ajax原因，会延后触发
+                    data 即为 上面的 ajax回调参数 res
+                */
 
                 // ajax加载用用户详细信息
                 ajax(function(userDetail) {
@@ -134,9 +128,9 @@ Vue.use(VueLife, {
         life: {
             prepose({ then, emit }) {
                 /*
-                这里的会在 beforeCreate 之后触发
-                emit 可以手动出发其他自定义事件，但仅限于当前实例
-            */
+                    这里的会在 beforeCreate 之后触发
+                    emit 可以手动出发其他自定义事件，但仅限于当前实例
+                */
 
                 // 这里表示异步执行
                 setTimeout(function(userDetail) {

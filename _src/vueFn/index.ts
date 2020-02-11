@@ -1,3 +1,4 @@
+// eslint-disable-next-line
 import Vue, { ComponentOptions, Component, AsyncComponent, DirectiveFunction, DirectiveOptions, PropOptions, ComputedOptions, WatchOptionsWithHandler, WatchHandler } from "vue"
 
 const _hasOwnProperty = Object.prototype.hasOwnProperty
