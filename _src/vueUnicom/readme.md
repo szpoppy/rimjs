@@ -99,21 +99,10 @@ unicom.monitorOff()
 ### main.js 注册 Unicom 插件
 
 ```javascript
-import Vue from 'vue'
-import VueUnicom from 'vue-unicom'
+import Vue from "vue"
+import VueUnicom from "vue-unicom"
 // 非 cli 也必须 install一下
-Vue.use(VueUnicom, {
-    // 制定名称， 默认为 unicom
-    unicom: 'unicom'，
-    // 定制分组使用名称 默认为 unicom + 'Name'
-    unicomName: 'unicomName',
-    // 定制id使用名称 默认为 unicom + 'Id'
-    unicomId: 'unicomId',
-    // 定制vue中，发布emit方法， this['$' + unicomEmit] 默认为 unicom参数
-    unicomEmit: 'unicom',
-    // 定制 Vue中，全局访问的类名 默认为  unicom 参数，并将第一个字母大写
-    unicomClass: 'Unicom'
-})
+Vue.use(VueUnicom)
 ```
 
 ### 其他关联 JS 中使用
