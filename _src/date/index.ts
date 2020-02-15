@@ -2,15 +2,16 @@
 const weekDayArr: Array<string> = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
 const weekDayArrE: Array<string> = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"]
 const weekDayArrF: Array<string> = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
-const oneDayNum: number = 24 * 60 * 60 * 1000
 
 // 克隆一个时间兑现，是否只保留年月日
 function wipeOut(date: Date, isWipe: boolean = false): Date {
-    let t: number = date.getTime()
     if (isWipe) {
-        t = Math.floor(t / oneDayNum) * oneDayNum
+        let y = date.getFullYear()
+        let m = date.getMonth() + 1
+        let d = date.getDate()
+        return new Date(y + "/" + m + "/" + d)
     }
-    return new Date(t)
+    return new Date(date.getTime())
 }
 
 export type dateType = boolean | number | string | Date
@@ -29,7 +30,7 @@ export function parseDate(date?: dateType, isWipe?: boolean): Date {
 
     if (!date) {
         // 返回当前时间
-        return new Date()
+        return wipeOut(new Date(), isWipe)
     }
 
     // 日期
@@ -51,7 +52,7 @@ export function parseDate(date?: dateType, isWipe?: boolean): Date {
     if (/^\d{13,}$/.test(date)) {
         date = parseInt(date)
         if (gmt) {
-            return parseDate((getDate(date, "YYYY/MM/DD hh:mm:ss") as string) + gmt, isWipe)
+            return parseDate(getDate(date, "YYYY/MM/DD hh:mm:ss") + gmt, isWipe)
         }
         return wipeOut(new Date(date), isWipe)
     }
@@ -69,7 +70,7 @@ export function parseDate(date?: dateType, isWipe?: boolean): Date {
 }
 
 // 格式化
-function format(str?: string, arr: Array<string> = [], info: any = {}): any {
+function format(str: string, arr: string[], info: any): string {
     if (!str) {
         // 无格式化字符串
         return info
@@ -87,24 +88,40 @@ function format(str?: string, arr: Array<string> = [], info: any = {}): any {
     return str
 }
 
+interface dateProt {
+    date: Date
+    YYYY: number
+    YY: number
+    MM: string
+    M: number
+    DD: string
+    D: number
+    hh: string
+    h: number
+    mm: string
+    m: number
+    ss: string
+    s: number
+    w: number
+    W: string
+    EW: string
+    FW: string
+    X: string
+}
+
 // 格式化日期
 // formatStr为格式化日期
-let parseArr: Array<string> = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",")
+let parseArr: string[] = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",")
 /**
  * 将date格式化为formatStr的格式
  * @param date
  * @param formatStr
  */
-export function getDate(date?: dateType, formatStr: string = "") {
+export function getDate(date: dateType): dateProt
+export function getDate(date: dateType, formatStr: string): string
+export function getDate(date: dateType, formatStr: string = ""): dateProt | string {
     let theDate: Date = parseDate(date)
     let tZone: number = 0
-    formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function(match, n, uni) {
-        tZone = parseInt(n)
-        if (uni == "h") {
-            tZone *= 60
-        }
-        return ""
-    })
     if (tZone) {
         // 设置为要求时区的时间
         theDate.setMinutes(theDate.getTimezoneOffset() + tZone + theDate.getMinutes())
@@ -128,9 +145,8 @@ export function getDate(date?: dateType, formatStr: string = "") {
 
     let diff = wipeOut(theDate, true).getTime() - parseDate(true).getTime()
     let X = diff == 86400000 ? "明天" : diff == 0 ? "今天" : W
-
-    return format(formatStr, parseArr, {
-        date: date,
+    let opt: dateProt = {
+        date: theDate,
         YYYY: YYYY,
         YY: YY,
         MM: MM,
@@ -148,10 +164,21 @@ export function getDate(date?: dateType, formatStr: string = "") {
         EW: EW,
         FW: FW,
         X: X
+    }
+    if (!formatStr) {
+        return opt
+    }
+    formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function(match, n, uni) {
+        tZone = parseInt(n)
+        if (uni == "h") {
+            tZone *= 60
+        }
+        return ""
     })
+    return format(formatStr, parseArr, opt)
 }
 
-interface diffOut {
+interface diffProt {
     D: number
     ms: number
     h: number
@@ -166,15 +193,19 @@ const diffIntervalArr = "D,ms,h,m,s".split(",")
  * @param arg2
  * @param arg3 格式化
  */
-export function diffDate(arg1: dateType | number, arg2: dateType | string, arg3?: string): string | diffOut {
+export function diffDate(arg1: number): diffProt
+export function diffDate(arg1: dateType, arg2: dateType): diffProt
+export function diffDate(arg1: number, arg2: string): string
+export function diffDate(arg1: dateType, arg2: dateType, arg3: string): string
+export function diffDate(arg1: dateType | number, arg2?: dateType | string, arg3?: string): string | diffProt {
     let num: number
     let outStr: string
     if (typeof arg1 == "number") {
         num = arg1
-        outStr = arg2 as string
+        outStr = (arg2 as string) || ""
     } else {
         num = parseDate(arg1).getTime() - parseDate(arg2).getTime()
-        outStr = arg3 as string
+        outStr = (arg3 as string) || ""
     }
 
     let mm: number = Math.abs(num)
@@ -189,13 +220,18 @@ export function diffDate(arg1: dateType | number, arg2: dateType | string, arg3?
     let h = mm % 24
     let D = Math.floor(mm / 24)
 
-    return format(outStr, diffIntervalArr, {
+    let opt = {
         D: D,
         ms: ms,
         h: h,
         m: m,
         s: s
-    })
+    }
+
+    if (!outStr) {
+        return opt
+    }
+    return format(outStr, diffIntervalArr, opt)
 }
 
 // 日期上增加特定时间
@@ -211,7 +247,9 @@ const appendTimeOpt: any = {
  * @param date
  * @param formatStr
  */
-export function appendDate(n: string | number, date: dateType, formatStr?: string) {
+export function appendDate(n: string | number, date: dateType): Date
+export function appendDate(n: string | number, date: dateType, formatStr: string): string
+export function appendDate(n: string | number, date: dateType, formatStr?: string): Date | string {
     let num: number = n as number
     if (typeof n == "string") {
         if (/^(-?\d+)([a-z])$/i.test(n)) {
