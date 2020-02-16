@@ -4,15 +4,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var weekDayArr = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 var weekDayArrE = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
 var weekDayArrF = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-var oneDayNum = 24 * 60 * 60 * 1000;
 // 克隆一个时间兑现，是否只保留年月日
 function wipeOut(date, isWipe) {
     if (isWipe === void 0) { isWipe = false; }
-    var t = date.getTime();
     if (isWipe) {
-        t = Math.floor(t / oneDayNum) * oneDayNum;
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        return new Date(y + "/" + m + "/" + d);
     }
-    return new Date(t);
+    return new Date(date.getTime());
 }
 /**
  * 新建一个时间对象
@@ -27,7 +28,7 @@ function parseDate(date, isWipe) {
     }
     if (!date) {
         // 返回当前时间
-        return new Date();
+        return wipeOut(new Date(), isWipe);
     }
     // 日期
     if (date instanceof Date) {
@@ -62,8 +63,6 @@ function parseDate(date, isWipe) {
 exports.parseDate = parseDate;
 // 格式化
 function format(str, arr, info) {
-    if (arr === void 0) { arr = []; }
-    if (info === void 0) { info = {}; }
     if (!str) {
         // 无格式化字符串
         return info;
@@ -83,22 +82,10 @@ function format(str, arr, info) {
 // 格式化日期
 // formatStr为格式化日期
 var parseArr = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",");
-/**
- * 将date格式化为formatStr的格式
- * @param date
- * @param formatStr
- */
 function getDate(date, formatStr) {
     if (formatStr === void 0) { formatStr = ""; }
     var theDate = parseDate(date);
     var tZone = 0;
-    formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function (match, n, uni) {
-        tZone = parseInt(n);
-        if (uni == "h") {
-            tZone *= 60;
-        }
-        return "";
-    });
     if (tZone) {
         // 设置为要求时区的时间
         theDate.setMinutes(theDate.getTimezoneOffset() + tZone + theDate.getMinutes());
@@ -121,8 +108,8 @@ function getDate(date, formatStr) {
     var W = weekDayArr[w];
     var diff = wipeOut(theDate, true).getTime() - parseDate(true).getTime();
     var X = diff == 86400000 ? "明天" : diff == 0 ? "今天" : W;
-    return format(formatStr, parseArr, {
-        date: date,
+    var opt = {
+        date: theDate,
         YYYY: YYYY,
         YY: YY,
         MM: MM,
@@ -140,27 +127,32 @@ function getDate(date, formatStr) {
         EW: EW,
         FW: FW,
         X: X
+    };
+    if (!formatStr) {
+        return opt;
+    }
+    formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function (match, n, uni) {
+        tZone = parseInt(n);
+        if (uni == "h") {
+            tZone *= 60;
+        }
+        return "";
     });
+    return format(formatStr, parseArr, opt);
 }
 exports.getDate = getDate;
 // 时间间隔差
 var diffIntervalArr = "D,ms,h,m,s".split(",");
-/**
- * date1 和 date2之间的时间差
- * @param arg1
- * @param arg2
- * @param arg3 格式化
- */
 function diffDate(arg1, arg2, arg3) {
     var num;
     var outStr;
     if (typeof arg1 == "number") {
         num = arg1;
-        outStr = arg2;
+        outStr = arg2 || "";
     }
     else {
         num = parseDate(arg1).getTime() - parseDate(arg2).getTime();
-        outStr = arg3;
+        outStr = arg3 || "";
     }
     var mm = Math.abs(num);
     // 毫秒
@@ -173,13 +165,17 @@ function diffDate(arg1, arg2, arg3) {
     mm = Math.floor(mm / 60);
     var h = mm % 24;
     var D = Math.floor(mm / 24);
-    return format(outStr, diffIntervalArr, {
+    var opt = {
         D: D,
         ms: ms,
         h: h,
         m: m,
         s: s
-    });
+    };
+    if (!outStr) {
+        return opt;
+    }
+    return format(outStr, diffIntervalArr, opt);
 }
 exports.diffDate = diffDate;
 // 日期上增加特定时间
@@ -189,12 +185,6 @@ var appendTimeOpt = {
     h: 60 * 60 * 1000,
     d: 24 * 60 * 60 * 1000
 };
-/**
- * 在date上增加时间
- * @param n
- * @param date
- * @param formatStr
- */
 function appendDate(n, date, formatStr) {
     var num = n;
     if (typeof n == "string") {
