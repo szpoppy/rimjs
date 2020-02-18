@@ -58,12 +58,13 @@ function getFullUrl(url) {
 // ===================================================================== 安全获取子对象数据
 function getSafeData(data, property) {
     if (property && data) {
-        property.split(".").forEach(function (item) {
-            data = data[item];
+        var props = property.split(".");
+        for (var i = 0; i < props.length; i += 1) {
+            data = data[props[i]];
             if (data == null) {
-                return false;
+                return null;
             }
-        });
+        }
     }
     return data;
 }
