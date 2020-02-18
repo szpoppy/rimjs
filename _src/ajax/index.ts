@@ -48,12 +48,13 @@ function getFullUrl(url: string): string {
 // ===================================================================== 安全获取子对象数据
 function getSafeData(data: any, property: string): any {
     if (property && data) {
-        property.split(".").forEach(function(item) {
-            data = data[item]
+        let props = property.split(".")
+        for (let i = 0; i < props.length; i += 1) {
+            data = data[props[i]]
             if (data == null) {
-                return false
+                return null
             }
-        })
+        }
     }
     return data
 }
