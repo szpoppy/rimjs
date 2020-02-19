@@ -13,7 +13,7 @@ interface QueryStringConstructor {
     new (opt?: initOpt): QueryString
 }
 
-class QueryString {
+export class QueryString {
     QS?: QueryStringConstructor
     sep: string = "&"
     eq: string = "="

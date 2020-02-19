@@ -119,7 +119,7 @@ dateFn.get(new Date(), "MM-DD X");
 
 ### 在一个时间上增加或者减少时间
 
-> dateFn.append(n:String;Number[, date:String;Number;Date, formatStr:Strings]):Date;String
+> dateFn.append(n:String;Number[, date:String;Number;Date, formatStr:Strings|boolean]):Date;String
 
 -   n:String
     -   1d 增加 1 天
@@ -130,6 +130,7 @@ dateFn.get(new Date(), "MM-DD X");
     -   增加的毫秒数
 -   date 日期格式的字符串 毫秒数字 或者日期
 -   formatStr 将日期详情格式化为字符串形式（如果为空，返回为 Date）
+-   formatStr true 去除时分秒的时间
 
 ```javascript
 // => 明天现在

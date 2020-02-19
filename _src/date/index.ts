@@ -248,8 +248,9 @@ const appendTimeOpt: any = {
  * @param formatStr
  */
 export function appendDate(n: string | number, date: dateType): Date
+export function appendDate(n: string | number, date: dateType, isWipe: boolean): Date
 export function appendDate(n: string | number, date: dateType, formatStr: string): string
-export function appendDate(n: string | number, date: dateType, formatStr?: string): Date | string {
+export function appendDate(n: string | number, date: dateType, formatStr?: string | boolean): Date | string {
     let num: number = n as number
     if (typeof n == "string") {
         if (/^(-?\d+)([a-z])$/i.test(n)) {
@@ -257,6 +258,9 @@ export function appendDate(n: string | number, date: dateType, formatStr?: strin
         } else {
             num = 0
         }
+    }
+    if (typeof formatStr == "boolean") {
+        return new Date(parseDate(date, formatStr).getTime() + num)
     }
 
     let val = new Date(parseDate(date).getTime() + num)
