@@ -78,6 +78,7 @@ var QueryString = /** @class */ (function () {
     };
     return QueryString;
 }());
+exports.QueryString = QueryString;
 var qs = new QueryString();
 qs.QS = QueryString;
 exports.parseQS = qs.parse;

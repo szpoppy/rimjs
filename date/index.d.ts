@@ -56,6 +56,7 @@ export declare function diffDate(arg1: dateType, arg2: dateType, arg3: string): 
  * @param formatStr
  */
 export declare function appendDate(n: string | number, date: dateType): Date;
+export declare function appendDate(n: string | number, date: dateType, isWipe: boolean): Date;
 export declare function appendDate(n: string | number, date: dateType, formatStr: string): string;
 declare const _default: {
     parse: typeof parseDate;

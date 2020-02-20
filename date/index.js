@@ -195,6 +195,9 @@ function appendDate(n, date, formatStr) {
             num = 0;
         }
     }
+    if (typeof formatStr == "boolean") {
+        return new Date(parseDate(date, formatStr).getTime() + num);
+    }
     var val = new Date(parseDate(date).getTime() + num);
     if (formatStr) {
         return getDate(val, formatStr);

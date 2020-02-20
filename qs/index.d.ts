@@ -7,7 +7,7 @@ interface initOpt {
 interface QueryStringConstructor {
     new (opt?: initOpt): QueryString;
 }
-declare class QueryString {
+export declare class QueryString {
     QS?: QueryStringConstructor;
     sep: string;
     eq: string;
