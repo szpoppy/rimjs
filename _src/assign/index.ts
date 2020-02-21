@@ -60,6 +60,7 @@ export function assign(target: object, ...sources: any[]): any {
     return _assign(target, sources, false)
 }
 
-Object.assign
-
-export default assign
+export default {
+    merge,
+    assign
+}

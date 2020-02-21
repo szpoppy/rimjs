@@ -9,7 +9,7 @@ stringifyQS({a: 1, b: [1,2]})  // a=1&b=1&b=2
 // qs 字符串转换为对象 同 qs.parse
 parseQS("a=1&b=1&b=2") // {a: 1, b: [1,2]}
 
-// 生成新的对象 同 qs.QS
+// 生成新的对象 同 qs.QueryString
 let qss = new QueryString({
     // a=1&b=1&b=2 中的 &连接符
     sep: "&",

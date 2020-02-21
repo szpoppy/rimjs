@@ -75,7 +75,6 @@ function remove(key: string): void {
  */
 export class LSClass {
     preposition: string = ":"
-    LSClass?: Function
     /**
      * pre 为前置参数
      * @param pre
@@ -170,8 +169,7 @@ export class LSClass {
 /**
  * 输出类
  */
-let ls = new LSClass(":")
-ls.LSClass = LSClass
+let ls = Object.assign(new LSClass(":"), { LSClass })
 
 export let getStorage = ls.getItem
 export let setStorage = ls.setItem

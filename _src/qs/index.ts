@@ -9,12 +9,7 @@ interface initOpt {
     escape?: Function
 }
 
-interface QueryStringConstructor {
-    new (opt?: initOpt): QueryString
-}
-
 export class QueryString {
-    QS?: QueryStringConstructor
     sep: string = "&"
     eq: string = "="
     unescape = decodeURIComponent
@@ -90,8 +85,7 @@ export class QueryString {
     }
 }
 
-let qs = new QueryString()
-qs.QS = QueryString
+let qs = Object.assign(new QueryString(), { QueryString })
 
 export let parseQS = qs.parse
 export let stringifyQS = qs.stringify

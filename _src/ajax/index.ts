@@ -308,19 +308,15 @@ function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEven
 
 let ajaxDateDiff: number = 0
 
-interface AjaxGroupConstructor {
-    new (opt?: IFAjaxConf): AjaxGroup
-}
-
 export class AjaxGroup extends Event {
     dateDiff: number = ajaxDateDiff
     conf: IFAjaxConf = {}
 
-    global?: Global
+    // global?: Global
 
     parent?: Global
 
-    Group?: AjaxGroupConstructor
+    // Group?: AjaxGroupConstructor
 
     on(type: string, fn: (arg: AjaxCourse) => void, isPre: boolean = false): void {
         this[":on"]<AjaxGroup>(type, fn, isPre)
@@ -788,7 +784,8 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
             return req.paths[s1] || s0
         })
 
-    if (req.baseURL && !/^(:?http(:?s)?:)?\/\//i.test(req.url)) {
+    let httpReg = new RegExp("^(:?http(:?s)?:)?//", "i")
+    if (req.baseURL && !httpReg.test(req.url)) {
         // 有baseURL 并且不是全量地址
         req.formatURL = req.baseURL + req.formatURL
     }
@@ -874,10 +871,6 @@ function ajaxAbort(target: Ajax, flag: boolean = false): void {
     }
 }
 
-let def = new AjaxGroup()
-
-// 全局
-def.global = ajaxGlobal
-def.Group = AjaxGroup
+let def = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup })
 
 export default def
