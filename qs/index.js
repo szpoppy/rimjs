@@ -79,8 +79,7 @@ var QueryString = /** @class */ (function () {
     return QueryString;
 }());
 exports.QueryString = QueryString;
-var qs = new QueryString();
-qs.QS = QueryString;
+var qs = Object.assign(new QueryString(), { QueryString: QueryString });
 exports.parseQS = qs.parse;
 exports.stringifyQS = qs.stringify;
 exports.default = qs;

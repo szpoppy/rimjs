@@ -3,7 +3,6 @@
  */
 export declare class LSClass {
     preposition: string;
-    LSClass?: Function;
     /**
      * pre 为前置参数
      * @param pre
@@ -30,7 +29,9 @@ export declare class LSClass {
 /**
  * 输出类
  */
-declare let ls: LSClass;
+declare let ls: LSClass & {
+    LSClass: typeof LSClass;
+};
 export declare let getStorage: (key: string) => any;
 export declare let setStorage: (key: string, value: any, expiration?: string | number | Date) => void;
 export declare let removeStorage: (key: string) => void;

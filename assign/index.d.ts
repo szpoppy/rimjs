@@ -14,4 +14,8 @@ export declare function merge<T, U, V, W>(target: T, source1: U, source2: V, sou
 export declare function assign<T, U>(target: T, source: U): T & U;
 export declare function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V;
 export declare function assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W;
-export default assign;
+declare const _default: {
+    merge: typeof merge;
+    assign: typeof assign;
+};
+export default _default;

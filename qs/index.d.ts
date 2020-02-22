@@ -4,11 +4,7 @@ interface initOpt {
     unescape?: Function;
     escape?: Function;
 }
-interface QueryStringConstructor {
-    new (opt?: initOpt): QueryString;
-}
 export declare class QueryString {
-    QS?: QueryStringConstructor;
     sep: string;
     eq: string;
     unescape: typeof decodeURIComponent;
@@ -25,7 +21,9 @@ export declare class QueryString {
      */
     stringify(opt: Record<string, any>): string;
 }
-declare let qs: QueryString;
+declare let qs: QueryString & {
+    QueryString: typeof QueryString;
+};
 export declare let parseQS: (str: string) => Record<string, any>;
 export declare let stringifyQS: (opt: Record<string, any>) => string;
 export default qs;

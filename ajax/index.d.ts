@@ -86,15 +86,10 @@ interface shortcutEventObj {
     [propName: string]: IEventOnFn;
 }
 declare type shortcutEvent = shortcutEventObj | IEventOnFn;
-interface AjaxGroupConstructor {
-    new (opt?: IFAjaxConf): AjaxGroup;
-}
 export declare class AjaxGroup extends Event {
     dateDiff: number;
     conf: IFAjaxConf;
-    global?: Global;
     parent?: Global;
-    Group?: AjaxGroupConstructor;
     on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor(opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): AjaxGroup;
@@ -112,5 +107,8 @@ declare class Global extends Event {
     setConf(conf: IFAjaxConf): void;
 }
 export declare let ajaxGlobal: Global;
-declare let def: AjaxGroup;
+declare let def: AjaxGroup & {
+    global: Global;
+    Group: typeof AjaxGroup;
+};
 export default def;

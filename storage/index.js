@@ -159,8 +159,7 @@ exports.LSClass = LSClass;
 /**
  * 输出类
  */
-var ls = new LSClass(":");
-ls.LSClass = LSClass;
+var ls = Object.assign(new LSClass(":"), { LSClass: LSClass });
 exports.getStorage = ls.getItem;
 exports.setStorage = ls.setItem;
 exports.removeStorage = ls.removeItem;

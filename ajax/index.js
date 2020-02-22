@@ -270,6 +270,7 @@ var AjaxGroup = /** @class */ (function (_super) {
         opt && _this.setConf(opt);
         return _this;
     }
+    // Group?: AjaxGroupConstructor
     AjaxGroup.prototype.on = function (type, fn, isPre) {
         if (isPre === void 0) { isPre = false; }
         this[":on"](type, fn, isPre);
@@ -684,7 +685,8 @@ function requestSend(param, course) {
         req.path = s0;
         return req.paths[s1] || s0;
     });
-    if (req.baseURL && !/^(:?http(:?s)?:)?\/\//i.test(req.url)) {
+    var httpReg = new RegExp("^(:?http(:?s)?:)?//", "i");
+    if (req.baseURL && !httpReg.test(req.url)) {
         // 有baseURL 并且不是全量地址
         req.formatURL = req.baseURL + req.formatURL;
     }
@@ -759,9 +761,6 @@ function ajaxAbort(target, flag) {
         flag && target.emit("abort", course);
     }
 }
-var def = new AjaxGroup();
-// 全局
-def.global = exports.ajaxGlobal;
-def.Group = AjaxGroup;
+var def = Object.assign(new AjaxGroup(), { global: exports.ajaxGlobal, Group: AjaxGroup });
 exports.default = def;
 //# sourceMappingURL=index.js.map

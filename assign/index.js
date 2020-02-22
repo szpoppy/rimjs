@@ -52,6 +52,8 @@ function assign(target) {
     return _assign(target, sources, false);
 }
 exports.assign = assign;
-Object.assign;
-exports.default = assign;
+exports.default = {
+    merge: merge,
+    assign: assign
+};
 //# sourceMappingURL=index.js.map
