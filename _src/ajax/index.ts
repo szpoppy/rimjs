@@ -267,8 +267,10 @@ export class Ajax extends Event {
     }
 
     // 返回Promist
-    then(thenFn?: (course: AjaxCourse) => any): Promise<any> {
-        let pse: Promise<any> = new Promise((resolve, reject) => {
+    then(): Promise<AjaxCourse>
+    then(thenFn: (course: AjaxCourse) => any): Promise<any>
+    then(thenFn?: (course: AjaxCourse) => any): Promise<AjaxCourse | any> {
+        let pse: Promise<AjaxCourse> = new Promise((resolve, reject) => {
             this.on("callback", function(course) {
                 resolve(course)
             })
