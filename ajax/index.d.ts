@@ -79,7 +79,8 @@ export declare class Ajax extends Event {
     abort(): Ajax;
     timeout(this: Ajax, time: number, callback: IEventOnFn): Ajax;
     send(this: Ajax, param?: sendParam, over?: boolean): Ajax;
-    then(thenFn?: (course: AjaxCourse) => any): Promise<any>;
+    then(): Promise<AjaxCourse>;
+    then(thenFn: (course: AjaxCourse) => any): Promise<any>;
 }
 declare type IEventOnFn = (this: Ajax, arg: AjaxCourse) => void;
 interface shortcutEventObj {

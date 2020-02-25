@@ -226,7 +226,6 @@ var Ajax = /** @class */ (function (_super) {
         }, 1);
         return this;
     };
-    // 返回Promist
     Ajax.prototype.then = function (thenFn) {
         var _this = this;
         var pse = new Promise(function (resolve, reject) {
