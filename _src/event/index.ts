@@ -61,6 +61,12 @@ export default class Event {
         }
     }
 
+    /**
+     * 内部调用 事件触发函数
+     * @param target
+     * @param type
+     * @param args
+     */
     private ":emit"<R, T>(target: T, type: string, arg: R): R {
         if (this._parent && this._parent[":emit"]) {
             this._parent[":emit"](target, type, arg)
@@ -74,13 +80,8 @@ export default class Event {
         return arg
     }
 
-    /**
-     * 内部调用 事件触发函数
-     * @param target
-     * @param type
-     * @param args
-     */
-    emit<R = any>(type: string, arg: R): R {
+    // 事件触发
+    emit<R>(type: string, arg: R): R {
         return this[":emit"](this, type, arg)
     }
 
