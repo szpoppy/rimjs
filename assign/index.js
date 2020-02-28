@@ -9,26 +9,20 @@ function _assign(target, objs, flag) {
         each_1.default(source, function (item, n) {
             if (item) {
                 var type = _toString.call(item).toLowerCase();
+                var isTArr = type == "[object array]";
+                var isTObj = type == "[object object]";
                 if (type == "[object date]") {
                     target[n] = new Date(item.getTime());
                     return;
                 }
-                if (target[n] != null) {
-                    var targetType = _toString.call(target[n]).toLowerCase();
-                    if (type == "[object array]") {
-                        if (!flag && targetType != type) {
-                            target[n] = [];
-                        }
-                        _assign(target[n], [item], flag);
-                        return;
+                var targetType = _toString.call(target[n]).toLowerCase();
+                if (isTArr || isTObj) {
+                    // 数组 或者 对象
+                    if (target[n] == null || (!flag && targetType != type)) {
+                        target[n] = isTArr ? [] : {};
                     }
-                    if (type == "[object object]") {
-                        if (!flag && targetType != type) {
-                            target[n] = {};
-                        }
-                        _assign(target[n], [item], flag);
-                        return;
-                    }
+                    _assign(target[n], [item], flag);
+                    return;
                 }
             }
             target[n] = item;

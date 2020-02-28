@@ -53,6 +53,12 @@ var Event = /** @class */ (function () {
             evs.splice(index, 1);
         }
     };
+    /**
+     * 内部调用 事件触发函数
+     * @param target
+     * @param type
+     * @param args
+     */
     Event.prototype[":emit"] = function (target, type, arg) {
         if (this._parent && this._parent[":emit"]) {
             this._parent[":emit"](target, type, arg);
@@ -63,12 +69,7 @@ var Event = /** @class */ (function () {
         }
         return arg;
     };
-    /**
-     * 内部调用 事件触发函数
-     * @param target
-     * @param type
-     * @param args
-     */
+    // 事件触发
     Event.prototype.emit = function (type, arg) {
         return this[":emit"](this, type, arg);
     };

@@ -22,14 +22,14 @@ export default class Event {
      * @param fn
      */
     off(type?: string, fn?: IEventFn): void;
-    private ":emit";
     /**
      * 内部调用 事件触发函数
      * @param target
      * @param type
      * @param args
      */
-    emit<R = any>(type: string, arg: R): R;
+    private ":emit";
+    emit<R>(type: string, arg: R): R;
     /**
      * 判断事件是否存在
      * @param type
