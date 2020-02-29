@@ -99,6 +99,7 @@ export default class Slip extends EventEmitter {
     bx: number = 0
     by: number = 0
 
+    // 所有事件
     on<T>(type: "start", fn: (this: T, arg: Event) => void, isPre?: boolean): void
     on<T>(type: "move" | "end", fn: (this: T, arg: { x: number; y: number; event: Event }) => void, isPre?: boolean): void
     on<T>(type: string, fn: (this: T, arg: any) => void, isPre: boolean = false): void {
