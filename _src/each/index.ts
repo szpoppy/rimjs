@@ -27,7 +27,9 @@ const forTypes = "-[object array]-[object nodelist]-[object htmlcollection]-[obj
  * @param fn 运行函数
  * @param exe 返回的值
  */
-export default function each<T>(arr: any, fn: (item: any, index: number | string, stop: () => void) => any, exe?: T): T | undefined {
+export function each(arr: any, fn: (item: any, index: number | string, stop: () => void) => any): void
+export function each<T>(arr: any, fn: (item: any, index: number | string, stop: () => void) => any, exe: T): T
+export function each<T>(arr: any, fn: (item: any, index: number | string, stop: () => void) => any, exe?: T): T | undefined {
     // 终止循环
     let isStop: boolean = false
     function stop(): void {
@@ -63,3 +65,5 @@ export default function each<T>(arr: any, fn: (item: any, index: number | string
 
     return exe
 }
+
+export default each

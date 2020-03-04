@@ -40,7 +40,7 @@ export function merge<T, U>(target: T, source: U): T & U
 export function merge<T, U, V>(target: T, source1: U, source2: V): T & U & V
 export function merge<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
 export function merge(target: object, ...sources: any[]): any {
-    return _assign(target, sources)
+    return _assign(target, sources, true)
 }
 
 /**
