@@ -17,12 +17,6 @@ function forAppend(obj, v, k) {
 function forBack() { }
 // 支持for循环的 数据
 var forTypes = "-[object array]-[object nodelist]-[object htmlcollection]-[object arguments]-";
-/**
- * 数据循环
- * @param arr arr或者obj
- * @param fn 运行函数
- * @param exe 返回的值
- */
 function each(arr, fn, exe) {
     // 终止循环
     var isStop = false;
@@ -58,5 +52,6 @@ function each(arr, fn, exe) {
     }
     return exe;
 }
+exports.each = each;
 exports.default = each;
 //# sourceMappingURL=index.js.map

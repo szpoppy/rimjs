@@ -35,7 +35,7 @@ function merge(target) {
     for (var _i = 1; _i < arguments.length; _i++) {
         sources[_i - 1] = arguments[_i];
     }
-    return _assign(target, sources);
+    return _assign(target, sources, true);
 }
 exports.merge = merge;
 function assign(target) {
