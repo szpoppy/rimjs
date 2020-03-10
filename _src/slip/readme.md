@@ -14,6 +14,6 @@ slip.on("start", function(event) {})
 // 按下时不放移动触发
 slip.on("start", function({ x, y, event }) {})
 
-// 松开时触发 
+// 松开时触发
 slip.on("end", function({ x, y, event }) {})
 ```
