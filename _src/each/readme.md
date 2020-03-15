@@ -1,5 +1,7 @@
 # each 循环
 
+> `stopFn` 为中止循环
+
 ```js
 // 数组循环遍历
 each(["1"], function(item, index, stopFn){
