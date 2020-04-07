@@ -56,7 +56,12 @@ function parseDate(date, isWipe) {
     })
         .replace(/-/g, "/")
         .replace(/T/, " ")
-        .replace(/\.\d+$/, "");
+        .replace(/(?:\.[\d]+)?(\+[\d]+)?$/, function (s0, s1) {
+        if (s1) {
+            return " GMT" + s1;
+        }
+        return "";
+    });
     // 防止报错
     return wipeOut(new Date(date + gmt), isWipe);
 }
