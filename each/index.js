@@ -40,6 +40,7 @@ function each(arr, fn, exe) {
         }
         else {
             for (var n in arr) {
+                // eslint-disable-next-line
                 if (!arr.hasOwnProperty || arr.hasOwnProperty(n)) {
                     var item = fn(arr[n], n, stop);
                     if (isStop) {

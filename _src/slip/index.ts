@@ -116,6 +116,7 @@ export default class Slip extends EventEmitter {
             }
         }
         if (!id) {
+            // eslint-disable-next-line
             throw "no id element"
         }
         this.dom = id as HTMLElement

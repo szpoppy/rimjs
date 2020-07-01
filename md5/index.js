@@ -89,6 +89,7 @@ function core_md5(x, len) {
         c = safe_add(c, oldc);
         d = safe_add(d, oldd);
     }
+    // eslint-disable-next-line
     return Array(a, b, c, d);
 }
 // eslint-disable-next-line
@@ -135,6 +136,7 @@ function bit_rol(num, cnt) {
     return (num << cnt) | (num >>> (32 - cnt));
 }
 function str2binl(str) {
+    // eslint-disable-next-line
     var bin = Array();
     var mask = (1 << chrsz) - 1;
     for (var i = 0; i < str.length * chrsz; i += chrsz)

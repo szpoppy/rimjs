@@ -81,13 +81,13 @@ function format(str: string, arr: string[], info: any): string {
         return info
     }
     str = str.replace(/<(\w+):(.*?)>/g, function(s0, s1, s2) {
-        var val = info[s1]
+        let val = info[s1]
         if (val) {
             return val + s2
         }
         return ""
     })
-    for (var i = 0; i < arr.length; i += 1) {
+    for (let i = 0; i < arr.length; i += 1) {
         str = str.replace(new RegExp(arr[i], "g"), info[arr[i]])
     }
     return str

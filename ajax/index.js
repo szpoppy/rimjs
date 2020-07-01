@@ -122,6 +122,7 @@ var AjaxReq = /** @class */ (function () {
         this.isFormData = false;
         this.isCross = false;
         this.outFlag = false;
+        // constructor() {}
     }
     return AjaxReq;
 }());
@@ -131,6 +132,7 @@ var AjaxRes = /** @class */ (function () {
         this.jsonKey = "json";
         this.headers = "";
     }
+    // constructor() {}
     AjaxRes.prototype.getData = function (prot, data) {
         if (data === undefined) {
             data = this[this.jsonKey];
@@ -139,7 +141,7 @@ var AjaxRes = /** @class */ (function () {
     };
     AjaxRes.prototype.getHeader = function (key) {
         if (typeof this.headers == "string") {
-            return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers) ? RegExp["$1"] : "";
+            return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers) ? RegExp.$1 : "";
         }
         if (this.headers instanceof Headers) {
             return this.headers.get(key) || "";
@@ -233,9 +235,11 @@ var Ajax = /** @class */ (function (_super) {
                 resolve(course);
             });
             _this.on("timeout", function () {
+                // eslint-disable-next-line
                 reject({ err: "访问超时", errType: 1 });
             });
             _this.on("abort", function () {
+                // eslint-disable-next-line
                 reject({ err: "访问中止", errType: 2 });
             });
         });
@@ -326,7 +330,7 @@ exports.AjaxGroup = AjaxGroup;
 var Global = /** @class */ (function (_super) {
     __extends(Global, _super);
     function Global() {
-        var _this = _super.call(this) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.conf = { useFetch: true, resType: EResType.json, jsonpKey: "callback", cache: true };
         return _this;
     }
@@ -334,6 +338,9 @@ var Global = /** @class */ (function (_super) {
         if (isPre === void 0) { isPre = false; }
         this[":on"](type, fn, isPre);
     };
+    // constructor() {
+    //     super()
+    // }
     Global.prototype.setConf = function (conf) {
         getConf(conf, this.conf);
     };
@@ -498,14 +505,14 @@ function fetchSend(course) {
     if (req.isCross) {
         // 跨域
         option.mode = "cors";
-        if (req.withCredentials) {
-            // 发送请求，带上cookie
-            option.credentials = "include";
-        }
     }
     else {
         // 同域，默认带上cookie
         option.credentials = "same-origin";
+    }
+    if (req.withCredentials) {
+        // 发送请求，带上cookie
+        option.credentials = "include";
     }
     // response.text then回调函数
     var fetchData = function (data) {
@@ -532,6 +539,7 @@ function fetchSend(course) {
             }
             catch (e) { }
             if (req.resType != "text" && req.resType != "json") {
+                // 只是为了不报错
                 results[1] = response[req.resType]();
             }
             Promise.all(results).then(fetchData, fetchData);

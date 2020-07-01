@@ -22,11 +22,11 @@ export default function debug(...args: any[]) {
             document.documentElement.appendChild(traceDom)
         }
     }
-    var strs = []
-    for (var i = 0; i < args.length; i += 1) {
+    let strs = []
+    for (let i = 0; i < args.length; i += 1) {
         strs.push(JSON.stringify(args[i]))
     }
-    var div = document.createElement("div")
+    let div = document.createElement("div")
     div.style.cssText = "padding: 5px; color:" + cc[tarceI] + "; word-wrap: break-word; background-color:" + tc[tarceI++]
     div.innerHTML = strs.join(" ， ")
     traceDom.appendChild(div)

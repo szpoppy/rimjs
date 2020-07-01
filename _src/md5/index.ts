@@ -89,6 +89,7 @@ function core_md5(x: number[], len: number) {
         c = safe_add(c, oldc)
         d = safe_add(d, oldd)
     }
+    // eslint-disable-next-line
     return Array(a, b, c, d)
 }
 // eslint-disable-next-line
@@ -135,6 +136,7 @@ function bit_rol(num: number, cnt: number) {
     return (num << cnt) | (num >>> (32 - cnt))
 }
 function str2binl(str: string) {
+    // eslint-disable-next-line
     let bin = Array()
     let mask = (1 << chrsz) - 1
     for (let i = 0; i < str.length * chrsz; i += chrsz) bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << i % 32

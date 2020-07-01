@@ -52,6 +52,7 @@ export function each<T>(arr: any, fn: (item: any, index: number | string, stop: 
             }
         } else {
             for (let n in arr) {
+                // eslint-disable-next-line
                 if (!arr.hasOwnProperty || arr.hasOwnProperty(n)) {
                     let item = fn(arr[n], n, stop)
                     if (isStop) {

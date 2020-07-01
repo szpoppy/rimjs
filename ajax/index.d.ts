@@ -3,7 +3,7 @@ interface IFStrObj {
     [propName: string]: string;
 }
 interface IParam {
-    [propName: string]: number | string | boolean | Array<number | string | boolean>;
+    [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam;
 }
 declare type sendParam = IParam | FormData | string;
 declare enum EResType {
@@ -45,7 +45,6 @@ export declare class AjaxReq {
     isCross: boolean;
     outFlag: boolean;
     [propName: string]: any;
-    constructor();
 }
 export declare class AjaxRes {
     jsonKey: string;
@@ -57,7 +56,6 @@ export declare class AjaxRes {
     err?: any;
     result?: any;
     [propName: string]: any;
-    constructor();
     getData(prot: string, data?: any): any;
     getHeader(key: string): string;
 }
@@ -104,7 +102,6 @@ export declare class AjaxGroup extends Event {
 declare class Global extends Event {
     conf: IFAjaxConf;
     on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
-    constructor();
     setConf(conf: IFAjaxConf): void;
 }
 export declare let ajaxGlobal: Global;

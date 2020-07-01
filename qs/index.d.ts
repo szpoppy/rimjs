@@ -4,6 +4,9 @@ interface initOpt {
     unescape?: Function;
     escape?: Function;
 }
+export interface IFQueryHash {
+    [prot: string]: string | null | number | (string | null | number)[];
+}
 export declare class QueryString {
     sep: string;
     eq: string;
@@ -14,16 +17,16 @@ export declare class QueryString {
      * 解析为 对象输出
      * @param str
      */
-    parse(str: string): Record<string, any>;
+    parse(str: string): IFQueryHash;
     /**
      * 序列化为字符串
      * @param opt
      */
-    stringify(opt: Record<string, any>): string;
+    stringify(opt: IFQueryHash): string;
 }
 declare let qs: QueryString & {
     QueryString: typeof QueryString;
 };
-export declare let parseQS: (str: string) => Record<string, any>;
-export declare let stringifyQS: (opt: Record<string, any>) => string;
+export declare function parseQS(str: string): IFQueryHash;
+export declare function stringifyQS(opt: IFQueryHash): string;
 export default qs;

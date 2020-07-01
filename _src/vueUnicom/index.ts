@@ -183,15 +183,15 @@ interface vueUnicomInstruct {
     [propName: string]: Function[] // 任意类型
 }
 
-export interface IVueUnicomBackOption {
-    [propName: string]: (arg: VueUnicomEvent) => void
+export interface IVueUnicomBackOption<T> {
+    [propName: string]: <D>(arg: VueUnicomEvent<D, T>) => void
 }
 
 declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
         unicomId?: string
         unicomName?: string | string[]
-        unicom?: IVueUnicomBackOption
+        unicom?: IVueUnicomBackOption<V>
     }
 }
 
@@ -202,8 +202,6 @@ declare module "vue/types/vue" {
         _unicom_data_?: vueUnicomData
     }
 }
-
-export type IVueUnicomBackFn = (key: string, fn: (arg: VueUnicomEvent) => void) => void
 
 // 通讯基础类
 export class VueUnicom {
@@ -342,7 +340,7 @@ export class VueUnicom {
     }
 
     // 订阅消息
-    on(type: string, fn: IVueUnicomBackFn): VueUnicom {
+    on<D = any, T = any>(type: string, fn: (arg: VueUnicomEvent<D, T>) => void): VueUnicom {
         let instruct = this._instruct_ || (this._instruct_ = {})
         instruct[type] || (instruct[type] = [])
         instruct[type].push(fn)
@@ -350,7 +348,7 @@ export class VueUnicom {
     }
 
     // 移除订阅
-    off(type?: string, fn?: IVueUnicomBackFn): VueUnicom {
+    off(type?: string, fn?: Function): VueUnicom {
         let instruct = this._instruct_
         if (instruct) {
             if (fn) {
@@ -394,7 +392,7 @@ let unicomInstalled: boolean = false
 
 // vue中指令
 interface vueInstruct {
-    [propName: string]: IVueUnicomBackFn
+    [propName: string]: (arg: VueUnicomEvent) => void
 }
 // vue临时存储数据
 interface vueUnicomData {
@@ -497,7 +495,7 @@ export function vueUnicomInstall(vue: VueConstructor) {
             let instructs = unicomData.instructs || []
             instructs.forEach(function(subs) {
                 for (let n in subs) {
-                    unicom.on(n, subs[n])
+                    unicom.on(n, subs[n] as any)
                 }
             })
         },

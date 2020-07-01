@@ -9,6 +9,10 @@ interface initOpt {
     escape?: Function
 }
 
+export interface IFQueryHash {
+    [prot: string]: string | null | number | (string | null | number)[]
+}
+
 export class QueryString {
     sep: string = "&"
     eq: string = "="
@@ -24,7 +28,7 @@ export class QueryString {
      * 解析为 对象输出
      * @param str
      */
-    parse(str: string): Record<string, any> {
+    parse(str: string): IFQueryHash {
         let sep = this.sep
         let eq = this.eq
         let unescape = this.unescape
@@ -60,7 +64,7 @@ export class QueryString {
      * 序列化为字符串
      * @param opt
      */
-    stringify(opt: Record<string, any>): string {
+    stringify(opt: IFQueryHash): string {
         let sep = this.sep
         let eq = this.eq
         let escape = this.escape
@@ -87,7 +91,11 @@ export class QueryString {
 
 let qs = Object.assign(new QueryString(), { QueryString })
 
-export let parseQS = qs.parse
-export let stringifyQS = qs.stringify
+export function parseQS(str: string) {
+    return qs.parse(str)
+}
+export function stringifyQS(opt: IFQueryHash) {
+    return qs.stringify(opt)
+}
 
 export default qs

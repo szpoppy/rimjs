@@ -6,6 +6,7 @@ type backFn<T> = (value: T) => void
 class Cache<T> {
     backs: backFn<T>[] = []
     inited: 0 | 1 | 2 = 0
+    date: number = new Date().getTime()
     data!: T
 
     setData(data: T) {
@@ -19,11 +20,16 @@ class Cache<T> {
     }
 }
 
-export function promiseCache<T = any>(getFn: getDataFn) {
+export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0) {
     let caches: Record<string, Cache<T>> = {}
     return function(key: string = ":default") {
         let cache = caches[key]
+        if (cache && cache.inited == 2 && eTime > 0 && cache.date + eTime < new Date().getTime()) {
+            // 已经过期了
+            cache.inited = 0
+        }
         if (!cache) {
+            // 不存在或者过期了
             cache = caches[key] = new Cache()
         }
 

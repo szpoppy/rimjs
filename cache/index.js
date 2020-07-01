@@ -4,6 +4,7 @@ var Cache = /** @class */ (function () {
     function Cache() {
         this.backs = [];
         this.inited = 0;
+        this.date = new Date().getTime();
     }
     Cache.prototype.setData = function (data) {
         this.data = data;
@@ -15,12 +16,18 @@ var Cache = /** @class */ (function () {
     };
     return Cache;
 }());
-function promiseCache(getFn) {
+function promiseCache(getFn, eTime) {
+    if (eTime === void 0) { eTime = 0; }
     var caches = {};
     return function (key) {
         if (key === void 0) { key = ":default"; }
         var cache = caches[key];
+        if (cache && cache.inited == 2 && eTime > 0 && cache.date + eTime < new Date().getTime()) {
+            // 已经过期了
+            cache.inited = 0;
+        }
         if (!cache) {
+            // 不存在或者过期了
             cache = caches[key] = new Cache();
         }
         // 直接返回已经存在

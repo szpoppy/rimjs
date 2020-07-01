@@ -233,7 +233,7 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveIni
 
     // console.log("mixinOpt", mixinOpt)
     Vue.config.optionMergeStrategies[defName] = function(pVal: any, nVal: any): Array<any> {
-        var val = pVal instanceof Array ? pVal : pVal ? [pVal] : []
+        let val = pVal instanceof Array ? pVal : pVal ? [pVal] : []
         if (nVal) {
             val.push(nVal)
         }

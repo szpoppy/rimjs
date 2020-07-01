@@ -70,6 +70,14 @@ function remove(key: string): void {
     LS.removeItem(key)
 }
 
+// 日期上增加特定时间
+const appendTimeOpt: any = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000
+}
+
 /**
  * 本地存储分组类
  */
@@ -140,18 +148,22 @@ export class LSClass {
             } else if (expiration === -1) {
                 json.expiration = -1
             } else {
-                json.expiration = new Date().getTime() + expiration * 24 * 60 * 60 * 1000
+                json.expiration = new Date().getTime() + expiration
             }
         } else {
             if (typeof expiration == "string") {
-                expiration = new Date(
-                    expiration
-                        .replace(/-/g, "/")
-                        .replace(/T/, " ")
-                        .replace(/\.\d*$/, "")
-                )
+                if (/^(\d+)([a-z])$/i.test(expiration)) {
+                    let num = parseInt(RegExp.$1) * (appendTimeOpt[RegExp.$2.toLowerCase()] || 0)
+                    expiration = new Date().getTime() + num
+                } else {
+                    expiration = new Date(
+                        expiration
+                            .replace(/-/g, "/")
+                            .replace(/T/, " ")
+                            .replace(/\.\d*$/, "")
+                    ).getTime()
+                }
             }
-            json.expiration = expiration.getTime()
         }
 
         LS.setItem(key, JSON.stringify(json))

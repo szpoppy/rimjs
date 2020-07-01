@@ -1,6 +1,6 @@
 {
     "name": "rimjs",
-    "version": "1.0.32",
+    "version": "1.1.1",
     "scripts": {
         "build": "node clean.js && tsc"
     },
@@ -15,5 +15,8 @@
     },
     "dependencies": {
         "vue": "^2.6.11"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org/"
     }
 }

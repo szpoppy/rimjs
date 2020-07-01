@@ -80,7 +80,13 @@ var QueryString = /** @class */ (function () {
 }());
 exports.QueryString = QueryString;
 var qs = Object.assign(new QueryString(), { QueryString: QueryString });
-exports.parseQS = qs.parse;
-exports.stringifyQS = qs.stringify;
+function parseQS(str) {
+    return qs.parse(str);
+}
+exports.parseQS = parseQS;
+function stringifyQS(opt) {
+    return qs.stringify(opt);
+}
+exports.stringifyQS = stringifyQS;
 exports.default = qs;
 //# sourceMappingURL=index.js.map

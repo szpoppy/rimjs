@@ -92,4 +92,45 @@ function isUrl(target) {
     return /^http(s)?:\/\/[A-Za-z0-9-]+\.[A-Za-z0-9]+[/=?%\-&_~`@[\]:+!]*([^<>])*$/.test(target);
 }
 exports.isUrl = isUrl;
+/**
+ * 护照
+ * @param {*} txt
+ */
+function isPassport(txt) {
+    return /^[a-zA-Z0-9]{5,17}$/.test(txt);
+}
+exports.isPassport = isPassport;
+/**
+ * 港澳通行证（回乡证）
+ * @param {*} txt
+ */
+function isGangAoPass(txt) {
+    return /^(m|M|h|H)(\d{8}|\d{10})$/.test(txt);
+}
+exports.isGangAoPass = isGangAoPass;
+/**
+ * 台湾居民来往大陆通行证（台胞证）
+ * @param {*} txt
+ */
+function isTaiwanPass(txt) {
+    return /^(\d{8}|[a-zA-Z][0-9]{9})$/.test(txt);
+}
+exports.isTaiwanPass = isTaiwanPass;
+/**
+ * 外国人永久居留身份证
+ * 15位 3为字母 + 12阿拉伯数字
+ */
+function isForeignerReside(txt) {
+    return /^[a-zA-Z]{3}[0-9]{12}$/.test(txt);
+}
+exports.isForeignerReside = isForeignerReside;
+/**
+ * 港澳台居民居住证
+ * 18位数字 开头为 81 || 82 || 83
+ * 11.28 修改为 8100 || 8200 || 8300
+ */
+function isGangAoTaiReside(txt) {
+    return /^8[1-3]0{2}\d{13}[0-9x]$/i.test(txt);
+}
+exports.isGangAoTaiReside = isGangAoTaiReside;
 //# sourceMappingURL=index.js.map

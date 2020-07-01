@@ -88,3 +88,44 @@ export function isIdCard(idCard: string) {
 export function isUrl(target: string) {
     return /^http(s)?:\/\/[A-Za-z0-9-]+\.[A-Za-z0-9]+[/=?%\-&_~`@[\]:+!]*([^<>])*$/.test(target)
 }
+
+/**
+ * 护照
+ * @param {*} txt
+ */
+export function isPassport(txt: string) {
+    return /^[a-zA-Z0-9]{5,17}$/.test(txt)
+}
+
+/**
+ * 港澳通行证（回乡证）
+ * @param {*} txt
+ */
+export function isGangAoPass(txt: string) {
+    return /^(m|M|h|H)(\d{8}|\d{10})$/.test(txt)
+}
+
+/**
+ * 台湾居民来往大陆通行证（台胞证）
+ * @param {*} txt
+ */
+export function isTaiwanPass(txt: string) {
+    return /^(\d{8}|[a-zA-Z][0-9]{9})$/.test(txt)
+}
+
+/**
+ * 外国人永久居留身份证
+ * 15位 3为字母 + 12阿拉伯数字
+ */
+export function isForeignerReside(txt: string) {
+    return /^[a-zA-Z]{3}[0-9]{12}$/.test(txt)
+}
+
+/**
+ * 港澳台居民居住证
+ * 18位数字 开头为 81 || 82 || 83
+ * 11.28 修改为 8100 || 8200 || 8300
+ */
+export function isGangAoTaiReside(txt: string) {
+    return /^8[1-3]0{2}\d{13}[0-9x]$/i.test(txt)
+}

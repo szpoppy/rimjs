@@ -78,7 +78,7 @@ function getParamString(param?: FormData | IParam | string, dataType?: string): 
     if (typeof param == "string") {
         return param || ""
     }
-    let str = dataType == "json" ? JSON.stringify(param) : qs.stringify(param)
+    let str = dataType == "json" ? JSON.stringify(param) : qs.stringify(param as any)
     return str
 }
 
@@ -95,7 +95,7 @@ interface IFStrObj {
     [propName: string]: string
 }
 interface IParam {
-    [propName: string]: number | string | boolean | Array<number | string | boolean>
+    [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam
 }
 
 type sendParam = IParam | FormData | string
@@ -147,7 +147,7 @@ export class AjaxReq {
 
     [propName: string]: any
 
-    constructor() {}
+    // constructor() {}
 }
 
 export class AjaxRes {
@@ -161,7 +161,7 @@ export class AjaxRes {
     result?: any;
     [propName: string]: any
 
-    constructor() {}
+    // constructor() {}
 
     getData(prot: string, data?: any): any {
         if (data === undefined) {
@@ -173,7 +173,7 @@ export class AjaxRes {
 
     getHeader(key: string): string {
         if (typeof this.headers == "string") {
-            return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers as string) ? RegExp["$1"] : ""
+            return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers as string) ? RegExp.$1 : ""
         }
         if (this.headers instanceof Headers) {
             return this.headers.get(key) || ""
@@ -275,9 +275,11 @@ export class Ajax extends Event {
                 resolve(course)
             })
             this.on("timeout", function() {
+                // eslint-disable-next-line
                 reject({ err: "访问超时", errType: 1 })
             })
             this.on("abort", function() {
+                // eslint-disable-next-line
                 reject({ err: "访问中止", errType: 2 })
             })
         })
@@ -376,6 +378,7 @@ export class AjaxGroup extends Event {
         }
         this.dateDiff = ajaxDateDiff = date.getTime() - new Date().getTime()
     }
+
     // 获取 服务器时间
     getDate(): Date {
         return new Date(this.dateDiff + new Date().getTime())
@@ -389,9 +392,9 @@ class Global extends Event {
         this[":on"]<Global>(type, fn, isPre)
     }
 
-    constructor() {
-        super()
-    }
+    // constructor() {
+    //     super()
+    // }
 
     setConf(conf: IFAjaxConf) {
         getConf(conf, this.conf)
@@ -581,13 +584,14 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
     if (req.isCross) {
         // 跨域
         option.mode = "cors"
-        if (req.withCredentials) {
-            // 发送请求，带上cookie
-            option.credentials = "include"
-        }
     } else {
         // 同域，默认带上cookie
         option.credentials = "same-origin"
+    }
+
+    if (req.withCredentials) {
+        // 发送请求，带上cookie
+        option.credentials = "include"
     }
 
     // response.text then回调函数
@@ -617,7 +621,8 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
             } catch (e) {}
 
             if (req.resType != "text" && req.resType != "json") {
-                results[1] = response[req.resType]()
+                // 只是为了不报错
+                results[1] = (response as any)[req.resType]()
             }
 
             Promise.all(results).then(fetchData, fetchData)

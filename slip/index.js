@@ -114,6 +114,7 @@ var Slip = /** @class */ (function (_super) {
             }
         }
         if (!id) {
+            // eslint-disable-next-line
             throw "no id element";
         }
         _this.dom = id;

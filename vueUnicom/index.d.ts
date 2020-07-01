@@ -18,14 +18,14 @@ export interface vueUnicomArg {
     group?: string | Array<string>;
     target?: any;
 }
-export interface IVueUnicomBackOption {
-    [propName: string]: (arg: VueUnicomEvent) => void;
+export interface IVueUnicomBackOption<T> {
+    [propName: string]: <D>(arg: VueUnicomEvent<D, T>) => void;
 }
 declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
         unicomId?: string;
         unicomName?: string | string[];
-        unicom?: IVueUnicomBackOption;
+        unicom?: IVueUnicomBackOption<V>;
     }
 }
 declare module "vue/types/vue" {
@@ -34,7 +34,6 @@ declare module "vue/types/vue" {
         _unicom_data_?: vueUnicomData;
     }
 }
-export declare type IVueUnicomBackFn = (key: string, fn: (arg: VueUnicomEvent) => void) => void;
 export declare class VueUnicom {
     static install: typeof vueUnicomInstall;
     private _instruct_;
@@ -51,12 +50,12 @@ export declare class VueUnicom {
     setId(id: string): VueUnicom;
     setGroup(group: string | string[]): this;
     has(type: string): boolean;
-    on(type: string, fn: IVueUnicomBackFn): VueUnicom;
-    off(type?: string, fn?: IVueUnicomBackFn): VueUnicom;
+    on<D = any, T = any>(type: string, fn: (arg: VueUnicomEvent<D, T>) => void): VueUnicom;
+    off(type?: string, fn?: Function): VueUnicom;
     emit<D>(query: string, data?: D, ...args: any): VueUnicomEmitBack<D>;
 }
 interface vueInstruct {
-    [propName: string]: IVueUnicomBackFn;
+    [propName: string]: (arg: VueUnicomEvent) => void;
 }
 interface vueUnicomData {
     isIgnore: boolean;

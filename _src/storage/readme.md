@@ -52,8 +52,12 @@ let store4 = new store.LSStore("v4#")
 -   expiration 什么时候过期 默认为 0
     -   -1 永久不过期 相当于 localStorage
     -   0 相当于 sessionStorage
-    -   大于 0 几天后过期
+    -   大于 0 多少毫秒后过期
     -   时间字符串 过期时间
+    -   1d 1天后过期
+    -   1h 1小时后过期
+    -   1m 1分钟后过期
+    -   1s 1秒后过期
     -   日期 过期时间
 
 ### 获取
