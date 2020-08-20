@@ -787,7 +787,7 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
         })
         // 短路经
         .replace(/^(\w+):(?!\/\/)/, (s0: string, s1: string) => {
-            req.path = s0
+            req.path = s1
             return req.paths[s1] || s0
         })
 
