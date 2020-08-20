@@ -12,7 +12,7 @@ export declare class VueUnicomEvent<D = any, T = any> {
     constructor(from: any, args: Array<any>);
 }
 export declare type VueUnicomEmitBack<D, T = any> = VueUnicomEvent<D, T> | VueUnicom | VueUnicom[];
-export declare function unicomEmit<D>(query: string, data?: D, args?: any[]): VueUnicomEmitBack<D, any>;
+export declare function unicomEmit<D>(query: string, data?: D, ...args: any): VueUnicomEmitBack<D, any>;
 export interface vueUnicomArg {
     id?: string;
     group?: string | Array<string>;

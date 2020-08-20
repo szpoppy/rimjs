@@ -689,7 +689,7 @@ function requestSend(param, course) {
     })
         // 短路经
         .replace(/^(\w+):(?!\/\/)/, function (s0, s1) {
-        req.path = s0;
+        req.path = s1;
         return req.paths[s1] || s0;
     });
     var httpReg = new RegExp("^(:?http(:?s)?:)?//", "i");

@@ -149,8 +149,11 @@ function _unicomEmit(self, query, data, args) {
     });
     return uniEvent;
 }
-function unicomEmit(query, data, args) {
-    if (args === void 0) { args = []; }
+function unicomEmit(query, data) {
+    var args = [];
+    for (var _i = 2; _i < arguments.length; _i++) {
+        args[_i - 2] = arguments[_i];
+    }
     return _unicomEmit(null, query, data, args);
 }
 exports.unicomEmit = unicomEmit;
