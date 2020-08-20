@@ -158,7 +158,7 @@ function _unicomEmit<D, T extends Vue = Vue>(self: T, query: string, data?: D, a
     return uniEvent
 }
 
-export function unicomEmit<D>(query: string, data?: D, args: any[] = []): VueUnicomEmitBack<D, any> {
+export function unicomEmit<D>(query: string, data?: D, ...args: any): VueUnicomEmitBack<D, any> {
     return _unicomEmit<D, any>(null, query, data, args)
 }
 
