@@ -1,4 +1,6 @@
 import Event from "../event";
+declare function loadJS(url: string, callback: Function): HTMLScriptElement;
+declare function getFullUrl(url: string): string;
 declare function fixedURL(url: string, paramStr: string): string;
 declare function getParamString(param?: FormData | IParam | string, dataType?: string): string | FormData;
 interface IFStrObj {
@@ -107,12 +109,20 @@ declare class Global extends Event {
     setConf(conf: IFAjaxConf): void;
 }
 export declare let ajaxGlobal: Global;
+export declare let ajaxUtil: {
+    fixedURL: typeof fixedURL;
+    toParam: typeof getParamString;
+    loadJS: typeof loadJS;
+    getFullUrl: typeof getFullUrl;
+};
 declare let def: AjaxGroup & {
     global: Global;
     Group: typeof AjaxGroup;
-    url: {
+    util: {
         fixedURL: typeof fixedURL;
         toParam: typeof getParamString;
+        loadJS: typeof loadJS;
+        getFullUrl: typeof getFullUrl;
     };
 };
 export default def;

@@ -766,6 +766,12 @@ function ajaxAbort(target, flag) {
         flag && target.emit("abort", course);
     }
 }
-var def = Object.assign(new AjaxGroup(), { global: exports.ajaxGlobal, Group: AjaxGroup, url: { fixedURL: fixedURL, toParam: getParamString } });
+exports.ajaxUtil = {
+    fixedURL: fixedURL,
+    toParam: getParamString,
+    loadJS: loadJS,
+    getFullUrl: getFullUrl
+};
+var def = Object.assign(new AjaxGroup(), { global: exports.ajaxGlobal, Group: AjaxGroup, util: exports.ajaxUtil });
 exports.default = def;
 //# sourceMappingURL=index.js.map

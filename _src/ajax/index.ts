@@ -876,6 +876,13 @@ function ajaxAbort(target: Ajax, flag: boolean = false): void {
     }
 }
 
-let def = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup, url: { fixedURL, toParam: getParamString } })
+export let ajaxUtil = {
+    fixedURL,
+    toParam: getParamString,
+    loadJS,
+    getFullUrl
+}
+
+let def = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup, util: ajaxUtil })
 
 export default def
