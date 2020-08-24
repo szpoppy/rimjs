@@ -98,9 +98,7 @@ function getDefaultContentType(dataType) {
 }
 var EResType;
 (function (EResType) {
-    // eslint-disable-next-line
     EResType["json"] = "json";
-    // eslint-disable-next-line
     EResType["text"] = "text";
 })(EResType || (EResType = {}));
 // ==================================================================== 资源返回类
@@ -768,6 +766,6 @@ function ajaxAbort(target, flag) {
         flag && target.emit("abort", course);
     }
 }
-var def = Object.assign(new AjaxGroup(), { global: exports.ajaxGlobal, Group: AjaxGroup });
+var def = Object.assign(new AjaxGroup(), { global: exports.ajaxGlobal, Group: AjaxGroup, url: { fixedURL: fixedURL, toParam: getParamString } });
 exports.default = def;
 //# sourceMappingURL=index.js.map

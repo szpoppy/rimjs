@@ -1,4 +1,6 @@
 import Event from "../event";
+declare function fixedURL(url: string, paramStr: string): string;
+declare function getParamString(param?: FormData | IParam | string, dataType?: string): string | FormData;
 interface IFStrObj {
     [propName: string]: string;
 }
@@ -108,5 +110,9 @@ export declare let ajaxGlobal: Global;
 declare let def: AjaxGroup & {
     global: Global;
     Group: typeof AjaxGroup;
+    url: {
+        fixedURL: typeof fixedURL;
+        toParam: typeof getParamString;
+    };
 };
 export default def;

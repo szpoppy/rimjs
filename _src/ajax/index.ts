@@ -101,9 +101,7 @@ interface IParam {
 type sendParam = IParam | FormData | string
 
 enum EResType {
-    // eslint-disable-next-line
     json = "json",
-    // eslint-disable-next-line
     text = "text"
 }
 
@@ -878,6 +876,6 @@ function ajaxAbort(target: Ajax, flag: boolean = false): void {
     }
 }
 
-let def = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup })
+let def = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup, url: { fixedURL, toParam: getParamString } })
 
 export default def
