@@ -582,13 +582,12 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
     if (req.isCross) {
         // 跨域
         option.mode = "cors"
-    } else {
-        // 同域，默认带上cookie
-        option.credentials = "same-origin"
     }
 
-    if (req.withCredentials) {
-        // 发送请求，带上cookie
+    // 同域，默认带上cookie
+    option.credentials = "same-origin"
+    if (req.withCredentials && req.isCross) {
+        // 发送请求，带上cookie 跨域
         option.credentials = "include"
     }
 
