@@ -9,6 +9,7 @@
 -   [2019-07-30]重构 vue-unicom，重构后代码逻辑更清晰
 -   [2019-07-31]优化注解，修复全局订阅问题以及一些多余代码删除
 -   [2020-01-21]TS 改造，只支持 CommonJS 加载
+-   [2020-09-07]出发异步支持，类似koa2的剥洋葱
 
 ## 功能
 
@@ -47,8 +48,11 @@ unicom.on("instruct", function({
     from,
     // new 时，绑定的对象
     target
-}) {
+}, next) {
     // ...
+
+    // 同步
+    next && next()
 })
 
 // 取消订阅 instruct 并且 回调为 这个函数的
@@ -103,18 +107,6 @@ import Vue from "vue"
 import VueUnicom from "vue-unicom"
 // 非 cli 也必须 install一下
 Vue.use(VueUnicom)
-```
-
-### 其他关联 JS 中使用
-
-```javascript
-// 提供 main.js 安装的插件
-export default function install(Vue) {
-    // 通过 Vue.Unicom 获取类
-    let unicom = new Vue.Unicom()
-
-    // 其他操作 参照 JS中使用方案
-}
 ```
 
 ### Vue 组件内部使用

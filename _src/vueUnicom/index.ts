@@ -174,7 +174,7 @@ function monitorExec(that: VueUnicom) {
     }
 }
 
-export interface vueUnicomArg {
+export interface IVueUnicomArg {
     id?: string
     group?: string | Array<string>
     target?: any
@@ -207,7 +207,7 @@ declare module "vue/types/vue" {
 export class VueUnicom {
     static install = vueUnicomInstall
     // 事件存放
-    private _instruct_: vueUnicomInstruct = {}
+    protected _instruct_: vueUnicomInstruct = {}
     // 绑定目标 可以是vue的vm 也可以是任意
     target: any
     // 唯一的id
@@ -220,7 +220,7 @@ export class VueUnicom {
     // 私有属性
     // eslint-disable-next-line
     private _monitor_back_: number = 0
-    constructor({ id, group, target }: vueUnicomArg = {}) {
+    constructor({ id, group, target }: IVueUnicomArg = {}) {
         let _instruct_ = this._instruct_
         this._instruct_ = {}
         if (_instruct_) {
@@ -377,7 +377,7 @@ export class VueUnicom {
             // 只需要负责自己
             let es = (this._instruct_ && this._instruct_[query]) || []
             es.forEach(channelFn => {
-                channelFn.call(this.target || this, data)
+                channelFn.call(this.target, data)
             })
             return data
         }
