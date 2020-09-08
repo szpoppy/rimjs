@@ -230,9 +230,12 @@ function listenExec(that) {
 }
 var lakeProt = function (query, data) {
     return __awaiter(this, void 0, void 0, function () {
+        var self;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, _lakePub(this, query, data)];
+                case 0:
+                    self = this._lake_data_ ? this._lake_data_.lake : this;
+                    return [4 /*yield*/, _lakePub(self, query, data)];
                 case 1: return [2 /*return*/, _a.sent()];
             }
         });
@@ -434,6 +437,7 @@ function vueLakeInstall(Vue) {
     }
     lakeInstalled = true;
     var name = "lake";
+    var lakeSubs = name + "Subs";
     // function(query: string, ...args: any) {
     //     return this._lake_data_.lake.emit(query, ...args)
     // }
@@ -494,7 +498,7 @@ function vueLakeInstall(Vue) {
             }
             var opt = this.$options;
             lakeData.initGroup = opt[lakeGroupName] || [];
-            lakeData.instructs = opt[name + "Subs"] || [];
+            lakeData.instructs = opt[lakeSubs] || [];
             // 触发器
             // lakeData.self = new Lake({target: this})
         },
@@ -530,7 +534,7 @@ function vueLakeInstall(Vue) {
     });
     // 自定义属性合并策略
     var merge = Vue.config.optionMergeStrategies;
-    merge[name] = function (parentVal, childVal) {
+    merge[lakeSubs] = function (parentVal, childVal) {
         var arr = parentVal || [];
         if (childVal) {
             arr.push(childVal);

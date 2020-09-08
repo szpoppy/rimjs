@@ -92,10 +92,10 @@ function removeLakeGroup(target: VueLake): void {
 
 // 发布指令时产生的事件的类
 export class VueLakeEvent<D = any> {
-    from: any
+    from: VueLake | null
     data: D;
     [propName: string]: any
-    constructor(from: VueLake, data: D) {
+    constructor(from: VueLake | null, data: D) {
         // 来自
         this.from = from
         // 数据
@@ -145,7 +145,7 @@ function getLake<D, T extends Vue = Vue>(query: string): [VueLake[], string] {
 }
 
 // 异步触发
-async function _lakePub<D>(self: VueLake, query: string, data?: D): Promise<VueLakeEmitBack<D>> {
+async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promise<VueLakeEmitBack<D>> {
     let [targetLake, instruct] = getLake(query)
     if (!instruct || targetLake instanceof VueLake) {
         return targetLake
@@ -153,7 +153,7 @@ async function _lakePub<D>(self: VueLake, query: string, data?: D): Promise<VueL
     if (data === undefined) {
         data = {} as any
     }
-    let uniEvent = new VueLakeEvent<D>(self, data)
+    let uniEvent = new VueLakeEvent<D>(self, data as D)
     let unis = targetLake.slice(0)
     let next = async function() {
         let un = unis.shift()
@@ -198,7 +198,6 @@ declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
         lakeId?: string
         lakeName?: string | string[]
-        // esline-disable-next-line
         lakeSubs?: IVueLakeBackOption
     }
 }
@@ -209,8 +208,9 @@ interface IVueLakeProt {
     group(name: string): VueLake[]
 }
 
-let lakeProt = async function(query, data) {
-    return await _lakePub(this, query, data)
+let lakeProt = async function(this: any, query, data) {
+    let self = this._lake_data_ ? this._lake_data_.lake : this
+    return await _lakePub(self, query, data)
 } as IVueLakeProt
 
 lakeProt.id = function(id) {
@@ -223,6 +223,7 @@ lakeProt.group = function(name) {
 declare module "vue/types/vue" {
     interface Vue {
         $lake: IVueLakeProt
+        // eslint-disable-next-line
         _lake_data_?: vueLakeData
     }
 }
@@ -436,6 +437,7 @@ export function vueLakeInstall(Vue: VueConstructor) {
     lakeInstalled = true
 
     let name: "lake" = "lake"
+    let lakeSubs = name + "Subs"
 
     // function(query: string, ...args: any) {
     //     return this._lake_data_.lake.emit(query, ...args)
@@ -502,7 +504,7 @@ export function vueLakeInstall(Vue: VueConstructor) {
 
             let opt: any = this.$options
             lakeData.initGroup = opt[lakeGroupName] || []
-            lakeData.instructs = opt[name + "Subs"] || []
+            lakeData.instructs = opt[lakeSubs] || []
 
             // 触发器
             // lakeData.self = new Lake({target: this})
@@ -546,7 +548,7 @@ export function vueLakeInstall(Vue: VueConstructor) {
 
     // 自定义属性合并策略
     let merge = Vue.config.optionMergeStrategies
-    merge[name] = function(parentVal?: lakeInObj[], childVal?: lakeInObj) {
+    merge[lakeSubs] = function(parentVal?: lakeInObj[], childVal?: lakeInObj) {
         let arr = parentVal || []
         if (childVal) {
             arr.push(childVal)

@@ -3,10 +3,10 @@
  */
 import Vue, { VueConstructor } from "vue";
 export declare class VueLakeEvent<D = any> {
-    from: any;
+    from: VueLake | null;
     data: D;
     [propName: string]: any;
-    constructor(from: VueLake, data: D);
+    constructor(from: VueLake | null, data: D);
 }
 export declare type VueLakeEmitBack<D> = VueLakeEvent<D> | VueLake | VueLake[];
 export declare function lakePub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>;
