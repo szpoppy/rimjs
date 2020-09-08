@@ -72,25 +72,25 @@ let that = Lake.getId('id')
 let thats = Lake.getGroup('name')
 
 // 监控组件被命名为 id
-lake.monitor("#id", function(that){
+lake.listen("#id", function(that){
     // that 命名为 id 的那个组件
     // ...
 })
 // 监控组件分组中包含 group
-lake.monitor("@group", function(that) {
+lake.listen("@group", function(that) {
     // ...
 })
 
 // 取消特定监控
-lake.monitorOff("#id", fun)
-lake.monitorOff("@group", fun)
+lake.unListen("#id", fun)
+lake.unListen("@group", fun)
 
 // 取消指定所有监控
-lake.monitorOff("#id")
-lake.monitorOff("@group")
+lake.unListen("#id")
+lake.unListen("@group")
 
 // 取消全部和unicom有关的监控
-lake.monitorOff()
+lake.unListen()
 
 ```
 

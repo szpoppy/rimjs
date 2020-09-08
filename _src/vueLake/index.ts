@@ -91,22 +91,19 @@ function removeLakeGroup(target: VueLake): void {
 }
 
 // 发布指令时产生的事件的类
-export class VueLakeEvent<D = any, T = any> {
+export class VueLakeEvent<D = any> {
     from: any
-    target: T
     data: D;
     [propName: string]: any
-    constructor(from: any, data: D) {
+    constructor(from: VueLake, data: D) {
         // 来自
-        this.from = from || null
-        // 目标绑定的对象，vue中代表vue的实例
-        this.target = (from && from.target) || null
+        this.from = from
         // 数据
         this.data = data
     }
 }
 
-export type VueLakeEmitBack<D, T = any> = VueLakeEvent<D, T> | VueLake | VueLake[]
+export type VueLakeEmitBack<D> = VueLakeEvent<D> | VueLake | VueLake[]
 
 function getLake<D, T extends Vue = Vue>(query: string): [VueLake[], string] {
     // 以下是全局触发发布
@@ -148,12 +145,15 @@ function getLake<D, T extends Vue = Vue>(query: string): [VueLake[], string] {
 }
 
 // 异步触发
-async function _lakePub<D, T extends Vue = Vue>(self: T, query: string, data?: D): Promise<VueLakeEmitBack<D, T>> {
+async function _lakePub<D>(self: VueLake, query: string, data?: D): Promise<VueLakeEmitBack<D>> {
     let [targetLake, instruct] = getLake(query)
     if (!instruct || targetLake instanceof VueLake) {
         return targetLake
     }
-    let uniEvent = new VueLakeEvent<D, T>(self, data)
+    if (data === undefined) {
+        data = {} as any
+    }
+    let uniEvent = new VueLakeEvent<D>(self, data)
     let unis = targetLake.slice(0)
     let next = async function() {
         let un = unis.shift()
@@ -165,13 +165,13 @@ async function _lakePub<D, T extends Vue = Vue>(self: T, query: string, data?: D
     await next()
     return uniEvent
 }
-export async function lakePub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D, any>> {
-    return await _lakePub<D, any>(null, query, data)
+export async function lakePub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>> {
+    return await _lakePub<D>(null, query, data)
 }
 
 // 监控数据
 let monitorArr: Array<[string, string, Function, VueLake?]> = []
-function monitorExec(that: VueLake) {
+function listenExec(that: VueLake) {
     for (let i = 0; i < monitorArr.length; i += 1) {
         let [type, target, callback] = monitorArr[i]
         if ((type == "#" && that.id == target) || (type == "@" && that.group.indexOf(target) > -1)) {
@@ -181,17 +181,17 @@ function monitorExec(that: VueLake) {
     }
 }
 
-export interface IVueLakeArg {
+export interface IVueLakeArg<T> {
     id?: string
     group?: string | Array<string>
-    target?: any
+    target?: T
 }
 interface vueLakeInstruct {
     [propName: string]: Function[] // 任意类型
 }
 
-export interface IVueLakeBackOption<T> {
-    [propName: string]: <D>(arg: VueLakeEvent<D, T>, next?: Function) => void
+export interface IVueLakeBackOption {
+    [propName: string]: <V extends Vue, D>(this: V, arg: VueLakeEvent<D>, next: () => Promise<void>) => void
 }
 
 declare module "vue/types/options" {
@@ -199,18 +199,18 @@ declare module "vue/types/options" {
         lakeId?: string
         lakeName?: string | string[]
         // esline-disable-next-line
-        lakeSubs?: IVueLakeBackOption<V>
+        lakeSubs?: IVueLakeBackOption
     }
 }
 
 interface IVueLakeProt {
-    <D>(query: string, data?: D): Promise<VueLakeEmitBack<D, any>>
+    <D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>
     id(id: string): VueLake
     group(name: string): VueLake[]
 }
 
 let lakeProt = async function(query, data) {
-    return await await _lakePub(this, query, data)
+    return await _lakePub(this, query, data)
 } as IVueLakeProt
 
 lakeProt.id = function(id) {
@@ -228,12 +228,12 @@ declare module "vue/types/vue" {
 }
 
 // 通讯基础类
-export class VueLake {
+export class VueLake<T = any> {
     static install = vueLakeInstall
     // 事件存放
     protected _instruct_: vueLakeInstruct = {}
     // 绑定目标 可以是vue的vm 也可以是任意
-    target: any
+    target: T | VueLake
     // 唯一的id
     id: string = ""
     // 属于的分组
@@ -246,9 +246,9 @@ export class VueLake {
     // 私有属性
     // eslint-disable-next-line
     protected _monitor_back_: number = 0
-    constructor({ id, group, target }: IVueLakeArg = {}) {
+    constructor({ id, group, target }: IVueLakeArg<T> = {}) {
         // 绑定的目标对象
-        this.target = target
+        this.target = target === undefined ? this : target
 
         // 分组
         this.group = []
@@ -265,22 +265,22 @@ export class VueLake {
         addLakeGroup(this)
 
         // 查找监控中是否被监控中
-        this.monitorBack()
+        this.listenExec()
     }
 
     // 延迟合并执行
-    monitorBack(): VueLake {
+    protected listenExec(): VueLake {
         clearTimeout(this._monitor_back_)
         // eslint-disable-next-line
         this._monitor_back_ = setTimeout(() => {
-            monitorExec(this)
+            listenExec(this)
         }, 1)
 
         return this
     }
 
     // 监听目标创建
-    monitor(instruct: string, callback: Function): VueLake {
+    listen(instruct: string, callback: Function): VueLake {
         let type = instruct.slice(0, 1)
         let target = instruct.slice(1, instruct.length)
         monitorArr.push([type, target, callback, this])
@@ -288,7 +288,7 @@ export class VueLake {
     }
 
     // 销毁监听
-    monitorOff(instruct?: string, callback?: Function): VueLake {
+    unListen(instruct?: string, callback?: Function): VueLake {
         for (let i = 0; i < monitorArr.length; ) {
             let [type, target, fn, self] = monitorArr[i]
             if (self == this && (!instruct || instruct == type + target) && (!callback || callback == fn)) {
@@ -311,7 +311,7 @@ export class VueLake {
         updateLakeGroupByName(this, [], this.group)
 
         // 监控销毁
-        this.monitorOff()
+        this.unListen()
 
         // 订阅销毁
         this.unSub()
@@ -324,7 +324,7 @@ export class VueLake {
             this.id = id
 
             // 运行延后执行
-            this.monitorBack()
+            this.listenExec()
         }
 
         return this
@@ -343,7 +343,7 @@ export class VueLake {
         this.group = group
 
         // 运行延后执行
-        this.monitorBack()
+        this.listenExec()
         return this
     }
 
@@ -353,7 +353,7 @@ export class VueLake {
     }
 
     // 订阅消息
-    sub<D = any, T = any>(type: string, fn: (arg: VueLakeEvent<D, T>) => void): VueLake {
+    sub<D = any>(type: string, fn: (arg: VueLakeEvent<D>, next: () => Promise<void>) => void): VueLake {
         let instruct = this._instruct_ || (this._instruct_ = {})
         instruct[type] || (instruct[type] = [])
         instruct[type].push(fn)
@@ -389,10 +389,16 @@ export class VueLake {
         if (data && data instanceof VueLakeEvent) {
             // 只需要负责自己
             let es = ((this._instruct_ && this._instruct_[query]) || []).slice(0)
-            let next = async () => {
+            let target = this.target
+            let next = async function() {
                 let channelFn = es.shift()
+                let len = es.length
                 if (channelFn) {
-                    await channelFn.call(this.target, data, next)
+                    await channelFn.call(target, data, next)
+                    if (len > 0 && len == es.length) {
+                        // channelFn 内部没执行 next
+                        await next()
+                    }
                 }
             }
             await next()
@@ -400,7 +406,7 @@ export class VueLake {
         }
 
         // 以下是全局触发发布
-        return await _lakePub<D>(this.target, query, data)
+        return await _lakePub<D>(this, query, data)
     }
 }
 
@@ -496,7 +502,7 @@ export function vueLakeInstall(Vue: VueConstructor) {
 
             let opt: any = this.$options
             lakeData.initGroup = opt[lakeGroupName] || []
-            lakeData.instructs = opt[name] || []
+            lakeData.instructs = opt[name + "Subs"] || []
 
             // 触发器
             // lakeData.self = new Lake({target: this})
@@ -513,9 +519,9 @@ export function vueLakeInstall(Vue: VueConstructor) {
 
             // 订阅事件
             let instructs = lakeData.instructs || []
-            instructs.forEach(function(subs) {
+            instructs.forEach(subs => {
                 for (let n in subs) {
-                    lake.sub(n, subs[n] as any)
+                    lake.sub(n, subs[n])
                 }
             })
         },
