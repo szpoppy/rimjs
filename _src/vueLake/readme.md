@@ -14,7 +14,7 @@
 
 - 任意相对独立的 JS 之间的通讯（包括 Vue 组件以及 JS）
 - 订阅需要初始化客户端，并且有自身的生命周期
-- 当在 Vue 组件内，unicom 会自动注册，并将生命周期融合
+- 当在 Vue lake 会自动注册，并将生命周期融合
 - 全局监控支持（当监控到某个组件初始化后，会自动触发回调）
 
 ## API
@@ -53,7 +53,7 @@ lake.sub("instruct", async function({
 lake.unSub("instruct", fun)
 // 取消 instruct 的全部订阅
 lake.unSub("instruct")
-// 取消全部和unicom有关的订阅
+// 取消全部和lake有关的订阅
 lake.unSub()
 
 // 消息发布 返回event 同 上面的回调参数
@@ -65,7 +65,7 @@ let event = lake.pub('instruct#id', data)
 // 消息发布到指定group
 let event = lake.pub('instruct@group', data)
 
-// 获取命名为 id 的unicom
+// 获取命名为 id 的lake
 let that = Lake.getId('id')
 
 // 获取分组 group
@@ -89,7 +89,7 @@ lake.unListen("@group", fun)
 lake.unListen("#id")
 lake.unListen("@group")
 
-// 取消全部和unicom有关的监控
+// 取消全部和lake有关的监控
 lake.unListen()
 
 ```
@@ -109,7 +109,7 @@ Vue.use(VueLake)
 {
     // 将这个组件归到group分组， 多个分组请使用字符串数组
     lakeName: 'group',
-    // unicom 是组件内部订阅消息设置的
+    // lake 是组件内部订阅消息设置的
     lakeSubs: {
         // 订阅消息 为 instruct
         async instruct (event, next) {
@@ -128,13 +128,13 @@ Vue.use(VueLake)
             this.$lake("instruct", arg)
 
             // 获取被命名为 id的组件引用
-            // that 为unicom实例，that.target 为Vue的实例
+            // that 为lake实例，that.target 为Vue的实例
             let that = this.$lake.id("id")
 
             // 获取分组为 group 的所有vue
             let thats = this.$lake.group("group")
 
-            // 原始 unicom 对象的指向，不介意直接操作
+            // 原始 lake 对象的指向，不介意直接操作
             this._lake_data_.self
         }
     }
@@ -145,7 +145,42 @@ Vue.use(VueLake)
 
 ```html
 <!-- 加入group分组 并且 将本组件命名为 id -->
-<component lake-name="group" unicom-id="id"></component>
+<component lake-name="group" lake-id="id"></component>
 <!-- 加入多个分组，请传入数组 -->
 <component :lake-name="['group1', 'group2']"></component>
+```
+
+### 一个实例
+```ts
+import Lake from "../vueLake"
+
+let lake = new Lake()
+
+lake.sub("tt", function({ data }) {
+    data.x = 1
+})
+
+lake.sub<{ y: number; z: number }>("tt", async function(this: Lake<void>, { data }, next) {
+    data.y = 1
+
+    await next()
+
+    data.z = 100
+})
+
+lake.sub("tt", async function({ data }, next) {
+    data.z = 2
+
+    await next()
+
+    data.z = 50
+})
+
+async function doExe() {
+    // 输出 {data:{x:1, z: 1, y: 100}}
+    console.log(await lake.pub("tt"))
+}
+
+doExe()
+
 ```
