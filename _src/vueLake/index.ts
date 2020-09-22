@@ -165,9 +165,10 @@ async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promi
     let next = async function() {
         if (subs.length) {
             let subFn = subs.shift() as Function
-            let len = subs.length
+            let sLen = subs.length
+            let uLen = unis.length
             await subFn.call(lake.target, uniEvent, next)
-            if (len > 0 && len == subs.length) {
+            if (uLen == unis.length && sLen == subs.length) {
                 // subFn 内部没执行 next
                 await next()
             }

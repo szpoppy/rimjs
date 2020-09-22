@@ -192,17 +192,18 @@ function _lakePub(self, query, data) {
                     subs = __spreadArrays(lake.getSubs(instruct));
                     next = function () {
                         return __awaiter(this, void 0, void 0, function () {
-                            var subFn, len;
+                            var subFn, sLen, uLen;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
                                         if (!subs.length) return [3 /*break*/, 4];
                                         subFn = subs.shift();
-                                        len = subs.length;
+                                        sLen = subs.length;
+                                        uLen = unis.length;
                                         return [4 /*yield*/, subFn.call(lake.target, uniEvent, next)];
                                     case 1:
                                         _a.sent();
-                                        if (!(len > 0 && len == subs.length)) return [3 /*break*/, 3];
+                                        if (!(uLen == unis.length && sLen == subs.length)) return [3 /*break*/, 3];
                                         // subFn 内部没执行 next
                                         return [4 /*yield*/, next()];
                                     case 2:
