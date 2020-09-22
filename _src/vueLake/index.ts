@@ -90,21 +90,6 @@ function removeLakeGroup(target: VueLake): void {
     }
 }
 
-// 发布指令时产生的事件的类
-export class VueLakeEvent<D = any> {
-    from: VueLake | null
-    data: D;
-    [propName: string]: any
-    constructor(from: VueLake | null, data: D) {
-        // 来自
-        this.from = from
-        // 数据
-        this.data = data
-    }
-}
-
-export type VueLakeEmitBack<D> = VueLakeEvent<D> | VueLake | VueLake[]
-
 function getLake<D, T extends Vue = Vue>(query: string): [VueLake[], string] {
     // 以下是全局触发发布
     let type: string = ""
@@ -144,23 +129,45 @@ function getLake<D, T extends Vue = Vue>(query: string): [VueLake[], string] {
     return [targetLake, instruct]
 }
 
-// 异步触发
-async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promise<VueLakeEmitBack<D>> {
-    let [targetLake, instruct] = getLake(query)
-    if (!instruct || targetLake instanceof VueLake) {
-        return targetLake
+// 发布指令时产生的事件的类
+export class VueLakeEvent<D = any> {
+    lakes: VueLake[] = []
+    instruct: string = ""
+    from: VueLake | null
+    data: D;
+    [propName: string]: any
+    constructor(from: VueLake | null, data: D, query?: string) {
+        // 来自
+        this.from = from
+        // 数据
+        this.data = data
+
+        if (query) {
+            let [lakes, instruct] = getLake(query)
+            this.lakes = lakes
+            this.instruct = instruct
+        }
     }
+
+    get lake() {
+        return this.lakes[0] || null
+    }
+}
+
+// 异步触发
+async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promise<VueLakeEvent<D>> {
     if (data === undefined) {
         data = {} as any
     }
-    let uniEvent = new VueLakeEvent<D>(self, data as D)
-    if (targetLake.length == 0) {
+    let uniEvent = new VueLakeEvent<D>(self, data as D, query)
+
+    if (uniEvent.instruct == "" || uniEvent.lakes.length == 0) {
         return uniEvent
     }
 
-    let unis = targetLake.slice(0)
+    let unis = uniEvent.lakes.slice(0)
     let lake = unis.shift() as VueLake
-    let subs = [...lake.getSubs(instruct)]
+    let subs = [...lake.getSubs(uniEvent.instruct)]
 
     let next = async function() {
         if (subs.length) {
@@ -177,7 +184,7 @@ async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promi
 
         if (unis.length) {
             lake = unis.shift() as VueLake
-            subs = [...lake.getSubs(instruct)]
+            subs = [...lake.getSubs(uniEvent.instruct)]
             await next()
             return
         }
@@ -186,7 +193,7 @@ async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promi
     await next()
     return uniEvent
 }
-export async function lakePub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>> {
+export async function lakePub<D>(query: string, data?: D) {
     return await _lakePub<D>(null, query, data)
 }
 
@@ -224,7 +231,7 @@ declare module "vue/types/options" {
 }
 
 interface IVueLakeProt {
-    <D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>
+    <D>(query: string, data?: D): Promise<VueLakeEvent<D>>
     id(id: string): VueLake
     group(name: string): VueLake[]
 }
@@ -413,7 +420,7 @@ export class VueLake<T = any> {
     }
 
     // 异步出发订阅
-    async pub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>> {
+    async pub<D>(query: string, data?: D) {
         // 以下是全局触发发布
         return await _lakePub<D>(this, query, data)
     }

@@ -3,13 +3,15 @@
  */
 import Vue, { VueConstructor } from "vue";
 export declare class VueLakeEvent<D = any> {
+    lakes: VueLake[];
+    instruct: string;
     from: VueLake | null;
     data: D;
     [propName: string]: any;
-    constructor(from: VueLake | null, data: D);
+    constructor(from: VueLake | null, data: D, query?: string);
+    get lake(): VueLake<any>;
 }
-export declare type VueLakeEmitBack<D> = VueLakeEvent<D> | VueLake | VueLake[];
-export declare function lakePub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>;
+export declare function lakePub<D>(query: string, data?: D): Promise<VueLakeEvent<D>>;
 export interface IVueLakeArg<T> {
     id?: string;
     group?: string | Array<string>;
@@ -29,7 +31,7 @@ declare module "vue/types/options" {
     }
 }
 interface IVueLakeProt {
-    <D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>;
+    <D>(query: string, data?: D): Promise<VueLakeEvent<D>>;
     id(id: string): VueLake;
     group(name: string): VueLake[];
 }
@@ -60,7 +62,7 @@ export declare class VueLake<T = any> {
     sub<D = any>(type: string, fn: (arg: VueLakeEvent<D>, next: () => Promise<void>) => void): VueLake;
     getSubs(query: string): Function[];
     unSub(type?: string, fn?: Function): VueLake;
-    pub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>;
+    pub<D>(query: string, data?: D): Promise<VueLakeEvent<D>>;
 }
 interface vueInstruct {
     [propName: string]: (arg: VueLakeEvent) => void;

@@ -120,17 +120,6 @@ function removeLakeGroup(target) {
         lakeGroup.splice(index, 1);
     }
 }
-// 发布指令时产生的事件的类
-var VueLakeEvent = /** @class */ (function () {
-    function VueLakeEvent(from, data) {
-        // 来自
-        this.from = from;
-        // 数据
-        this.data = data;
-    }
-    return VueLakeEvent;
-}());
-exports.VueLakeEvent = VueLakeEvent;
 function getLake(query) {
     // 以下是全局触发发布
     var type = "";
@@ -169,27 +158,48 @@ function getLake(query) {
     }
     return [targetLake, instruct];
 }
+// 发布指令时产生的事件的类
+var VueLakeEvent = /** @class */ (function () {
+    function VueLakeEvent(from, data, query) {
+        this.lakes = [];
+        this.instruct = "";
+        // 来自
+        this.from = from;
+        // 数据
+        this.data = data;
+        if (query) {
+            var _a = getLake(query), lakes = _a[0], instruct = _a[1];
+            this.lakes = lakes;
+            this.instruct = instruct;
+        }
+    }
+    Object.defineProperty(VueLakeEvent.prototype, "lake", {
+        get: function () {
+            return this.lakes[0] || null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return VueLakeEvent;
+}());
+exports.VueLakeEvent = VueLakeEvent;
 // 异步触发
 function _lakePub(self, query, data) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, targetLake, instruct, uniEvent, unis, lake, subs, next;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var uniEvent, unis, lake, subs, next;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
-                    _a = getLake(query), targetLake = _a[0], instruct = _a[1];
-                    if (!instruct || targetLake instanceof VueLake) {
-                        return [2 /*return*/, targetLake];
-                    }
                     if (data === undefined) {
                         data = {};
                     }
-                    uniEvent = new VueLakeEvent(self, data);
-                    if (targetLake.length == 0) {
+                    uniEvent = new VueLakeEvent(self, data, query);
+                    if (uniEvent.instruct == "" || uniEvent.lakes.length == 0) {
                         return [2 /*return*/, uniEvent];
                     }
-                    unis = targetLake.slice(0);
+                    unis = uniEvent.lakes.slice(0);
                     lake = unis.shift();
-                    subs = __spreadArrays(lake.getSubs(instruct));
+                    subs = __spreadArrays(lake.getSubs(uniEvent.instruct));
                     next = function () {
                         return __awaiter(this, void 0, void 0, function () {
                             var subFn, sLen, uLen;
@@ -214,7 +224,7 @@ function _lakePub(self, query, data) {
                                     case 4:
                                         if (!unis.length) return [3 /*break*/, 6];
                                         lake = unis.shift();
-                                        subs = __spreadArrays(lake.getSubs(instruct));
+                                        subs = __spreadArrays(lake.getSubs(uniEvent.instruct));
                                         return [4 /*yield*/, next()];
                                     case 5:
                                         _a.sent();
@@ -226,7 +236,7 @@ function _lakePub(self, query, data) {
                     };
                     return [4 /*yield*/, next()];
                 case 1:
-                    _b.sent();
+                    _a.sent();
                     return [2 /*return*/, uniEvent];
             }
         });
