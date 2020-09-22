@@ -58,6 +58,7 @@ export declare class VueLake<T = any> {
     setGroup(group: string | string[]): this;
     has(type: string): boolean;
     sub<D = any>(type: string, fn: (arg: VueLakeEvent<D>, next: () => Promise<void>) => void): VueLake;
+    getSubs(query: string): Function[];
     unSub(type?: string, fn?: Function): VueLake;
     pub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>>;
 }

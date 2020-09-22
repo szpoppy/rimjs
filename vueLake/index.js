@@ -38,6 +38,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // #id 存放id的lake对象
 var lakeGroupByID = {};
@@ -165,7 +172,7 @@ function getLake(query) {
 // 异步触发
 function _lakePub(self, query, data) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, targetLake, instruct, uniEvent, unis, next;
+        var _a, targetLake, instruct, uniEvent, unis, lake, subs, next;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -177,23 +184,41 @@ function _lakePub(self, query, data) {
                         data = {};
                     }
                     uniEvent = new VueLakeEvent(self, data);
+                    if (targetLake.length == 0) {
+                        return [2 /*return*/, uniEvent];
+                    }
                     unis = targetLake.slice(0);
+                    lake = unis.shift();
+                    subs = __spreadArrays(lake.getSubs(instruct));
                     next = function () {
                         return __awaiter(this, void 0, void 0, function () {
-                            var un;
+                            var subFn, len;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
-                                        un = unis.shift();
-                                        if (!un) return [3 /*break*/, 3];
-                                        return [4 /*yield*/, un.pub(instruct, uniEvent)];
+                                        if (!subs.length) return [3 /*break*/, 4];
+                                        subFn = subs.shift();
+                                        len = subs.length;
+                                        return [4 /*yield*/, subFn.call(lake.target, uniEvent, next)];
                                     case 1:
                                         _a.sent();
+                                        if (!(len > 0 && len == subs.length)) return [3 /*break*/, 3];
+                                        // subFn 内部没执行 next
                                         return [4 /*yield*/, next()];
                                     case 2:
+                                        // subFn 内部没执行 next
                                         _a.sent();
                                         _a.label = 3;
                                     case 3: return [2 /*return*/];
+                                    case 4:
+                                        if (!unis.length) return [3 /*break*/, 6];
+                                        lake = unis.shift();
+                                        subs = __spreadArrays(lake.getSubs(instruct));
+                                        return [4 /*yield*/, next()];
+                                    case 5:
+                                        _a.sent();
+                                        return [2 /*return*/];
+                                    case 6: return [2 /*return*/];
                                 }
                             });
                         });
@@ -349,6 +374,11 @@ var VueLake = /** @class */ (function () {
         instruct[type].push(fn);
         return this;
     };
+    // 获取订阅的方法
+    VueLake.prototype.getSubs = function (query) {
+        // 只需要负责自己
+        return (this._instruct_ && this._instruct_[query]) || [];
+    };
     // 移除订阅
     VueLake.prototype.unSub = function (type, fn) {
         var instruct = this._instruct_;
@@ -369,7 +399,7 @@ var VueLake = /** @class */ (function () {
                 delete instruct[type];
             }
             else {
-                delete this._instruct_;
+                this._instruct_ = {};
             }
         }
         return this;
@@ -377,43 +407,10 @@ var VueLake = /** @class */ (function () {
     // 异步出发订阅
     VueLake.prototype.pub = function (query, data) {
         return __awaiter(this, void 0, void 0, function () {
-            var es_1, target_1, next_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        if (!(data && data instanceof VueLakeEvent)) return [3 /*break*/, 2];
-                        es_1 = ((this._instruct_ && this._instruct_[query]) || []).slice(0);
-                        target_1 = this.target;
-                        next_1 = function () {
-                            return __awaiter(this, void 0, void 0, function () {
-                                var channelFn, len;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            channelFn = es_1.shift();
-                                            len = es_1.length;
-                                            if (!channelFn) return [3 /*break*/, 3];
-                                            return [4 /*yield*/, channelFn.call(target_1, data, next_1)];
-                                        case 1:
-                                            _a.sent();
-                                            if (!(len > 0 && len == es_1.length)) return [3 /*break*/, 3];
-                                            // channelFn 内部没执行 next
-                                            return [4 /*yield*/, next_1()];
-                                        case 2:
-                                            // channelFn 内部没执行 next
-                                            _a.sent();
-                                            _a.label = 3;
-                                        case 3: return [2 /*return*/];
-                                    }
-                                });
-                            });
-                        };
-                        return [4 /*yield*/, next_1()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/, data];
-                    case 2: return [4 /*yield*/, _lakePub(this, query, data)];
-                    case 3: 
+                    case 0: return [4 /*yield*/, _lakePub(this, query, data)];
+                    case 1: 
                     // 以下是全局触发发布
                     return [2 /*return*/, _a.sent()];
                 }

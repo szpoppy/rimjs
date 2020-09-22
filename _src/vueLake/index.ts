@@ -154,14 +154,34 @@ async function _lakePub<D>(self: VueLake | null, query: string, data?: D): Promi
         data = {} as any
     }
     let uniEvent = new VueLakeEvent<D>(self, data as D)
+    if (targetLake.length == 0) {
+        return uniEvent
+    }
+
     let unis = targetLake.slice(0)
+    let lake = unis.shift() as VueLake
+    let subs = [...lake.getSubs(instruct)]
+
     let next = async function() {
-        let un = unis.shift()
-        if (un) {
-            await un.pub<VueLakeEvent>(instruct, uniEvent)
+        if (subs.length) {
+            let subFn = subs.shift() as Function
+            let len = subs.length
+            await subFn.call(lake.target, uniEvent, next)
+            if (len > 0 && len == subs.length) {
+                // subFn 内部没执行 next
+                await next()
+            }
+            return
+        }
+
+        if (unis.length) {
+            lake = unis.shift() as VueLake
+            subs = [...lake.getSubs(instruct)]
             await next()
+            return
         }
     }
+
     await next()
     return uniEvent
 }
@@ -361,6 +381,12 @@ export class VueLake<T = any> {
         return this
     }
 
+    // 获取订阅的方法
+    getSubs(query: string) {
+        // 只需要负责自己
+        return (this._instruct_ && this._instruct_[query]) || []
+    }
+
     // 移除订阅
     unSub(type?: string, fn?: Function): VueLake {
         let instruct = this._instruct_
@@ -379,7 +405,7 @@ export class VueLake<T = any> {
             } else if (type) {
                 delete instruct[type]
             } else {
-                delete this._instruct_
+                this._instruct_ = {}
             }
         }
         return this
@@ -387,25 +413,6 @@ export class VueLake<T = any> {
 
     // 异步出发订阅
     async pub<D>(query: string, data?: D): Promise<VueLakeEmitBack<D>> {
-        if (data && data instanceof VueLakeEvent) {
-            // 只需要负责自己
-            let es = ((this._instruct_ && this._instruct_[query]) || []).slice(0)
-            let target = this.target
-            let next = async function() {
-                let channelFn = es.shift()
-                let len = es.length
-                if (channelFn) {
-                    await channelFn.call(target, data, next)
-                    if (len > 0 && len == es.length) {
-                        // channelFn 内部没执行 next
-                        await next()
-                    }
-                }
-            }
-            await next()
-            return data
-        }
-
         // 以下是全局触发发布
         return await _lakePub<D>(this, query, data)
     }
