@@ -290,11 +290,12 @@ interface shortcutEventObj {
     [propName: string]: IEventOnFn
 }
 type shortcutEvent = shortcutEventObj | IEventOnFn
-
-function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam, onNew?: Function) {
+type groupLoadOnNew = (ajax: Ajax) => void
+function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam | groupLoadOnNew, onNew?: groupLoadOnNew) {
     let opt = typeof url == "string" ? { url } : url
 
     if (callback && typeof callback != "function") {
+        onNew = param as groupLoadOnNew
         param = callback
         callback = undefined
     }
@@ -304,7 +305,7 @@ function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEven
     if (typeof callback == "function") {
         one.on("callback", callback)
     }
-    one.send(param)
+    one.send(param as sendParam)
     return one
 }
 

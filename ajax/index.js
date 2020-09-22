@@ -249,6 +249,7 @@ exports.Ajax = Ajax;
 function groupLoad(target, url, callback, param, onNew) {
     var opt = typeof url == "string" ? { url: url } : url;
     if (callback && typeof callback != "function") {
+        onNew = param;
         param = callback;
         callback = undefined;
     }
