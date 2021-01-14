@@ -94,7 +94,7 @@ lake.unListen()
 
 ```
 
-### main.js 注册 Unicom 插件
+### main.js 注册 Lake 插件
 
 ```javascript
 import Vue from "vue"
