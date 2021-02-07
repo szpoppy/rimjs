@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.vueFn = void 0;
 var _hasOwnProperty = Object.prototype.hasOwnProperty;
 var _toString = Object.prototype.toString;
 /**

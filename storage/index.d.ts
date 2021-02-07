@@ -33,6 +33,6 @@ declare let ls: LSClass & {
     LSClass: typeof LSClass;
 };
 export declare let getStorage: (key: string) => any;
-export declare let setStorage: (key: string, value: any, expiration?: string | number | Date) => void;
+export declare let setStorage: (key: string, value: any, expiration?: number | string | Date) => void;
 export declare let removeStorage: (key: string) => void;
 export default ls;

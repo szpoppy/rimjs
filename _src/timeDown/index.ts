@@ -67,7 +67,7 @@ class TimeEvent extends EventEmitter {
 }
 
 let queue: TimeEvent[] = []
-let interval: number = 0
+let interval: null | ReturnType<typeof setInterval> = null
 
 /**
  * 执行一次 一个 循环
@@ -112,7 +112,7 @@ function step() {
     } else {
         // 无队列，移除 interval
         clearInterval(interval)
-        interval = 0
+        interval = null
     }
 }
 
@@ -151,7 +151,7 @@ function stopAll() {
     queue = []
     // 无队列，移除 interval
     clearInterval(interval)
-    interval = 0
+    interval = null
 }
 export default Object.assign(timeDown, {
     stopAll,

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isGangAoTaiReside = exports.isForeignerReside = exports.isTaiwanPass = exports.isGangAoPass = exports.isPassport = exports.isUrl = exports.isIdCard = exports.isZip = exports.isEnglish = exports.isChinese = exports.isMobile = exports.isEmail = void 0;
 /**
  * 是否为Email
  * @method Util.cUtilValidate.isEmail

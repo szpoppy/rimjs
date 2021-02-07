@@ -219,7 +219,7 @@ export class VueUnicom {
 
     // 私有属性
     // eslint-disable-next-line
-    private _monitor_back_: number = 0
+    private _monitor_back_: null | ReturnType<typeof setTimeout> = null
     constructor({ id, group, target }: IVueUnicomArg = {}) {
         let _instruct_ = this._instruct_
         this._instruct_ = {}

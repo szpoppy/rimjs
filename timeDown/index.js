@@ -74,7 +74,7 @@ var TimeEvent = /** @class */ (function (_super) {
     return TimeEvent;
 }(event_1.default));
 var queue = [];
-var interval = 0;
+var interval = null;
 /**
  * 执行一次 一个 循环
  * @param {*} x
@@ -120,7 +120,7 @@ function step() {
     else {
         // 无队列，移除 interval
         clearInterval(interval);
-        interval = 0;
+        interval = null;
     }
 }
 /**
@@ -156,7 +156,7 @@ function stopAll() {
     queue = [];
     // 无队列，移除 interval
     clearInterval(interval);
-    interval = 0;
+    interval = null;
 }
 exports.default = Object.assign(timeDown, {
     stopAll: stopAll,

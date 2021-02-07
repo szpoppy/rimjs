@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.stringifyQS = exports.parseQS = exports.QueryString = void 0;
 var QueryString = /** @class */ (function () {
     function QueryString(opt) {
         this.sep = "&";

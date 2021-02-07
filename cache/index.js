@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.promiseCache = void 0;
 var Cache = /** @class */ (function () {
     function Cache() {
         this.backs = [];

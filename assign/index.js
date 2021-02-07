@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.assign = exports.merge = void 0;
 var each_1 = require("../each");
 // 用于类型判断
 var _toString = Object.prototype.toString;

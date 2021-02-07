@@ -1,12 +1,3 @@
-<p align="center">
-   <a href="https://www.npmjs.com/package/rimjs">
-   		<img src="https://img.shields.io/npm/v/rimjs.svg?style=flat" alt="npm">
-   </a>
-   <a href="https://www.npmjs.com/package/rimjs">
-   		<img src="https://img.shields.io/npm/dm/rimjs.svg?style=flat" alt="npm">
-   </a>
-</p>
-
 # Ajax
 
 > 一套支持分组拦截器的 ajax

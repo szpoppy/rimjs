@@ -12,6 +12,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.vueUnicomInstall = exports.VueUnicom = exports.unicomEmit = exports.VueUnicomEvent = void 0;
 // #id 存放id的unicom对象
 var unicomGroupByID = {};
 /**
@@ -178,7 +179,7 @@ var VueUnicom = /** @class */ (function () {
         this.id = "";
         // 私有属性
         // eslint-disable-next-line
-        this._monitor_back_ = 0;
+        this._monitor_back_ = null;
         var _instruct_ = this._instruct_;
         this._instruct_ = {};
         if (_instruct_) {

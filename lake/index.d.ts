@@ -33,7 +33,7 @@ export declare class Lake<T = any> {
     static pub: typeof lakePub;
     static getId: (id: string) => Lake<any>;
     static getGroup: (name: string) => Lake<any>[];
-    protected _monitor_back_: number;
+    protected _monitor_back_: null | ReturnType<typeof setTimeout>;
     constructor({ id, group, target }?: ILakeArg<T>);
     protected listenExec(): Lake;
     listen(instruct: string, callback: Function): Lake;

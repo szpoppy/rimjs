@@ -4,6 +4,7 @@
  功能:MD5编码
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.utf8_str = exports.utf8_b64 = exports.mac_str = exports.mac_b64 = exports.mac_hex = exports.str = exports.b64 = exports.hex = void 0;
 var hexcase = 0;
 var b64pad = "";
 var chrsz = 8;

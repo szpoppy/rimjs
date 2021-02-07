@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeStorage = exports.setStorage = exports.getStorage = exports.LSClass = void 0;
 var soleTime = new Date().getTime() - 1000000;
 var soleCount = 1000;
 // 获取页面唯一的值

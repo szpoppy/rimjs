@@ -250,7 +250,7 @@ export class Lake<T = any> {
 
     // 私有属性
     // eslint-disable-next-line
-    protected _monitor_back_: number = 0
+    protected _monitor_back_: null | ReturnType<typeof setTimeout> = null
     constructor({ id, group, target }: ILakeArg<T> = {}) {
         // 绑定的目标对象
         this.target = target === undefined ? this : target

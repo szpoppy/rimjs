@@ -46,6 +46,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Lake = exports.lakeProt = exports.lakePub = exports.LakeEvent = void 0;
 // #id 存放id的lake对象
 var lakeGroupByID = {};
 /**
@@ -177,7 +178,7 @@ var LakeEvent = /** @class */ (function () {
         get: function () {
             return this.lakes[0] || null;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     return LakeEvent;
@@ -293,7 +294,7 @@ var Lake = /** @class */ (function () {
         this.id = "";
         // 私有属性
         // eslint-disable-next-line
-        this._monitor_back_ = 0;
+        this._monitor_back_ = null;
         // 绑定的目标对象
         this.target = target === undefined ? this : target;
         // 分组

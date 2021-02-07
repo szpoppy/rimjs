@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.appendDate = exports.diffDate = exports.getDate = exports.parseDate = void 0;
 // 星期几 中文
 var weekDayArr = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 var weekDayArrE = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];

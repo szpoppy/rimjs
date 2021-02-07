@@ -8,7 +8,7 @@
         "rootDir": "./_src/",
         "experimentalDecorators": true,
         "lib": ["es2016", "dom"],
-        "types": []
+        "types": ["node"]
     },
     "include": ["_src/**/*"],
     "exclude": ["node_modules"]

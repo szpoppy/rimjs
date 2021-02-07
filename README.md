@@ -1,8 +1,19 @@
+<p align="center">
+   <a href="https://www.npmjs.com/package/rimjs">
+   		<img src="https://img.shields.io/npm/v/rimjs.svg?style=flat" alt="npm">
+   </a>
+   <a href="https://www.npmjs.com/package/rimjs">
+   		<img src="https://img.shields.io/npm/dm/rimjs.svg?style=flat" alt="npm">
+   </a>
+</p>
 # 使用TS写的一些浏览器js的周边
 
 ## npm
 
 [https://www.npmjs.com/package/rimjs](https://www.npmjs.com/package/rimjs)
+
+## 更新日志
+[2021-2-7] ajax支持nodejs（FormData没测试），使用方式不变
 
 ## 功能
 | 名称                                    | 说明                                        |

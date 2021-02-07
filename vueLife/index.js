@@ -7,6 +7,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.vueLifeInstall = void 0;
 // 插件默认名称
 var defName = "life";
 // 所有绑定关系
