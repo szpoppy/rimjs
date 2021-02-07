@@ -24,15 +24,11 @@ function getDefaultAdapter() {
     return adapter;
 }
 */
-var getFullUrl_1 = require("../util/getFullUrl");
-var loadJS_1 = require("../util/loadJS");
 var lib_1 = require("./lib");
 __exportStar(require("./lib"), exports);
 exports.ajaxUtil = {
     fixedURL: lib_1.fixedURL,
-    toParam: lib_1.getParamString,
-    loadJS: loadJS_1.loadJS,
-    getFullUrl: getFullUrl_1.getFullUrl
+    toParam: lib_1.getParamString
 };
 (function () {
     if (typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]") {

@@ -1,5 +1,4 @@
 "use strict";
-// ========================================================================= 动态加载js
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loadJS = void 0;
 // jsonp 加载方式需要使用

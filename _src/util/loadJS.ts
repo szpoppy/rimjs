@@ -1,7 +1,3 @@
-// ========================================================================= 动态加载js
-
-import def from "../ajax"
-
 // jsonp 加载方式需要使用
 let head: HTMLElement = document.head || document.getElementsByTagName("head")[0] || document.documentElement
 export function loadJS(url: string, callback: Function): HTMLScriptElement {

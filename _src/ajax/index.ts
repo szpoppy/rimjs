@@ -11,16 +11,12 @@ function getDefaultAdapter() {
     return adapter;
 }
 */
-import { getFullUrl } from "../util/getFullUrl"
-import { loadJS } from "../util/loadJS"
 import { AjaxGroup, ajaxGlobal, fixedURL, getParamString } from "./lib"
 export * from "./lib"
 
 export let ajaxUtil = {
     fixedURL,
-    toParam: getParamString,
-    loadJS,
-    getFullUrl
+    toParam: getParamString
 }
 ;(function() {
     if (typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]") {
