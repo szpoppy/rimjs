@@ -17,11 +17,22 @@ var Cache = /** @class */ (function () {
     };
     return Cache;
 }());
-function promiseCache(getFn, eTime) {
+function getKeyDef(para) {
+    if (typeof para == "string") {
+        return para;
+    }
+    if (para && para.toString) {
+        return para.toString();
+    }
+    return ":default";
+}
+function promiseCache(getFn, eTime, getKey) {
     if (eTime === void 0) { eTime = 0; }
+    if (getKey === void 0) { getKey = getKeyDef; }
     var caches = {};
-    return function (key) {
-        if (key === void 0) { key = ":default"; }
+    return function (para) {
+        if (para === void 0) { para = null; }
+        var key = getKey(para);
         var cache = caches[key];
         if (cache && cache.inited == 2 && eTime > 0 && cache.date + eTime < new Date().getTime()) {
             // 已经过期了
@@ -42,7 +53,7 @@ function promiseCache(getFn, eTime) {
                 cache.inited = 1;
                 getFn(function (data) {
                     cache.setData(data);
-                }, key);
+                }, para);
             }
         });
     };

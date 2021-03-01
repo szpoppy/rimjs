@@ -1,5 +1,5 @@
 type setDataFn = (data: any) => void
-type getDataFn = (setData: setDataFn, key: string) => void
+type getDataFn = (setData: setDataFn, para: any) => void
 
 type backFn<T> = (value: T) => void
 
@@ -20,9 +20,20 @@ class Cache<T> {
     }
 }
 
-export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0) {
+function getKeyDef(para: any): string {
+    if (typeof para == "string") {
+        return para
+    }
+    if (para && para.toString) {
+        return para.toString()
+    }
+    return ":default"
+}
+
+export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKey: (key: any) => string = getKeyDef) {
     let caches: Record<string, Cache<T>> = {}
-    return function(key: string = ":default") {
+    return function(para: any = null) {
+        let key = getKey(para)
         let cache = caches[key]
         if (cache && cache.inited == 2 && eTime > 0 && cache.date + eTime < new Date().getTime()) {
             // 已经过期了
@@ -45,7 +56,7 @@ export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0) {
                 cache.inited = 1
                 getFn(function(data) {
                     cache.setData(data)
-                }, key)
+                }, para)
             }
         })
     }
