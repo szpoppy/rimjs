@@ -91,7 +91,7 @@ function fetchSend(course) {
         headers: req.header
     };
     // 提交字符串
-    var paramStr = lib_1.getParamString(param, req.dataType);
+    var paramStr = req.isFormData ? param : lib_1.getParamString(param, req.dataType);
     if (method == "GET") {
         req.url = lib_1.fixedURL(req.url, paramStr);
         option.body = null;
@@ -213,7 +213,7 @@ function xhrSend(course) {
         // xhr 跨域带cookie
         req.xhr.withCredentials = true;
     }
-    var paramStr = lib_1.getParamString(req.param, req.dataType);
+    var paramStr = req.isFormData ? req.param : lib_1.getParamString(req.param, req.dataType);
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
         req.xhr.open(method, lib_1.fixedURL(req.url, paramStr), true);

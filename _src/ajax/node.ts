@@ -28,7 +28,7 @@ function nodeFetchSend(this: Ajax, course: AjaxCourse): void {
     }
 
     // 提交字符串
-    let paramStr = getParamString(param, req.dataType) as string
+    let paramStr = req.isFormData ? (param as any) : (getParamString(param, req.dataType) as string)
 
     if (method == "GET") {
         req.url = fixedURL(req.url, paramStr as string)

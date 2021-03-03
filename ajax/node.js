@@ -26,7 +26,7 @@ function nodeFetchSend(course) {
         headers: req.header
     };
     // 提交字符串
-    var paramStr = lib_1.getParamString(param, req.dataType);
+    var paramStr = req.isFormData ? param : lib_1.getParamString(param, req.dataType);
     if (method == "GET") {
         req.url = lib_1.fixedURL(req.url, paramStr);
         option.body = null;

@@ -104,7 +104,7 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
     }
 
     // 提交字符串
-    let paramStr = getParamString(param, req.dataType)
+    let paramStr = req.isFormData ? (param as FormData) : getParamString(param, req.dataType)
 
     if (method == "GET") {
         req.url = fixedURL(req.url, paramStr as string)
@@ -236,7 +236,7 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
         req.xhr.withCredentials = true
     }
 
-    let paramStr: string | FormData | null = getParamString(req.param, req.dataType)
+    let paramStr: string | FormData | null = req.isFormData ? (req.param as FormData) : getParamString(req.param, req.dataType)
 
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
