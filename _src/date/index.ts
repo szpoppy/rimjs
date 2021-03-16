@@ -82,7 +82,7 @@ function format(str: string, arr: string[], info: any): string {
     }
     str = str.replace(/<(\w+):(.*?)>/g, function(s0, s1, s2) {
         let val = info[s1]
-        if (val) {
+        if (val && /[^0]/.test(String(val))) {
             return val + s2
         }
         return ""
@@ -185,13 +185,19 @@ export function getDate(date: dateType, formatStr: string = ""): dateProt | stri
 
 interface diffProt {
     D: number
+    DD: string
     ms: number
+    mms: string
+    m: number
+    mm: string
     h: number
+    hh: string
     s: number
+    ss: string
 }
 
 // 时间间隔差
-const diffIntervalArr = "D,ms,h,m,s".split(",")
+const diffIntervalArr = "DD,D,mms,ms,hh,h,mm,m,ss,s".split(",")
 /**
  * date1 和 date2之间的时间差
  * @param arg1
@@ -213,23 +219,28 @@ export function diffDate(arg1: dateType | number, arg2?: dateType | string, arg3
         outStr = (arg3 as string) || ""
     }
 
-    let mm: number = Math.abs(num)
+    let x: number = Math.abs(num)
     // 毫秒
-    let ms: number = mm % 1000
+    let ms: number = x % 1000
     // 秒
-    mm = Math.floor(mm / 1000)
-    let s = mm % 60
-    mm = Math.floor(mm / 60)
-    let m = mm % 60
-    mm = Math.floor(mm / 60)
-    let h = mm % 24
-    let D = Math.floor(mm / 24)
+    x = Math.floor(x / 1000)
+    let s = x % 60
+    x = Math.floor(x / 60)
+    let m = x % 60
+    x = Math.floor(x / 60)
+    let h = x % 24
+    let D = Math.floor(x / 24)
 
     let opt = {
+        DD: ("0" + D).slice(-2),
         D: D,
+        mms: ("0" + ms).slice(-2),
         ms: ms,
+        hh: ("0" + h).slice(-2),
         h: h,
+        mm: ("0" + m).slice(-2),
         m: m,
+        ss: ("0" + s).slice(-2),
         s: s
     }
 

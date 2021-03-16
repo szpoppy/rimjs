@@ -75,7 +75,7 @@ function format(str, arr, info) {
     }
     str = str.replace(/<(\w+):(.*?)>/g, function (s0, s1, s2) {
         var val = info[s1];
-        if (val) {
+        if (val && /[^0]/.test(String(val))) {
             return val + s2;
         }
         return "";
@@ -148,7 +148,7 @@ function getDate(date, formatStr) {
 }
 exports.getDate = getDate;
 // 时间间隔差
-var diffIntervalArr = "D,ms,h,m,s".split(",");
+var diffIntervalArr = "DD,D,mms,ms,hh,h,mm,m,ss,s".split(",");
 function diffDate(arg1, arg2, arg3) {
     var num;
     var outStr;
@@ -160,22 +160,27 @@ function diffDate(arg1, arg2, arg3) {
         num = parseDate(arg1).getTime() - parseDate(arg2).getTime();
         outStr = arg3 || "";
     }
-    var mm = Math.abs(num);
+    var x = Math.abs(num);
     // 毫秒
-    var ms = mm % 1000;
+    var ms = x % 1000;
     // 秒
-    mm = Math.floor(mm / 1000);
-    var s = mm % 60;
-    mm = Math.floor(mm / 60);
-    var m = mm % 60;
-    mm = Math.floor(mm / 60);
-    var h = mm % 24;
-    var D = Math.floor(mm / 24);
+    x = Math.floor(x / 1000);
+    var s = x % 60;
+    x = Math.floor(x / 60);
+    var m = x % 60;
+    x = Math.floor(x / 60);
+    var h = x % 24;
+    var D = Math.floor(x / 24);
     var opt = {
+        DD: ("0" + D).slice(-2),
         D: D,
+        mms: ("0" + ms).slice(-2),
         ms: ms,
+        hh: ("0" + h).slice(-2),
         h: h,
+        mm: ("0" + m).slice(-2),
         m: m,
+        ss: ("0" + s).slice(-2),
         s: s
     };
     if (!outStr) {
