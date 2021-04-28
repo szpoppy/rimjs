@@ -35,9 +35,15 @@ export declare function getDate(date: dateType): dateProt;
 export declare function getDate(date: dateType, formatStr: string): string;
 interface diffProt {
     D: number;
+    DD: string;
     ms: number;
+    mms: string;
+    m: number;
+    mm: string;
     h: number;
+    hh: string;
     s: number;
+    ss: string;
 }
 /**
  * date1 和 date2之间的时间差
