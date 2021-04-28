@@ -4,6 +4,9 @@
 
 [https://www.npmjs.com/package/rimjs](https://www.npmjs.com/package/rimjs)
 
+## 更新日志  
+2021-04-28: vueLife、vueUnicom、vueLake 对vue3的支持
+
 ## 功能
 | 名称                               | 说明                                        |
 | ---------------------------------- | ------------------------------------------- |

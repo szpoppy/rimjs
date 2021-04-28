@@ -4,6 +4,7 @@
         "sourceMap": true,
         "target": "es5",
         "module": "CommonJS",
+        "moduleResolution": "node",
         "outDir": "./",
         "rootDir": "./_src/",
         "experimentalDecorators": true,

@@ -133,7 +133,7 @@ function hookEmit(key, data, that) {
         _hookExec(key, hookLifes[n], hookData[key]);
     }
 }
-function vueLifeInstall(Vue, init) {
+function vueLifeInstall(V, init) {
     // 初始化函数
     if (typeof init == "function") {
         init = {
@@ -176,7 +176,7 @@ function vueLifeInstall(Vue, init) {
         };
     }
     // console.log("mixinOpt", mixinOpt)
-    Vue.config.optionMergeStrategies[defName] = function (pVal, nVal) {
+    V.config.optionMergeStrategies[defName] = function (pVal, nVal) {
         var val = pVal instanceof Array ? pVal : pVal ? [pVal] : [];
         if (nVal) {
             val.push(nVal);
@@ -191,7 +191,7 @@ function vueLifeInstall(Vue, init) {
                 return data;
             },
             hooks: hooks,
-            vue: Vue
+            vue: V
         };
         initFn.apply(void 0, __spreadArrays([arg], initArgs));
     }
@@ -219,7 +219,7 @@ function vueLifeInstall(Vue, init) {
             }
         }
     };
-    Vue.mixin(mixinOpt);
+    V.mixin(mixinOpt);
 }
 exports.vueLifeInstall = vueLifeInstall;
 exports.default = vueLifeInstall;

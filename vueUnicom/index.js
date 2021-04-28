@@ -13,6 +13,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.vueUnicomInstall = exports.VueUnicom = exports.unicomEmit = exports.VueUnicomEvent = void 0;
+// eslint-disable-next-line
+var vue_1 = require("vue");
 // #id 存放id的unicom对象
 var unicomGroupByID = {};
 /**
@@ -333,7 +335,7 @@ var VueUnicom = /** @class */ (function () {
 exports.VueUnicom = VueUnicom;
 // vue 安装插槽
 var unicomInstalled = false;
-function vueUnicomInstall(vue) {
+function vueUnicomInstall(V) {
     var _a, _b;
     if (unicomInstalled) {
         // 防止重复install
@@ -341,15 +343,24 @@ function vueUnicomInstall(vue) {
     }
     unicomInstalled = true;
     var name = "unicom";
-    // 添加原型方法
-    vue.prototype["$" + name] = function (query) {
+    function uniconExe(query) {
         var _a;
         var args = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
         return (_a = this._unicom_data_.unicom).emit.apply(_a, __spreadArrays([query], args));
-    };
+    }
+    var is3 = vue_1.default.version.indexOf("3") == 0;
+    if (is3) {
+        ;
+        V.config.globalProperties["$" + name] = uniconExe;
+    }
+    else {
+        // 添加原型方法
+        ;
+        V.prototype["$" + name] = uniconExe;
+    }
     // unicom-id
     var unicomIdName = name + "Id";
     // 分组  unicom-name
@@ -361,7 +372,7 @@ function vueUnicomInstall(vue) {
         return unicomData.initGroup.concat(names);
     }
     // 全局混入 vue
-    vue.mixin({
+    V.mixin({
         props: (_a = {},
             // 命名
             _a[unicomIdName] = {
@@ -439,7 +450,7 @@ function vueUnicomInstall(vue) {
         }
     });
     // 自定义属性合并策略
-    var merge = vue.config.optionMergeStrategies;
+    var merge = V.config.optionMergeStrategies;
     merge[name] = function (parentVal, childVal) {
         var arr = parentVal || [];
         if (childVal) {

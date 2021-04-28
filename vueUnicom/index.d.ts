@@ -4,6 +4,7 @@
  * [2019-07-21] 重构,以事件模型为基础,多组件之间 订阅者和发布者来制作
  */
 import Vue, { VueConstructor } from "vue";
+import { App } from "vue3";
 export declare class VueUnicomEvent<D = any, T = any> {
     from: any;
     target: T;
@@ -37,6 +38,17 @@ declare module "vue/types/vue" {
         _unicom_data_?: vueUnicomData;
     }
 }
+declare module "vue" {
+    interface ComponentCustomOptions {
+        unicomId?: string;
+        unicomName?: string | string[];
+        unicom?: IVueUnicomBackOption<Vue>;
+    }
+    interface ComponentCustomProperties {
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>;
+        _unicom_data_?: vueUnicomData;
+    }
+}
 export declare class VueUnicom {
     static install: typeof vueUnicomInstall;
     protected _instruct_: vueUnicomInstruct;
@@ -66,5 +78,5 @@ interface vueUnicomData {
     instructs?: Array<vueInstruct>;
     unicom?: VueUnicom;
 }
-export declare function vueUnicomInstall(vue: VueConstructor): void;
+export declare function vueUnicomInstall(V: VueConstructor | App): void;
 export default VueUnicom;

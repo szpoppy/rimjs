@@ -6,6 +6,7 @@
 
 // eslint-disable-next-line
 import Vue, { VueConstructor } from "vue"
+import { App } from "vue3" // vue3
 
 interface vueUnicomGather {
     [propName: string]: VueUnicom // 任意类型
@@ -197,6 +198,21 @@ declare module "vue/types/options" {
 
 declare module "vue/types/vue" {
     interface Vue {
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>
+        // eslint-disable-next-line
+        _unicom_data_?: vueUnicomData
+    }
+}
+
+declare module "vue" {
+    // vue3
+    interface ComponentCustomOptions {
+        unicomId?: string
+        unicomName?: string | string[]
+        unicom?: IVueUnicomBackOption<Vue>
+    }
+
+    interface ComponentCustomProperties {
         $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>
         // eslint-disable-next-line
         _unicom_data_?: vueUnicomData
@@ -405,7 +421,7 @@ interface vueUnicomData {
     unicom?: VueUnicom
 }
 
-export function vueUnicomInstall(vue: VueConstructor) {
+export function vueUnicomInstall(V: VueConstructor | App) {
     if (unicomInstalled) {
         // 防止重复install
         return
@@ -414,9 +430,16 @@ export function vueUnicomInstall(vue: VueConstructor) {
 
     let name = "unicom"
 
-    // 添加原型方法
-    vue.prototype["$" + name] = function(query: string, ...args: any) {
+    function uniconExe(this: any, query: string, ...args: any) {
         return this._unicom_data_.unicom.emit(query, ...args)
+    }
+
+    let is3 = Vue.version.indexOf("3") == 0
+    if (is3) {
+        ;(V as App).config.globalProperties["$" + name] = uniconExe
+    } else {
+        // 添加原型方法
+        ;(V as VueConstructor).prototype["$" + name] = uniconExe
     }
 
     // unicom-id
@@ -432,7 +455,7 @@ export function vueUnicomInstall(vue: VueConstructor) {
     }
 
     // 全局混入 vue
-    vue.mixin({
+    V.mixin({
         props: {
             // 命名
             [unicomIdName]: {
@@ -519,7 +542,7 @@ export function vueUnicomInstall(vue: VueConstructor) {
     }
 
     // 自定义属性合并策略
-    let merge = vue.config.optionMergeStrategies
+    let merge = V.config.optionMergeStrategies
     merge[name] = function(parentVal?: unicomInObj[], childVal?: unicomInObj) {
         let arr = parentVal || []
         if (childVal) {

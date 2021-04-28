@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import { VueConstructor } from "vue"
-
+import { App } from "vue3" // vue3
 /**
  * 初始化传入参数
  */
@@ -40,11 +40,18 @@ export interface IVueLifeInitFnArg {
     hooks: {
         [propName: string]: string
     }
-    vue: VueConstructor
+    vue: VueConstructor | App
 }
 
 declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
+        life?: IVueLiveHookOption
+    }
+}
+
+declare module "vue" {
+    // vue3
+    interface ComponentCustomOptions {
         life?: IVueLiveHookOption
     }
 }
@@ -184,7 +191,7 @@ function hookEmit(key: string, data: any, that?: any) {
     }
 }
 
-export function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveInitObj) {
+export function vueLifeInstall(V: VueConstructor | App, init: Function | IVueLiveInitObj) {
     // 初始化函数
     if (typeof init == "function") {
         init = {
@@ -232,7 +239,7 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveIni
     }
 
     // console.log("mixinOpt", mixinOpt)
-    Vue.config.optionMergeStrategies[defName] = function(pVal: any, nVal: any): Array<any> {
+    V.config.optionMergeStrategies[defName] = function(pVal: any, nVal: any): Array<any> {
         let val = pVal instanceof Array ? pVal : pVal ? [pVal] : []
         if (nVal) {
             val.push(nVal)
@@ -248,7 +255,7 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveIni
                 return data
             },
             hooks,
-            vue: Vue
+            vue: V
         }
         initFn(arg, ...initArgs)
     }
@@ -280,7 +287,7 @@ export function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveIni
         }
     }
 
-    Vue.mixin(mixinOpt)
+    V.mixin(mixinOpt)
 }
 
 export default vueLifeInstall

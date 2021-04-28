@@ -4,6 +4,7 @@
 
 // eslint-disable-next-line
 import Vue, { VueConstructor } from "vue"
+import { App } from "vue3" // vue3
 import Lake, { LakeEvent, lakeProt } from "../lake"
 export * from "../lake"
 
@@ -45,7 +46,22 @@ declare module "vue/types/vue" {
     }
 }
 
-export function vueLakeInstall(Vue: VueConstructor) {
+declare module "vue" {
+    // vue3
+    interface ComponentCustomProperties {
+        $lake: typeof lakeProt
+        // eslint-disable-next-line
+        _lake_data_?: vueLakeData
+    }
+
+    interface ComponentCustomOptions {
+        lakeId?: string
+        lakeName?: string | string[]
+        lakeSubs?: IVueLakeBackOption
+    }
+}
+
+export function vueLakeInstall(V: VueConstructor | App) {
     if (lakeInstalled) {
         // 防止重复install
         return
@@ -55,13 +71,13 @@ export function vueLakeInstall(Vue: VueConstructor) {
     let name: "lake" = "lake"
     let lakeSubs = name + "Subs"
 
-    // function(query: string, ...args: any) {
-    //     return this._lake_data_.lake.emit(query, ...args)
-    // }
-
-    // 添加原型方法
-    // Object.defineProperty(vue.prototype)
-    Vue.prototype["$" + name] = lakeProt
+    let is3 = Vue.version.indexOf("3") == 0
+    if (is3) {
+        ;(V as App).config.globalProperties["$" + name] = lakeProt
+    } else {
+        // 添加原型方法
+        ;(V as VueConstructor).prototype["$" + name] = lakeProt
+    }
 
     // lake-id
     let lakeIdName = name + "Id"
@@ -76,7 +92,7 @@ export function vueLakeInstall(Vue: VueConstructor) {
     }
 
     // 全局混入 vue
-    Vue.mixin({
+    V.mixin({
         props: {
             // 命名
             [lakeIdName]: {
@@ -163,7 +179,7 @@ export function vueLakeInstall(Vue: VueConstructor) {
     }
 
     // 自定义属性合并策略
-    let merge = Vue.config.optionMergeStrategies
+    let merge = V.config.optionMergeStrategies
     merge[lakeSubs] = function(parentVal?: lakeInObj[], childVal?: lakeInObj) {
         let arr = parentVal || []
         if (childVal) {

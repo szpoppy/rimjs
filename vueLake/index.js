@@ -14,11 +14,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.vueLakeInstall = void 0;
+// eslint-disable-next-line
+var vue_1 = require("vue");
 var lake_1 = require("../lake");
 __exportStar(require("../lake"), exports);
 // vue 安装插槽
 var lakeInstalled = false;
-function vueLakeInstall(Vue) {
+function vueLakeInstall(V) {
     var _a, _b;
     if (lakeInstalled) {
         // 防止重复install
@@ -27,12 +29,16 @@ function vueLakeInstall(Vue) {
     lakeInstalled = true;
     var name = "lake";
     var lakeSubs = name + "Subs";
-    // function(query: string, ...args: any) {
-    //     return this._lake_data_.lake.emit(query, ...args)
-    // }
-    // 添加原型方法
-    // Object.defineProperty(vue.prototype)
-    Vue.prototype["$" + name] = lake_1.lakeProt;
+    var is3 = vue_1.default.version.indexOf("3") == 0;
+    if (is3) {
+        ;
+        V.config.globalProperties["$" + name] = lake_1.lakeProt;
+    }
+    else {
+        // 添加原型方法
+        ;
+        V.prototype["$" + name] = lake_1.lakeProt;
+    }
     // lake-id
     var lakeIdName = name + "Id";
     // 分组  lake-name
@@ -44,7 +50,7 @@ function vueLakeInstall(Vue) {
         return lakeData.initGroup.concat(names);
     }
     // 全局混入 vue
-    Vue.mixin({
+    V.mixin({
         props: (_a = {},
             // 命名
             _a[lakeIdName] = {
@@ -122,7 +128,7 @@ function vueLakeInstall(Vue) {
         }
     });
     // 自定义属性合并策略
-    var merge = Vue.config.optionMergeStrategies;
+    var merge = V.config.optionMergeStrategies;
     merge[lakeSubs] = function (parentVal, childVal) {
         var arr = parentVal || [];
         if (childVal) {

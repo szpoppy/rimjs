@@ -2,6 +2,7 @@
  * [2020-09-07] 开发
  */
 import Vue, { VueConstructor } from "vue";
+import { App } from "vue3";
 import Lake, { LakeEvent, lakeProt } from "../lake";
 export * from "../lake";
 export interface IVueLakeBackOption {
@@ -29,5 +30,16 @@ declare module "vue/types/vue" {
         _lake_data_?: vueLakeData;
     }
 }
-export declare function vueLakeInstall(Vue: VueConstructor): void;
+declare module "vue" {
+    interface ComponentCustomProperties {
+        $lake: typeof lakeProt;
+        _lake_data_?: vueLakeData;
+    }
+    interface ComponentCustomOptions {
+        lakeId?: string;
+        lakeName?: string | string[];
+        lakeSubs?: IVueLakeBackOption;
+    }
+}
+export declare function vueLakeInstall(V: VueConstructor | App): void;
 export default Lake;

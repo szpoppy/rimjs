@@ -1,4 +1,5 @@
 import { VueConstructor } from "vue";
+import { App } from "vue3";
 /**
  * 初始化传入参数
  */
@@ -25,12 +26,17 @@ export interface IVueLifeInitFnArg {
     hooks: {
         [propName: string]: string;
     };
-    vue: VueConstructor;
+    vue: VueConstructor | App;
 }
 declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
         life?: IVueLiveHookOption;
     }
 }
-export declare function vueLifeInstall(Vue: VueConstructor, init: Function | IVueLiveInitObj): void;
+declare module "vue" {
+    interface ComponentCustomOptions {
+        life?: IVueLiveHookOption;
+    }
+}
+export declare function vueLifeInstall(V: VueConstructor | App, init: Function | IVueLiveInitObj): void;
 export default vueLifeInstall;
