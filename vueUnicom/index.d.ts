@@ -34,7 +34,7 @@ declare module "vue/types/options" {
 }
 declare module "vue/types/vue" {
     interface Vue {
-        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>;
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue | App>;
         _unicom_data_?: vueUnicomData;
     }
 }
@@ -42,10 +42,10 @@ declare module "vue" {
     interface ComponentCustomOptions {
         unicomId?: string;
         unicomName?: string | string[];
-        unicom?: IVueUnicomBackOption<Vue>;
+        unicom?: IVueUnicomBackOption<Vue | App>;
     }
     interface ComponentCustomProperties {
-        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>;
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue | App>;
         _unicom_data_?: vueUnicomData;
     }
 }
