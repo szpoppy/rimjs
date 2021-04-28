@@ -4,17 +4,13 @@
  * 目的，提供vue 全局的转发机制
  * [2019-07-21] 重构,以事件模型为基础,多组件之间 订阅者和发布者来制作
  */
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.vueUnicomInstall = exports.VueUnicom = exports.unicomEmit = exports.VueUnicomEvent = void 0;
-// eslint-disable-next-line
-var vue_1 = require("vue");
 // #id 存放id的unicom对象
 var unicomGroupByID = {};
 /**
@@ -336,7 +332,7 @@ exports.VueUnicom = VueUnicom;
 // vue 安装插槽
 var unicomInstalled = false;
 function vueUnicomInstall(V) {
-    var _a, _b;
+    var _a, _b, _c;
     if (unicomInstalled) {
         // 防止重复install
         return;
@@ -349,17 +345,19 @@ function vueUnicomInstall(V) {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        return (_a = this._unicom_data_.unicom).emit.apply(_a, __spreadArrays([query], args));
+        return (_a = this._unicom_data_.unicom).emit.apply(_a, __spreadArray([query], args));
     }
-    var is3 = vue_1.default.version.indexOf("3") == 0;
+    var is3 = V.version.indexOf("3") == 0;
+    var destroyed = "destroyed";
     if (is3) {
-        ;
-        V.config.globalProperties["$" + name] = uniconExe;
+        destroyed = "unmounted";
+        var vA = V;
+        vA.config.globalProperties["$" + name] = uniconExe;
     }
     else {
         // 添加原型方法
-        ;
-        V.prototype["$" + name] = uniconExe;
+        var vV = V;
+        vV.prototype["$" + name] = uniconExe;
     }
     // unicom-id
     var unicomIdName = name + "Id";
@@ -372,71 +370,72 @@ function vueUnicomInstall(V) {
         return unicomData.initGroup.concat(names);
     }
     // 全局混入 vue
-    V.mixin({
-        props: (_a = {},
-            // 命名
-            _a[unicomIdName] = {
-                type: String,
-                default: ""
-            },
-            // 分组
-            _a[unicomGroupName] = {
-                type: [String, Array],
-                default: ""
-            },
-            _a),
-        watch: (_b = {},
-            _b[unicomIdName] = function (nv) {
-                var ud = this._unicom_data_;
-                if (ud && ud.unicom) {
-                    ud.unicom.setId(nv);
+    V.mixin((_a = {
+            props: (_b = {},
+                // 命名
+                _b[unicomIdName] = {
+                    type: String,
+                    default: ""
+                },
+                // 分组
+                _b[unicomGroupName] = {
+                    type: [String, Array],
+                    default: ""
+                },
+                _b),
+            watch: (_c = {},
+                _c[unicomIdName] = function (nv) {
+                    var ud = this._unicom_data_;
+                    if (ud && ud.unicom) {
+                        ud.unicom.setId(nv);
+                    }
+                },
+                _c[unicomGroupName] = function () {
+                    var ud = this._unicom_data_;
+                    if (ud && ud.unicom) {
+                        ud.unicom.setGroup(getGroup(this));
+                    }
+                },
+                _c),
+            // 创建的时候，加入事件机制
+            beforeCreate: function () {
+                // 屏蔽不需要融合的 节点
+                var isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag));
+                // unicomData 数据存放
+                var unicomData = {
+                    // 不需要，忽略
+                    isIgnore: isIgnore
+                };
+                // eslint-disable-next-line
+                this._unicom_data_ = unicomData;
+                if (isIgnore) {
+                    return;
                 }
+                var opt = this.$options;
+                unicomData.initGroup = opt[unicomGroupName] || [];
+                unicomData.instructs = opt[name] || [];
+                // 触发器
+                // unicomData.self = new Unicom({target: this})
             },
-            _b[unicomGroupName] = function () {
-                var ud = this._unicom_data_;
-                if (ud && ud.unicom) {
-                    ud.unicom.setGroup(getGroup(this));
+            created: function () {
+                var unicomData = this._unicom_data_;
+                if (unicomData.isIgnore) {
+                    // 忽略
+                    return;
                 }
-            },
-            _b),
-        // 创建的时候，加入事件机制
-        beforeCreate: function () {
-            // 屏蔽不需要融合的 节点
-            var isIgnore = !this.$vnode || /-transition$/.test(this.$vnode.tag);
-            // unicomData 数据存放
-            var unicomData = {
-                // 不需要，忽略
-                isIgnore: isIgnore
-            };
-            // eslint-disable-next-line
-            this._unicom_data_ = unicomData;
-            if (isIgnore) {
-                return;
+                // 初始化
+                var unicom = (unicomData.unicom = new VueUnicom({ target: this, id: this[unicomIdName], group: getGroup(this) }));
+                // 订阅事件
+                var instructs = unicomData.instructs || [];
+                instructs.forEach(function (subs) {
+                    for (var n in subs) {
+                        unicom.on(n, subs[n]);
+                    }
+                });
             }
-            var opt = this.$options;
-            unicomData.initGroup = opt[unicomGroupName] || [];
-            unicomData.instructs = opt[name] || [];
-            // 触发器
-            // unicomData.self = new Unicom({target: this})
-        },
-        created: function () {
-            var unicomData = this._unicom_data_;
-            if (unicomData.isIgnore) {
-                // 忽略
-                return;
-            }
-            // 初始化
-            var unicom = (unicomData.unicom = new VueUnicom({ target: this, id: this[unicomIdName], group: getGroup(this) }));
-            // 订阅事件
-            var instructs = unicomData.instructs || [];
-            instructs.forEach(function (subs) {
-                for (var n in subs) {
-                    unicom.on(n, subs[n]);
-                }
-            });
         },
         // 全局混合， 销毁实例的时候，销毁事件
-        destroyed: function () {
+        _a[destroyed] = function () {
             var unicomData = this._unicom_data_;
             if (unicomData.isIgnore) {
                 // 忽略
@@ -447,8 +446,8 @@ function vueUnicomInstall(V) {
             if (unicom) {
                 unicom.destroy();
             }
-        }
-    });
+        },
+        _a));
     // 自定义属性合并策略
     var merge = V.config.optionMergeStrategies;
     merge[name] = function (parentVal, childVal) {

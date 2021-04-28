@@ -71,12 +71,16 @@ export function vueLakeInstall(V: VueConstructor | App) {
     let name: "lake" = "lake"
     let lakeSubs = name + "Subs"
 
-    let is3 = Vue.version.indexOf("3") == 0
+    let is3 = V.version.indexOf("3") == 0
+    let destroyed = "destroyed"
     if (is3) {
-        ;(V as App).config.globalProperties["$" + name] = lakeProt
+        destroyed = "unmounted"
+        let vA = V as App
+        vA.config.globalProperties["$" + name] = lakeProt
     } else {
         // 添加原型方法
-        ;(V as VueConstructor).prototype["$" + name] = lakeProt
+        let vV = V as VueConstructor
+        vV.prototype["$" + name] = lakeProt
     }
 
     // lake-id
@@ -122,7 +126,7 @@ export function vueLakeInstall(V: VueConstructor | App) {
         // 创建的时候，加入事件机制
         beforeCreate() {
             // 屏蔽不需要融合的 节点
-            let isIgnore = !this.$vnode || /-transition$/.test(this.$vnode.tag as string)
+            let isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag as string))
             // lakeData 数据存放
             let lakeData: vueLakeData = {
                 // 不需要，忽略
@@ -160,7 +164,7 @@ export function vueLakeInstall(V: VueConstructor | App) {
             })
         },
         // 全局混合， 销毁实例的时候，销毁事件
-        destroyed(this: any) {
+        [destroyed](this: any) {
             let lakeData = this._lake_data_ as vueLakeData
             if (lakeData.isIgnore) {
                 // 忽略
@@ -199,5 +203,7 @@ export function vueLakeInstall(V: VueConstructor | App) {
         return arr
     }
 }
+
+Object.assign(Lake, { install: vueLakeInstall })
 
 export default Lake

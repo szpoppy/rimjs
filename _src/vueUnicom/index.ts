@@ -198,7 +198,7 @@ declare module "vue/types/options" {
 
 declare module "vue/types/vue" {
     interface Vue {
-        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue | App>
         // eslint-disable-next-line
         _unicom_data_?: vueUnicomData
     }
@@ -209,11 +209,11 @@ declare module "vue" {
     interface ComponentCustomOptions {
         unicomId?: string
         unicomName?: string | string[]
-        unicom?: IVueUnicomBackOption<Vue>
+        unicom?: IVueUnicomBackOption<Vue | App>
     }
 
     interface ComponentCustomProperties {
-        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue>
+        $unicom: <D>(query: string, data?: D, ...args: any) => VueUnicomEmitBack<D, Vue | App>
         // eslint-disable-next-line
         _unicom_data_?: vueUnicomData
     }
@@ -434,12 +434,16 @@ export function vueUnicomInstall(V: VueConstructor | App) {
         return this._unicom_data_.unicom.emit(query, ...args)
     }
 
-    let is3 = Vue.version.indexOf("3") == 0
+    let is3 = V.version.indexOf("3") == 0
+    let destroyed = "destroyed"
     if (is3) {
-        ;(V as App).config.globalProperties["$" + name] = uniconExe
+        destroyed = "unmounted"
+        let vA = V as App
+        vA.config.globalProperties["$" + name] = uniconExe
     } else {
         // 添加原型方法
-        ;(V as VueConstructor).prototype["$" + name] = uniconExe
+        let vV = V as VueConstructor
+        vV.prototype["$" + name] = uniconExe
     }
 
     // unicom-id
@@ -485,7 +489,7 @@ export function vueUnicomInstall(V: VueConstructor | App) {
         // 创建的时候，加入事件机制
         beforeCreate() {
             // 屏蔽不需要融合的 节点
-            let isIgnore = !this.$vnode || /-transition$/.test(this.$vnode.tag as string)
+            let isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag as string))
             // unicomData 数据存放
             let unicomData: vueUnicomData = {
                 // 不需要，忽略
@@ -523,7 +527,7 @@ export function vueUnicomInstall(V: VueConstructor | App) {
             })
         },
         // 全局混合， 销毁实例的时候，销毁事件
-        destroyed(this: any) {
+        [destroyed](this: any) {
             let unicomData = this._unicom_data_ as vueUnicomData
             if (unicomData.isIgnore) {
                 // 忽略

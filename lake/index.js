@@ -38,12 +38,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Lake = exports.lakeProt = exports.lakePub = exports.LakeEvent = void 0;
@@ -200,7 +198,7 @@ function _lakePub(self, query, data) {
                     }
                     unis = uniEvent.lakes.slice(0);
                     lake = unis.shift();
-                    subs = __spreadArrays(lake.getSubs(uniEvent.instruct));
+                    subs = __spreadArray([], lake.getSubs(uniEvent.instruct));
                     next = function () {
                         return __awaiter(this, void 0, void 0, function () {
                             var subFn, sLen, uLen;
@@ -225,7 +223,7 @@ function _lakePub(self, query, data) {
                                     case 4:
                                         if (!unis.length) return [3 /*break*/, 6];
                                         lake = unis.shift();
-                                        subs = __spreadArrays(lake.getSubs(uniEvent.instruct));
+                                        subs = __spreadArray([], lake.getSubs(uniEvent.instruct));
                                         return [4 /*yield*/, next()];
                                     case 5:
                                         _a.sent();
