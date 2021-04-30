@@ -99,8 +99,8 @@ lake.unListen()
 ```javascript
 import Vue from "vue"
 import VueLake from "rimjs/vueLake"
-// 非 cli 也必须 install一下
-Vue.use(VueLake)
+// 非 cli 也必须 install一下 useProps 默认为 true，部分极端情况可以设置为false  例如：ant-design
+Vue.use(VueLake, { useProps: true })
 ```
 
 ### Vue 组件内部使用

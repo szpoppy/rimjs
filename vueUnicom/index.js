@@ -331,8 +331,9 @@ var VueUnicom = /** @class */ (function () {
 exports.VueUnicom = VueUnicom;
 // vue 安装插槽
 var unicomInstalled = false;
-function vueUnicomInstall(V) {
-    var _a, _b, _c;
+function vueUnicomInstall(V, _a) {
+    var _b, _c, _d;
+    var _e = _a === void 0 ? {} : _a, _f = _e.useProps, useProps = _f === void 0 ? true : _f;
     if (unicomInstalled) {
         // 防止重复install
         return;
@@ -369,34 +370,7 @@ function vueUnicomInstall(V) {
         var names = target[unicomGroupName] || [];
         return unicomData.initGroup.concat(names);
     }
-    // 全局混入 vue
-    V.mixin((_a = {
-            props: (_b = {},
-                // 命名
-                _b[unicomIdName] = {
-                    type: String,
-                    default: ""
-                },
-                // 分组
-                _b[unicomGroupName] = {
-                    type: [String, Array],
-                    default: ""
-                },
-                _b),
-            watch: (_c = {},
-                _c[unicomIdName] = function (nv) {
-                    var ud = this._unicom_data_;
-                    if (ud && ud.unicom) {
-                        ud.unicom.setId(nv);
-                    }
-                },
-                _c[unicomGroupName] = function () {
-                    var ud = this._unicom_data_;
-                    if (ud && ud.unicom) {
-                        ud.unicom.setGroup(getGroup(this));
-                    }
-                },
-                _c),
+    var mixin = (_b = {
             // 创建的时候，加入事件机制
             beforeCreate: function () {
                 // 屏蔽不需要融合的 节点
@@ -435,7 +409,7 @@ function vueUnicomInstall(V) {
             }
         },
         // 全局混合， 销毁实例的时候，销毁事件
-        _a[destroyed] = function () {
+        _b[destroyed] = function () {
             var unicomData = this._unicom_data_;
             if (unicomData.isIgnore) {
                 // 忽略
@@ -447,7 +421,39 @@ function vueUnicomInstall(V) {
                 unicom.destroy();
             }
         },
-        _a));
+        _b);
+    if (useProps) {
+        Object.assign(mixin, {
+            props: (_c = {},
+                // 命名
+                _c[unicomIdName] = {
+                    type: String,
+                    default: ""
+                },
+                // 分组
+                _c[unicomGroupName] = {
+                    type: [String, Array],
+                    default: ""
+                },
+                _c),
+            watch: (_d = {},
+                _d[unicomIdName] = function (nv) {
+                    var ud = this._unicom_data_;
+                    if (ud && ud.unicom) {
+                        ud.unicom.setId(nv);
+                    }
+                },
+                _d[unicomGroupName] = function () {
+                    var ud = this._unicom_data_;
+                    if (ud && ud.unicom) {
+                        ud.unicom.setGroup(getGroup(this));
+                    }
+                },
+                _d)
+        });
+    }
+    // 全局混入 vue
+    V.mixin(mixin);
     // 自定义属性合并策略
     var merge = V.config.optionMergeStrategies;
     merge[name] = function (parentVal, childVal) {

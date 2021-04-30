@@ -190,8 +190,13 @@ async function _lakePub<D>(self: Lake | null, query: string, data?: D): Promise<
     await next()
     return uniEvent
 }
-export async function lakePub<D>(query: string, data?: D) {
-    return await _lakePub<D>(null, query, data)
+export async function lakePub<D>(lake: Lake, query: string, data?: D)
+export async function lakePub<D>(lake: string, query?: D)
+export async function lakePub<D>(lake: Lake | string, query: string | D, data?: D) {
+    if (typeof lake == "string") {
+        return await _lakePub<D>(null, lake, query as D)
+    }
+    return await _lakePub<D>(lake, query as string, data)
 }
 
 // 监控数据
@@ -215,24 +220,6 @@ interface lakeInstruct {
     [propName: string]: Function[] // 任意类型
 }
 
-interface ILakeProt {
-    <D>(query: string, data?: D): Promise<LakeEvent<D>>
-    id(id: string): Lake
-    group(name: string): Lake[]
-}
-
-export let lakeProt = async function(this: any, query, data) {
-    let self = this._lake_data_ ? this._lake_data_.lake : this
-    return await _lakePub(self, query, data)
-} as ILakeProt
-
-lakeProt.id = function(id) {
-    return getLake("#" + id)[0][0]
-}
-lakeProt.group = function(name) {
-    return getLake("@" + name)[0]
-}
-
 // 通讯基础类
 export class Lake<T = any> {
     // 事件存放
@@ -245,8 +232,8 @@ export class Lake<T = any> {
     group: Array<string>
 
     static pub = lakePub
-    static getId = lakeProt.id
-    static getGroup = lakeProt.group
+    static getId = (id: string) => getLake("#" + id)[0][0]
+    static getGroup = (name: string) => getLake("@" + name)[0]
 
     // 私有属性
     // eslint-disable-next-line
@@ -401,6 +388,5 @@ export class Lake<T = any> {
         return await _lakePub<D>(this, query, data)
     }
 }
-
 
 export default Lake

@@ -10,7 +10,8 @@ export declare class LakeEvent<D = any> {
     constructor(from: Lake | null, data: D, query?: string);
     get lake(): Lake<any>;
 }
-export declare function lakePub<D>(query: string, data?: D): Promise<LakeEvent<D>>;
+export declare function lakePub<D>(lake: Lake, query: string, data?: D): any;
+export declare function lakePub<D>(lake: string, query?: D): any;
 export interface ILakeArg<T> {
     id?: string;
     group?: string | Array<string>;
@@ -19,12 +20,6 @@ export interface ILakeArg<T> {
 interface lakeInstruct {
     [propName: string]: Function[];
 }
-interface ILakeProt {
-    <D>(query: string, data?: D): Promise<LakeEvent<D>>;
-    id(id: string): Lake;
-    group(name: string): Lake[];
-}
-export declare let lakeProt: ILakeProt;
 export declare class Lake<T = any> {
     protected _instruct_: lakeInstruct;
     target: T | Lake;

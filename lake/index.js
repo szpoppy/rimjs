@@ -44,7 +44,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from) {
     return to;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Lake = exports.lakeProt = exports.lakePub = exports.LakeEvent = void 0;
+exports.Lake = exports.lakePub = exports.LakeEvent = void 0;
 // #id 存放id的lake对象
 var lakeGroupByID = {};
 /**
@@ -241,12 +241,16 @@ function _lakePub(self, query, data) {
         });
     });
 }
-function lakePub(query, data) {
+function lakePub(lake, query, data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, _lakePub(null, query, data)];
+                case 0:
+                    if (!(typeof lake == "string")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, _lakePub(null, lake, query)];
                 case 1: return [2 /*return*/, _a.sent()];
+                case 2: return [4 /*yield*/, _lakePub(lake, query, data)];
+                case 3: return [2 /*return*/, _a.sent()];
             }
         });
     });
@@ -263,25 +267,6 @@ function listenExec(that) {
         }
     }
 }
-exports.lakeProt = function (query, data) {
-    return __awaiter(this, void 0, void 0, function () {
-        var self;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    self = this._lake_data_ ? this._lake_data_.lake : this;
-                    return [4 /*yield*/, _lakePub(self, query, data)];
-                case 1: return [2 /*return*/, _a.sent()];
-            }
-        });
-    });
-};
-exports.lakeProt.id = function (id) {
-    return getLake("#" + id)[0][0];
-};
-exports.lakeProt.group = function (name) {
-    return getLake("@" + name)[0];
-};
 // 通讯基础类
 var Lake = /** @class */ (function () {
     function Lake(_a) {
@@ -428,8 +413,8 @@ var Lake = /** @class */ (function () {
         });
     };
     Lake.pub = lakePub;
-    Lake.getId = exports.lakeProt.id;
-    Lake.getGroup = exports.lakeProt.group;
+    Lake.getId = function (id) { return getLake("#" + id)[0][0]; };
+    Lake.getGroup = function (name) { return getLake("@" + name)[0]; };
     return Lake;
 }());
 exports.Lake = Lake;

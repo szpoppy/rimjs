@@ -78,5 +78,7 @@ interface vueUnicomData {
     instructs?: Array<vueInstruct>;
     unicom?: VueUnicom;
 }
-export declare function vueUnicomInstall(V: VueConstructor | App): void;
+export declare function vueUnicomInstall(V: VueConstructor | App, { useProps }?: {
+    useProps?: boolean;
+}): void;
 export default VueUnicom;

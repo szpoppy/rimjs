@@ -5,7 +5,7 @@
 // eslint-disable-next-line
 import Vue, { VueConstructor } from "vue"
 import { App } from "vue3" // vue3
-import Lake, { LakeEvent, lakeProt } from "../lake"
+import Lake, { LakeEvent, lakePub } from "../lake"
 export * from "../lake"
 
 export interface IVueLakeBackOption {
@@ -20,15 +20,34 @@ interface vueInstruct {
     [propName: string]: (arg: LakeEvent) => void
 }
 // vue临时存储数据
-interface vueLakeData {
-    isIgnore: boolean
+class vueLakeData {
+    isIgnore: boolean = false
     // 分组
     initGroup?: Array<string>
     // 指令
     instructs?: Array<vueInstruct>
     // 绑定的lake对象
     lake?: Lake
+
+    setId(id: string): void {
+        this.lake && this.lake.setId(id)
+    }
+
+    setGroup(group: string | string[]): void {
+        this.lake && this.lake.setGroup(group)
+    }
 }
+
+let lakeProt = Object.assign(
+    async function<D>(this: any, query, data?: D) {
+        let self = (this._lake_data_ && this._lake_data_.lake) || this
+        return await lakePub(self, query, data)
+    },
+    {
+        id: Lake.getId,
+        group: Lake.getGroup
+    }
+)
 
 declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
@@ -61,7 +80,7 @@ declare module "vue" {
     }
 }
 
-export function vueLakeInstall(V: VueConstructor | App) {
+export function vueLakeInstall(V: VueConstructor | App, { useProps = true } = {}) {
     if (lakeInstalled) {
         // 防止重复install
         return
@@ -95,43 +114,14 @@ export function vueLakeInstall(V: VueConstructor | App) {
         return lakeData.initGroup.concat(names)
     }
 
-    // 全局混入 vue
-    V.mixin({
-        props: {
-            // 命名
-            [lakeIdName]: {
-                type: String,
-                default: ""
-            },
-            // 分组
-            [lakeGroupName]: {
-                type: [String, Array],
-                default: ""
-            }
-        },
-        watch: {
-            [lakeIdName](nv) {
-                let ud = this._lake_data_ as any
-                if (ud && ud.lake) {
-                    ud.lake.setId(nv)
-                }
-            },
-            [lakeGroupName]() {
-                let ud = this._lake_data_ as any
-                if (ud && ud.lake) {
-                    ud.lake.setGroup(getGroup(this))
-                }
-            }
-        },
+    let mixin = {
         // 创建的时候，加入事件机制
         beforeCreate() {
             // 屏蔽不需要融合的 节点
             let isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag as string))
             // lakeData 数据存放
-            let lakeData: vueLakeData = {
-                // 不需要，忽略
-                isIgnore
-            }
+            let lakeData = new vueLakeData()
+            lakeData.isIgnore = isIgnore
             // eslint-disable-next-line
             this._lake_data_ = lakeData
             if (isIgnore) {
@@ -176,7 +166,41 @@ export function vueLakeInstall(V: VueConstructor | App) {
                 lake.destroy()
             }
         }
-    })
+    }
+
+    if (useProps) {
+        Object.assign(mixin, {
+            props: {
+                // 命名
+                [lakeIdName]: {
+                    type: String,
+                    default: ""
+                },
+                // 分组
+                [lakeGroupName]: {
+                    type: [String, Array],
+                    default: ""
+                }
+            },
+            watch: {
+                [lakeIdName](nv) {
+                    let ud = this._lake_data_ as any
+                    if (ud && ud.lake) {
+                        ud.lake.setId(nv)
+                    }
+                },
+                [lakeGroupName]() {
+                    let ud = this._lake_data_ as any
+                    if (ud && ud.lake) {
+                        ud.lake.setGroup(getGroup(this))
+                    }
+                }
+            }
+        })
+    }
+
+    // 全局混入 vue
+    V.mixin(mixin)
 
     interface lakeInObj {
         [propName: string]: (arg: LakeEvent) => LakeEvent

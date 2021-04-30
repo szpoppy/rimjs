@@ -421,7 +421,7 @@ interface vueUnicomData {
     unicom?: VueUnicom
 }
 
-export function vueUnicomInstall(V: VueConstructor | App) {
+export function vueUnicomInstall(V: VueConstructor | App, { useProps = true } = {}) {
     if (unicomInstalled) {
         // 防止重复install
         return
@@ -458,34 +458,7 @@ export function vueUnicomInstall(V: VueConstructor | App) {
         return unicomData.initGroup.concat(names)
     }
 
-    // 全局混入 vue
-    V.mixin({
-        props: {
-            // 命名
-            [unicomIdName]: {
-                type: String,
-                default: ""
-            },
-            // 分组
-            [unicomGroupName]: {
-                type: [String, Array],
-                default: ""
-            }
-        },
-        watch: {
-            [unicomIdName](nv) {
-                let ud = this._unicom_data_ as any
-                if (ud && ud.unicom) {
-                    ud.unicom.setId(nv)
-                }
-            },
-            [unicomGroupName]() {
-                let ud = this._unicom_data_ as any
-                if (ud && ud.unicom) {
-                    ud.unicom.setGroup(getGroup(this))
-                }
-            }
-        },
+    let mixin = {
         // 创建的时候，加入事件机制
         beforeCreate() {
             // 屏蔽不需要融合的 节点
@@ -539,7 +512,40 @@ export function vueUnicomInstall(V: VueConstructor | App) {
                 unicom.destroy()
             }
         }
-    })
+    }
+    if (useProps) {
+        Object.assign(mixin, {
+            props: {
+                // 命名
+                [unicomIdName]: {
+                    type: String,
+                    default: ""
+                },
+                // 分组
+                [unicomGroupName]: {
+                    type: [String, Array],
+                    default: ""
+                }
+            },
+            watch: {
+                [unicomIdName](nv) {
+                    let ud = this._unicom_data_ as any
+                    if (ud && ud.unicom) {
+                        ud.unicom.setId(nv)
+                    }
+                },
+                [unicomGroupName]() {
+                    let ud = this._unicom_data_ as any
+                    if (ud && ud.unicom) {
+                        ud.unicom.setGroup(getGroup(this))
+                    }
+                }
+            }
+        })
+    }
+
+    // 全局混入 vue
+    V.mixin(mixin)
 
     interface unicomInObj {
         [propName: string]: (arg: VueUnicomEvent) => VueUnicomEvent

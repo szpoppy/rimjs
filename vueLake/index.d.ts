@@ -3,7 +3,7 @@
  */
 import Vue, { VueConstructor } from "vue";
 import { App } from "vue3";
-import Lake, { LakeEvent, lakeProt } from "../lake";
+import Lake, { LakeEvent } from "../lake";
 export * from "../lake";
 export interface IVueLakeBackOption {
     [propName: string]: <V extends Vue, D>(this: V, arg: LakeEvent<D>, next: () => Promise<void>) => void;
@@ -11,12 +11,18 @@ export interface IVueLakeBackOption {
 interface vueInstruct {
     [propName: string]: (arg: LakeEvent) => void;
 }
-interface vueLakeData {
+declare class vueLakeData {
     isIgnore: boolean;
     initGroup?: Array<string>;
     instructs?: Array<vueInstruct>;
     lake?: Lake;
+    setId(id: string): void;
+    setGroup(group: string | string[]): void;
 }
+declare let lakeProt: (<D>(this: any, query: any, data?: D) => Promise<any>) & {
+    id: (id: string) => Lake<any>;
+    group: (name: string) => Lake<any>[];
+};
 declare module "vue/types/options" {
     interface ComponentOptions<V extends Vue> {
         lakeId?: string;
@@ -41,5 +47,7 @@ declare module "vue" {
         lakeSubs?: IVueLakeBackOption;
     }
 }
-export declare function vueLakeInstall(V: VueConstructor | App): void;
+export declare function vueLakeInstall(V: VueConstructor | App, { useProps }?: {
+    useProps?: boolean;
+}): void;
 export default Lake;

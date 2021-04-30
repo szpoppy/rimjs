@@ -14,6 +14,7 @@
 
 ## 更新日志
 [2021-2-7] ajax支持nodejs（FormData没测试），使用方式不变
+[2021-04-30] vueLake、vueUnicom 支持通过参数 useProps:false 设置禁用全局的 name 和 id功能
 
 ## 功能
 | 名称                                    | 说明                                        |

@@ -105,8 +105,8 @@ unicom.monitorOff()
 ```javascript
 import Vue from "vue"
 import VueUnicom from "vue-unicom"
-// 非 cli 也必须 install一下
-Vue.use(VueUnicom)
+// 非 cli 也必须 install一下 useProps 默认为 true 例如：ant-design
+Vue.use(VueUnicom, {useProps: true})
 ```
 
 ### Vue 组件内部使用
