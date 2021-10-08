@@ -283,7 +283,7 @@ var AjaxGroup = /** @class */ (function (_super) {
     };
     AjaxGroup.prototype.setDate = function (date) {
         if (typeof date == "string") {
-            date = new Date(date.replace(/T/, " ").replace(/\.\d+$/, ""));
+            date = new Date(date.replace(/(\d)T(\d)/, "$1 $2").replace(/\.\d+$/, ""));
         }
         this.dateDiff = ajaxDateDiff = date.getTime() - new Date().getTime();
     };

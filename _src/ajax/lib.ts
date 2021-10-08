@@ -330,7 +330,7 @@ export class AjaxGroup extends Event {
 
     setDate(date: string | Date): void {
         if (typeof date == "string") {
-            date = new Date(date.replace(/T/, " ").replace(/\.\d+$/, ""))
+            date = new Date(date.replace(/(\d)T(\d)/, "$1 $2").replace(/\.\d+$/, ""))
         }
         this.dateDiff = ajaxDateDiff = date.getTime() - new Date().getTime()
     }
