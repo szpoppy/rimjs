@@ -143,38 +143,53 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
         responseEnd.call(this, course)
     }
 
-    // fetch then回调函数
-    function fetchBack(response: Response) {
-        if (!req.outFlag) {
-            // outFlag 为true，表示 中止了
-            // 设置 headers 方便获取
-            res.headers = response.headers
-
-            // 状态吗
-            res.status = response.status
-            // 返回的字符串
-            res.text = ""
-            // 是否有错误
-            res.err = response.ok ? null : "http error [" + res.status + "]"
-            let results: Promise<any>[] = []
-            try {
-                results[0] = response.text()
-            } catch (e) {}
-
-            if (req.resType != "text" && req.resType != "json") {
-                // 只是为了不报错
-                results[1] = (response as any)[req.resType]()
-            }
-
-            Promise.all(results).then(fetchData, fetchData)
-        }
-        req.outFlag = false
-    }
-
     // 发送事件处理
     this.emit("send", course)
     // 发送数据
-    window.fetch(req.url, option).then(fetchBack, fetchBack)
+    window.fetch(req.url, option).then(
+        function(response: Response) {
+            if (!req.outFlag) {
+                // outFlag 为true，表示 中止了
+                // 设置 headers 方便获取
+                res.headers = response.headers || ""
+
+                // 状态吗
+                res.status = response.status || 0
+                // 返回的字符串
+                res.text = ""
+                // 是否有错误
+                res.err = response.ok ? null : "http error [" + res.status + "]"
+                let results: Promise<any>[] = []
+                try {
+                    results[0] = response.text()
+                } catch (e) {}
+
+                if (req.resType != "text" && req.resType != "json") {
+                    // 只是为了不报错
+                    results[1] = (response as any)[req.resType]()
+                }
+
+                Promise.all(results).then(fetchData, fetchData)
+            }
+            req.outFlag = false
+        },
+        function(err: TypeError) {
+            if (!req.outFlag) {
+                // outFlag 为true，表示 中止了
+                // 设置 headers 方便获取
+                res.headers = ""
+
+                // 状态吗
+                res.status = -1
+
+                // 是否有错误
+                res.err = err.message
+
+                fetchData(["", {}])
+            }
+            req.outFlag = false
+        }
+    )
 }
 
 // ===================================================================xhr 发送数据

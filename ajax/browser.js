@@ -125,14 +125,16 @@ function fetchSend(course) {
         // 统一处理 返回数据
         lib_1.responseEnd.call(_this, course);
     };
-    // fetch then回调函数
-    function fetchBack(response) {
+    // 发送事件处理
+    this.emit("send", course);
+    // 发送数据
+    window.fetch(req.url, option).then(function (response) {
         if (!req.outFlag) {
             // outFlag 为true，表示 中止了
             // 设置 headers 方便获取
-            res.headers = response.headers;
+            res.headers = response.headers || "";
             // 状态吗
-            res.status = response.status;
+            res.status = response.status || 0;
             // 返回的字符串
             res.text = "";
             // 是否有错误
@@ -149,11 +151,19 @@ function fetchSend(course) {
             Promise.all(results).then(fetchData, fetchData);
         }
         req.outFlag = false;
-    }
-    // 发送事件处理
-    this.emit("send", course);
-    // 发送数据
-    window.fetch(req.url, option).then(fetchBack, fetchBack);
+    }, function (err) {
+        if (!req.outFlag) {
+            // outFlag 为true，表示 中止了
+            // 设置 headers 方便获取
+            res.headers = "";
+            // 状态吗
+            res.status = -1;
+            // 是否有错误
+            res.err = err.message;
+            fetchData(["", {}]);
+        }
+        req.outFlag = false;
+    });
 }
 // ===================================================================xhr 发送数据
 // xhr的onload事件

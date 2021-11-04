@@ -119,6 +119,15 @@ export function vueLakeInstall(V: VueConstructor | App, { useProps = true } = {}
         beforeCreate() {
             // 屏蔽不需要融合的 节点
             let isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag as string))
+
+            let opt: any = this.$options
+            let names = opt[lakeGroupName] || [];
+            let ints = opt[lakeSubs] || [];
+            let id = opt[lakeIdName];
+            if (!isIgnore && !id && names.length == 0 && ints.length == 0) {
+                isIgnore = true;
+            }
+
             // lakeData 数据存放
             let lakeData = new vueLakeData()
             lakeData.isIgnore = isIgnore
@@ -128,9 +137,8 @@ export function vueLakeInstall(V: VueConstructor | App, { useProps = true } = {}
                 return
             }
 
-            let opt: any = this.$options
-            lakeData.initGroup = opt[lakeGroupName] || []
-            lakeData.instructs = opt[lakeSubs] || []
+            lakeData.initGroup = names
+            lakeData.instructs = ints
 
             // 触发器
             // lakeData.self = new Lake({target: this})

@@ -1,23 +1,23 @@
 {
     "name": "rimjs",
-    "version": "1.4.2",
+    "version": "1.4.7",
     "scripts": {
         "build": "node clean.js && tsc"
     },
     "devDependencies": {
-        "@types/node": "^15.0.1",
-        "@typescript-eslint/eslint-plugin": "^4.22.0",
-        "@typescript-eslint/parser": "^4.22.0",
-        "eslint": "^6.8.0",
-        "eslint-config-prettier": "^6.9.0",
-        "eslint-plugin-prettier": "^3.1.2",
-        "prettier": "^1.19.1",
-        "typescript": "^4.2.4"
+        "@types/node": "~15.0.1",
+        "@typescript-eslint/eslint-plugin": "~4.22.0",
+        "@typescript-eslint/parser": "~4.22.0",
+        "eslint": "~6.8.0",
+        "eslint-config-prettier": "~6.9.0",
+        "eslint-plugin-prettier": "~3.1.2",
+        "prettier": "~1.19.1",
+        "typescript": "~4.2.4"
     },
     "dependencies": {
-        "form-data": "^3.0.0",
-        "node-fetch": "^2.6.1",
-        "vue": "^2.6.12",
+        "form-data": "~3.0.0",
+        "node-fetch": "~2.6.1",
+        "vue": "~2.6.12",
         "vue3": "npm:vue@3.0.11"
     },
     "publishConfig": {

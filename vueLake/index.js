@@ -120,6 +120,13 @@ function vueLakeInstall(V, _a) {
             beforeCreate: function () {
                 // 屏蔽不需要融合的 节点
                 var isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag));
+                var opt = this.$options;
+                var names = opt[lakeGroupName] || [];
+                var ints = opt[lakeSubs] || [];
+                var id = opt[lakeIdName];
+                if (!isIgnore && !id && names.length == 0 && ints.length == 0) {
+                    isIgnore = true;
+                }
                 // lakeData 数据存放
                 var lakeData = new vueLakeData();
                 lakeData.isIgnore = isIgnore;
@@ -128,9 +135,8 @@ function vueLakeInstall(V, _a) {
                 if (isIgnore) {
                     return;
                 }
-                var opt = this.$options;
-                lakeData.initGroup = opt[lakeGroupName] || [];
-                lakeData.instructs = opt[lakeSubs] || [];
+                lakeData.initGroup = names;
+                lakeData.instructs = ints;
                 // 触发器
                 // lakeData.self = new Lake({target: this})
             },
