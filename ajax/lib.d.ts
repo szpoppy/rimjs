@@ -67,6 +67,7 @@ export declare class AjaxCourse {
     res: AjaxRes;
     progress?: ProgressEvent;
     ajax: Ajax;
+    [propName: string]: any;
     getDate(this: AjaxCourse): Date;
     constructor(ajax: Ajax);
 }

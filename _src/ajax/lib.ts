@@ -143,6 +143,7 @@ export class AjaxCourse {
     res: AjaxRes = new AjaxRes()
     progress?: ProgressEvent
     ajax: Ajax
+    [propName: string]: any
 
     getDate(this: AjaxCourse): Date {
         return this.ajax.parent.getDate()
