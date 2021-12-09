@@ -9,6 +9,7 @@ export declare function parseDate(date?: dateType, isWipe?: boolean): Date;
 interface dateProt {
     date: Date;
     YYYY: number;
+    SSS: string;
     YY: number;
     MM: string;
     M: number;

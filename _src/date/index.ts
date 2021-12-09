@@ -96,6 +96,7 @@ function format(str: string, arr: string[], info: any): string {
 interface dateProt {
     date: Date
     YYYY: number
+    SSS: string
     YY: number
     MM: string
     M: number
@@ -116,7 +117,7 @@ interface dateProt {
 
 // 格式化日期
 // formatStr为格式化日期
-let parseArr: string[] = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",")
+let parseArr: string[] = "YYYY,SSS,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",")
 /**
  * 将date格式化为formatStr的格式
  * @param date
@@ -127,6 +128,15 @@ export function getDate(date: dateType, formatStr: string): string
 export function getDate(date: dateType, formatStr: string = ""): dateProt | string {
     let theDate: Date = parseDate(date)
     let tZone: number = 0
+    if(formatStr) {
+        formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function(match, n, uni) {
+            tZone = parseInt(n)
+            if (uni == "h") {
+                tZone *= 60
+            }
+            return ""
+        })
+    }
     if (tZone) {
         // 设置为要求时区的时间
         theDate.setMinutes(theDate.getTimezoneOffset() + tZone + theDate.getMinutes())
@@ -143,6 +153,7 @@ export function getDate(date: dateType, formatStr: string = ""): dateProt | stri
     let mm = ("0" + m).slice(-2)
     let s = theDate.getSeconds()
     let ss = ("0" + s).slice(-2)
+    let SSS = ("00" + theDate.getMilliseconds()).slice(-3)
     let w = theDate.getDay()
     let EW = weekDayArrE[w]
     let FW = weekDayArrF[w]
@@ -164,6 +175,7 @@ export function getDate(date: dateType, formatStr: string = ""): dateProt | stri
         m: m,
         ss: ss,
         s: s,
+        SSS: SSS,
         w: w,
         W: W,
         EW: EW,
@@ -173,13 +185,7 @@ export function getDate(date: dateType, formatStr: string = ""): dateProt | stri
     if (!formatStr) {
         return opt
     }
-    formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function(match, n, uni) {
-        tZone = parseInt(n)
-        if (uni == "h") {
-            tZone *= 60
-        }
-        return ""
-    })
+    
     return format(formatStr, parseArr, opt)
 }
 

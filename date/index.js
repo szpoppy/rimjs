@@ -87,11 +87,20 @@ function format(str, arr, info) {
 }
 // 格式化日期
 // formatStr为格式化日期
-var parseArr = "YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",");
+var parseArr = "YYYY,SSS,YY,MM,M,DD,D,hh,h,mm,m,ss,s,w,EW,FW,W,X".split(",");
 function getDate(date, formatStr) {
     if (formatStr === void 0) { formatStr = ""; }
     var theDate = parseDate(date);
     var tZone = 0;
+    if (formatStr) {
+        formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function (match, n, uni) {
+            tZone = parseInt(n);
+            if (uni == "h") {
+                tZone *= 60;
+            }
+            return "";
+        });
+    }
     if (tZone) {
         // 设置为要求时区的时间
         theDate.setMinutes(theDate.getTimezoneOffset() + tZone + theDate.getMinutes());
@@ -108,6 +117,7 @@ function getDate(date, formatStr) {
     var mm = ("0" + m).slice(-2);
     var s = theDate.getSeconds();
     var ss = ("0" + s).slice(-2);
+    var SSS = ("00" + theDate.getMilliseconds()).slice(-3);
     var w = theDate.getDay();
     var EW = weekDayArrE[w];
     var FW = weekDayArrF[w];
@@ -128,6 +138,7 @@ function getDate(date, formatStr) {
         m: m,
         ss: ss,
         s: s,
+        SSS: SSS,
         w: w,
         W: W,
         EW: EW,
@@ -137,13 +148,6 @@ function getDate(date, formatStr) {
     if (!formatStr) {
         return opt;
     }
-    formatStr = formatStr.replace(/^([+-]\d+)([hm]):/i, function (match, n, uni) {
-        tZone = parseInt(n);
-        if (uni == "h") {
-            tZone *= 60;
-        }
-        return "";
-    });
     return format(formatStr, parseArr, opt);
 }
 exports.getDate = getDate;
