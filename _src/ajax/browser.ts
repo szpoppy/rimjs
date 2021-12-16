@@ -76,7 +76,7 @@ function jsonpSend(this: Ajax, course: AjaxCourse): void {
     w[backFunKey] = backFun
 
     // 所有参数都放在url上
-    let url = fixedURL(req.url, getParamString(param, req.dataType) as string)
+    let url = fixedURL(req.url, getParamString(param) as string)
 
     // 发送事件出发
     this.emit("send", course)
@@ -103,15 +103,12 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
         headers: req.header
     }
 
-    // 提交字符串
-    let paramStr = req.isFormData ? (param as FormData) : getParamString(param, req.dataType)
-
     if (method == "GET") {
-        req.url = fixedURL(req.url, paramStr as string)
+        req.url = fixedURL(req.url, getParamString(param) as string)
         option.body = null
         param = undefined
     } else {
-        option.body = paramStr || null
+        option.body = (req.isFormData ? (param as FormData) : getParamString(param, req.dataType)) || null
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // 默认 Content-Type
             req.header["Content-Type"] = getDefaultContentType(req.dataType)
@@ -251,14 +248,14 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
         req.xhr.withCredentials = true
     }
 
-    let paramStr: string | FormData | null = req.isFormData ? (req.param as FormData) : getParamString(req.param, req.dataType)
+    let paramStr: string | FormData | null = null
 
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
-        req.xhr.open(method, fixedURL(req.url, paramStr as string), true)
-        paramStr = null
+        req.xhr.open(method, fixedURL(req.url, getParamString(req.param) as string), true)
     } else {
         req.xhr.open(method, req.url, true)
+        paramStr = req.isFormData ? (req.param as FormData) : getParamString(req.param, req.dataType)
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // Content-Type 默认值
             req.header["Content-Type"] = getDefaultContentType(req.dataType)

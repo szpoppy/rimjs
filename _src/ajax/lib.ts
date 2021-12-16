@@ -142,7 +142,7 @@ export class AjaxCourse {
     req: AjaxReq = new AjaxReq()
     res: AjaxRes = new AjaxRes()
     progress?: ProgressEvent
-    ajax: Ajax
+    ajax: Ajax;
     [propName: string]: any
 
     getDate(this: AjaxCourse): Date {
@@ -302,7 +302,7 @@ export class AjaxGroup extends Event {
 
     // 快捷函数
     shortcut(opt: IFAjaxConf, events?: shortcutEvent) {
-        return (callback: IEventOnFn | sendParam, param: sendParam): Ajax => {
+        return (callback: IEventOnFn | sendParam, param?: sendParam): Ajax => {
             return groupLoad(this, opt, callback, param, function(one: Ajax) {
                 if (events) {
                     if (typeof events == "function") {
@@ -318,15 +318,13 @@ export class AjaxGroup extends Event {
     }
 
     // 创建并加载
-    load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam): Ajax {
-        return groupLoad(this, url, callback, param)
+    load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam | groupLoadOnNew, onNew?: groupLoadOnNew): Ajax {
+        return groupLoad(this, url, callback, param, onNew)
     }
 
     // promise
-    fetch(opt?: IFAjaxConf, param?: sendParam): Promise<any> {
-        return this.create(opt)
-            .send(param)
-            .then()
+    fetch(opt?: IFAjaxConf, param?: sendParam, onNew?: groupLoadOnNew): Promise<any> {
+        return groupLoad(this, opt, param, onNew).then()
     }
 
     setDate(date: string | Date): void {

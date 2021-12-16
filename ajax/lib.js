@@ -272,14 +272,12 @@ var AjaxGroup = /** @class */ (function (_super) {
         };
     };
     // 创建并加载
-    AjaxGroup.prototype.load = function (url, callback, param) {
-        return groupLoad(this, url, callback, param);
+    AjaxGroup.prototype.load = function (url, callback, param, onNew) {
+        return groupLoad(this, url, callback, param, onNew);
     };
     // promise
-    AjaxGroup.prototype.fetch = function (opt, param) {
-        return this.create(opt)
-            .send(param)
-            .then();
+    AjaxGroup.prototype.fetch = function (opt, param, onNew) {
+        return groupLoad(this, opt, param, onNew).then();
     };
     AjaxGroup.prototype.setDate = function (date) {
         if (typeof date == "string") {

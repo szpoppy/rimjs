@@ -89,6 +89,7 @@ interface shortcutEventObj {
     [propName: string]: IEventOnFn;
 }
 declare type shortcutEvent = shortcutEventObj | IEventOnFn;
+declare type groupLoadOnNew = (ajax: Ajax) => void;
 export declare class AjaxGroup extends Event {
     dateDiff: number;
     conf: IFAjaxConf;
@@ -97,9 +98,9 @@ export declare class AjaxGroup extends Event {
     constructor(opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): AjaxGroup;
     create(opt?: IFAjaxConf): Ajax;
-    shortcut(opt: IFAjaxConf, events?: shortcutEvent): (callback: IEventOnFn | sendParam, param: sendParam) => Ajax;
-    load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam): Ajax;
-    fetch(opt?: IFAjaxConf, param?: sendParam): Promise<any>;
+    shortcut(opt: IFAjaxConf, events?: shortcutEvent): (callback: IEventOnFn | sendParam, param?: sendParam) => Ajax;
+    load(url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam | groupLoadOnNew, onNew?: groupLoadOnNew): Ajax;
+    fetch(opt?: IFAjaxConf, param?: sendParam, onNew?: groupLoadOnNew): Promise<any>;
     setDate(date: string | Date): void;
     getDate(): Date;
 }

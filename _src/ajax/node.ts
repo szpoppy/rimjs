@@ -27,15 +27,12 @@ function nodeFetchSend(this: Ajax, course: AjaxCourse): void {
         headers: req.header
     }
 
-    // 提交字符串
-    let paramStr = req.isFormData ? (param as any) : (getParamString(param, req.dataType) as string)
-
     if (method == "GET") {
-        req.url = fixedURL(req.url, paramStr as string)
+        req.url = fixedURL(req.url, getParamString(param) as string)
         option.body = null
         param = undefined
     } else {
-        option.body = paramStr || null
+        option.body = (req.isFormData ? (param as any) : (getParamString(param, req.dataType) as string)) || null
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // 默认 Content-Type
             req.header["Content-Type"] = getDefaultContentType(req.dataType)

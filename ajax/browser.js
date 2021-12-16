@@ -67,7 +67,7 @@ function jsonpSend(course) {
     var w = window;
     w[backFunKey] = backFun;
     // 所有参数都放在url上
-    var url = lib_1.fixedURL(req.url, lib_1.getParamString(param, req.dataType));
+    var url = lib_1.fixedURL(req.url, lib_1.getParamString(param));
     // 发送事件出发
     this.emit("send", course);
     // 发送请求
@@ -90,15 +90,13 @@ function fetchSend(course) {
         method: method,
         headers: req.header
     };
-    // 提交字符串
-    var paramStr = req.isFormData ? param : lib_1.getParamString(param, req.dataType);
     if (method == "GET") {
-        req.url = lib_1.fixedURL(req.url, paramStr);
+        req.url = lib_1.fixedURL(req.url, lib_1.getParamString(param));
         option.body = null;
         param = undefined;
     }
     else {
-        option.body = paramStr || null;
+        option.body = (req.isFormData ? param : lib_1.getParamString(param, req.dataType)) || null;
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // 默认 Content-Type
             req.header["Content-Type"] = lib_1.getDefaultContentType(req.dataType);
@@ -223,14 +221,14 @@ function xhrSend(course) {
         // xhr 跨域带cookie
         req.xhr.withCredentials = true;
     }
-    var paramStr = req.isFormData ? req.param : lib_1.getParamString(req.param, req.dataType);
+    var paramStr = null;
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
-        req.xhr.open(method, lib_1.fixedURL(req.url, paramStr), true);
-        paramStr = null;
+        req.xhr.open(method, lib_1.fixedURL(req.url, lib_1.getParamString(req.param)), true);
     }
     else {
         req.xhr.open(method, req.url, true);
+        paramStr = req.isFormData ? req.param : lib_1.getParamString(req.param, req.dataType);
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // Content-Type 默认值
             req.header["Content-Type"] = lib_1.getDefaultContentType(req.dataType);
