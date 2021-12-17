@@ -121,11 +121,11 @@ export function vueLakeInstall(V: VueConstructor | App, { useProps = true } = {}
             let isIgnore = !is3 && (!this.$vnode || /-transition$/.test(this.$vnode.tag as string))
 
             let opt: any = this.$options
-            let names = opt[lakeGroupName] || [];
-            let ints = opt[lakeSubs] || [];
-            let id = opt[lakeIdName];
+            let names = opt[lakeGroupName] || []
+            let ints = opt[lakeSubs] || []
+            let id = opt[lakeIdName]
             if (!isIgnore && !id && names.length == 0 && ints.length == 0) {
-                isIgnore = true;
+                isIgnore = true
             }
 
             // lakeData 数据存放
