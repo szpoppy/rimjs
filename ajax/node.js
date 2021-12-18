@@ -3,9 +3,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lib_1 = require("./lib");
 var node_fetch_1 = require("node-fetch");
 var FormData = require("form-data");
+var each_1 = require("../each");
+var assign_1 = require("../assign");
+var qs = require("querystring");
 // 实现具体的请求
-lib_1.ajaxGlobal.isFormData = function (para) {
-    return para instanceof FormData;
+// ajaxGlobal.isFormData = function(para: any) {
+//     return para instanceof FormData
+// }
+lib_1.ajaxGlobal.paramMerge = function (req, param) {
+    var isFormData = param instanceof FormData;
+    if (isFormData) {
+        // FormData 将参数都添加到 FormData中
+        each_1.default(req.param, function (value, key) {
+            var fd = param;
+            fd.append(key, value);
+        });
+        req.param = param;
+    }
+    else {
+        if (typeof param == "string") {
+            // 参数为字符串，自动格式化为 object，后面合并后在序列化
+            param = req.dataType == "json" ? JSON.parse(param) : qs.parse(param);
+        }
+        assign_1.merge(req.param, param || {});
+    }
 };
 lib_1.ajaxGlobal.fetchExecute = function (course, ajax) {
     var req = course.req;

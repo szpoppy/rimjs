@@ -33,7 +33,7 @@ exports.ajaxUtil = {
 (function () {
     if (typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]") {
         // node
-        require("./node");
+        require("./node-http");
         return;
     }
     // 浏览器

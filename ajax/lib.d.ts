@@ -8,7 +8,7 @@ interface IFStrObj {
 interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam;
 }
-declare type sendParam = IParam | FormData | string;
+declare type sendParam = IParam | string | FormData;
 declare enum EResType {
     json = "json",
     text = "text"
@@ -41,6 +41,7 @@ export declare class AjaxReq {
     cache: boolean;
     withCredentials: boolean;
     xhr?: XMLHttpRequest;
+    nodeReq: any;
     path: string;
     orginURL: string;
     formatURL: string;
@@ -108,7 +109,7 @@ export declare class Global extends Event {
     conf: IFAjaxConf;
     on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     setConf(conf: IFAjaxConf): void;
-    isFormData(data: any): boolean;
+    paramMerge(req: AjaxReq, param: any): void;
     fetchExecute(course: AjaxCourse, ajax: Ajax): void;
 }
 export declare let ajaxGlobal: Global;

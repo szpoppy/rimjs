@@ -5,9 +5,26 @@ var sole_1 = require("../sole");
 var getFullUrl_1 = require("../util/getFullUrl");
 var loadJS_1 = require("../util/loadJS");
 var each_1 = require("../each");
+var assign_1 = require("../assign");
+var qs = require("querystring");
 // 实现具体的请求
-lib_1.ajaxGlobal.isFormData = function (para) {
-    return window.FormData && para instanceof window.FormData;
+lib_1.ajaxGlobal.paramMerge = function (req, param) {
+    var isFormData = window.FormData && param instanceof window.FormData;
+    if (isFormData) {
+        // FormData 将参数都添加到 FormData中
+        each_1.default(req.param, function (value, key) {
+            var fd = param;
+            fd.append(key, value);
+        });
+        req.param = param;
+    }
+    else {
+        if (typeof param == "string") {
+            // 参数为字符串，自动格式化为 object，后面合并后在序列化
+            param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param);
+        }
+        assign_1.merge(req.param, param || {});
+    }
 };
 lib_1.ajaxGlobal.fetchExecute = function (course, ajax) {
     var req = course.req;
@@ -148,7 +165,7 @@ function fetchSend(course) {
             }
             Promise.all(results).then(fetchData, fetchData);
         }
-        req.outFlag = false;
+        // req.outFlag = false
     }, function (err) {
         if (!req.outFlag) {
             // outFlag 为true，表示 中止了
@@ -160,7 +177,7 @@ function fetchSend(course) {
             res.err = err.message;
             fetchData(["", {}]);
         }
-        req.outFlag = false;
+        // req.outFlag = false
     });
 }
 // ===================================================================xhr 发送数据
@@ -204,7 +221,7 @@ function onload(course) {
         lib_1.responseEnd.call(this, course);
     }
     delete req.xhr;
-    req.outFlag = false;
+    // req.outFlag = false
 }
 /**
  * xhr 发送数据

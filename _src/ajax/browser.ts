@@ -3,10 +3,26 @@ import getUUID from "../sole"
 import { getFullUrl } from "../util/getFullUrl"
 import { loadJS } from "../util/loadJS"
 import forEach from "../each"
+import { merge } from "../assign"
+import * as qs from "querystring"
 
 // 实现具体的请求
-ajaxGlobal.isFormData = function(para) {
-    return window.FormData && para instanceof window.FormData
+ajaxGlobal.paramMerge = function(req, param) {
+    let isFormData = window.FormData && param instanceof window.FormData
+    if (isFormData) {
+        // FormData 将参数都添加到 FormData中
+        forEach(req.param, function(value, key) {
+            let fd = <FormData>param
+            fd.append(key as string, value)
+        })
+        req.param = param
+    } else {
+        if (typeof param == "string") {
+            // 参数为字符串，自动格式化为 object，后面合并后在序列化
+            param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param)
+        }
+        merge(req.param, param || {})
+    }
 }
 ajaxGlobal.fetchExecute = function(course, ajax) {
     let { req } = course
@@ -168,7 +184,7 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
 
                 Promise.all(results).then(fetchData, fetchData)
             }
-            req.outFlag = false
+            // req.outFlag = false
         },
         function(err: TypeError) {
             if (!req.outFlag) {
@@ -184,7 +200,7 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
 
                 fetchData(["", {}])
             }
-            req.outFlag = false
+            // req.outFlag = false
         }
     )
 }
@@ -228,7 +244,7 @@ function onload(this: Ajax, course: AjaxCourse): void {
         responseEnd.call(this, course)
     }
     delete req.xhr
-    req.outFlag = false
+    // req.outFlag = false
 }
 
 /**

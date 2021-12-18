@@ -19,8 +19,7 @@ exports.responseEnd = exports.ajaxGlobal = exports.Global = exports.AjaxGroup = 
 var event_1 = require("../event");
 var assign_1 = require("../assign");
 var sole_1 = require("../sole");
-var each_1 = require("../each");
-var qs_1 = require("../qs");
+var qs = require("querystring");
 // ===================================================================== 参数整合url, 将多个URLSearchParams字符串合并为一个
 function fixedURL(url, paramStr) {
     if (paramStr) {
@@ -40,7 +39,7 @@ function getParamString(param, dataType) {
     if (typeof param == "string") {
         return param || "";
     }
-    var str = dataType == "json" ? JSON.stringify(param) : qs_1.default.stringify(param);
+    var str = dataType == "json" ? JSON.stringify(param) : qs.stringify(param);
     return str;
 }
 exports.getParamString = getParamString;
@@ -310,10 +309,9 @@ var Global = /** @class */ (function (_super) {
         getConf(conf, this.conf);
     };
     // eslint-disable-next-line
-    Global.prototype.isFormData = function (data) {
+    Global.prototype.paramMerge = function (req, param) {
         // eslint-disable-next-line
         console.log("no isFormData Fn");
-        return false;
     };
     // eslint-disable-next-line
     Global.prototype.fetchExecute = function (course, ajax) {
@@ -385,6 +383,11 @@ function ajaxAbort(target, flag) {
             req.xhr.abort();
             req.xhr = undefined;
         }
+        else if (req.nodeReq) {
+            // node 中止
+            req.nodeReq.abort();
+            req.nodeReq = undefined;
+        }
         delete target._course;
         flag && target.emit("abort", course);
     }
@@ -421,7 +424,7 @@ function requestSend(param, course) {
         // 短路经
         .replace(/^(\w+):(?!\/\/)/, function (s0, s1) {
         req.path = s1;
-        return req.paths[s1] || s0;
+        return (req.paths[s1] || s0);
     });
     var httpReg = new RegExp("^(:?http(:?s)?:)?//", "i");
     if (req.baseURL && !httpReg.test(req.url)) {
@@ -430,35 +433,17 @@ function requestSend(param, course) {
     }
     // 确认短路径后
     this.emit("path", course);
+    var method = req.method = String(req.method || "get").toUpperCase();
+    exports.ajaxGlobal.paramMerge(req, param);
     // 是否为 FormData
-    var isFormData = exports.ajaxGlobal.isFormData(param);
-    // if (FormData && param instanceof FormData) {
-    //     isFormData = true
-    // }
-    req.isFormData = isFormData;
+    var isFormData = req.isFormData;
     // 请求类型
     var dataType = (req.dataType = String(req.dataType || "").toLowerCase());
-    if (isFormData) {
-        // FormData 将参数都添加到 FormData中
-        each_1.default(req.param, function (value, key) {
-            var fd = param;
-            fd.append(key, value);
-        });
-        req.param = param;
-    }
-    else {
-        if (typeof param == "string") {
-            // 参数为字符串，自动格式化为 object，后面合并后在序列化
-            param = dataType == "json" ? JSON.parse(param) : qs_1.default.parse(param);
-        }
-        assign_1.merge(req.param, param || {});
-    }
     // 数据整理完成
     this.emit("open", course);
     // 还原,防止复写， 防止在 open中重写这些参数
     req.isFormData = isFormData;
     req.dataType = dataType;
-    var method = String(req.method || "get").toUpperCase();
     req.method = method;
     if (method == "GET") {
         var para = req.param;

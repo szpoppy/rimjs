@@ -1,8 +1,9 @@
 import Event from "../event"
 import { merge } from "../assign"
 import getUUID from "../sole"
+import * as qs from "querystring"
+import { ReadStream } from "fs"
 import forEach from "../each"
-import qs from "../qs"
 
 // ===================================================================== 参数整合url, 将多个URLSearchParams字符串合并为一个
 export function fixedURL(url: string, paramStr: string): string {
@@ -49,6 +50,33 @@ function getSafeData(data: any, property: string): any {
     return data
 }
 
+// interface NodeFormDataItem {
+//     value?: ReadStream | string | Buffer
+//     url?: string
+//     name?: string
+//     fileName?: string
+// }
+// type NodeFormDataItemValue = NodeFormDataItem | ReadStream | string | Buffer
+// export class NodeFormData {
+//     private _data: { [prot: string]: NodeFormDataItemValue }
+
+//     set(key: string, item: NodeFormDataItemValue) {
+//         this._data[key] = item
+//     }
+
+//     delete(key: string) {
+//         delete this._data[key]
+//     }
+
+//     has(key: string) {
+//         return !!this._data[key]
+//     }
+
+//     forEach(fn: (item: NodeFormDataItemValue, key: string) => void) {
+//         forEach(this._data, fn)
+//     }
+// }
+
 // ==================================================================== 接口
 interface IFStrObj {
     [propName: string]: string
@@ -57,7 +85,7 @@ interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam
 }
 
-type sendParam = IParam | FormData | string
+type sendParam = IParam | string | FormData
 
 enum EResType {
     // eslint-disable-next-line
@@ -97,6 +125,7 @@ export class AjaxReq {
     withCredentials: boolean = true
 
     xhr?: XMLHttpRequest
+    nodeReq: any
     path: string = ""
     orginURL: string = ""
     formatURL: string = ""
@@ -356,10 +385,9 @@ export class Global extends Event {
     }
 
     // eslint-disable-next-line
-    isFormData(data: any) {
+    paramMerge(req: AjaxReq, param: any) {
         // eslint-disable-next-line
         console.log("no isFormData Fn")
-        return false
     }
 
     // eslint-disable-next-line
@@ -439,6 +467,11 @@ function ajaxAbort(target: Ajax, flag: boolean = false): void {
             req.xhr.abort()
             req.xhr = undefined
         }
+        else if(req.nodeReq) {
+            // node 中止
+            req.nodeReq.abort()
+            req.nodeReq = undefined
+        }
         delete target._course
         flag && target.emit("abort", course)
     }
@@ -479,9 +512,9 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
             return ""
         })
         // 短路经
-        .replace(/^(\w+):(?!\/\/)/, (s0: string, s1: string) => {
+        .replace(/^(\w+):(?!\/\/)/, (s0, s1) => {
             req.path = s1
-            return req.paths[s1] || s0
+            return (req.paths[s1] || s0) as string
         })
 
     let httpReg = new RegExp("^(:?http(:?s)?:)?//", "i")
@@ -492,31 +525,14 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     // 确认短路径后
     this.emit("path", course)
+    let method = req.method = String(req.method || "get").toUpperCase()
 
+    ajaxGlobal.paramMerge(req, param)
     // 是否为 FormData
-    let isFormData = ajaxGlobal.isFormData(param)
-    // if (FormData && param instanceof FormData) {
-    //     isFormData = true
-    // }
-    req.isFormData = isFormData
+    let isFormData = req.isFormData
 
     // 请求类型
     let dataType = (req.dataType = String(req.dataType || "").toLowerCase())
-
-    if (isFormData) {
-        // FormData 将参数都添加到 FormData中
-        forEach(req.param, function(value, key) {
-            let fd = <FormData>param
-            fd.append(key as string, value)
-        })
-        req.param = param
-    } else {
-        if (typeof param == "string") {
-            // 参数为字符串，自动格式化为 object，后面合并后在序列化
-            param = dataType == "json" ? JSON.parse(param) : qs.parse(param)
-        }
-        merge(req.param as IParam, (param as IParam) || {})
-    }
 
     // 数据整理完成
     this.emit("open", course)
@@ -524,8 +540,6 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
     // 还原,防止复写， 防止在 open中重写这些参数
     req.isFormData = isFormData
     req.dataType = dataType
-
-    let method = String(req.method || "get").toUpperCase()
     req.method = method
     if (method == "GET") {
         let para = req.param as IParam
