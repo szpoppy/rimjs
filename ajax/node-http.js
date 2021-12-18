@@ -97,7 +97,7 @@ function httpRequest(course) {
                 // 是否有错误
                 res.err = (s >= 200 && s < 300) || s === 304 ? null : "http error [" + s + "]";
                 try {
-                    res.text = chunks.join("");
+                    res.text = Buffer.isBuffer(chunks[0]) ? Buffer.concat(chunks).toString() : chunks.join("");
                 }
                 catch (e) { }
                 // 统一处理 返回数据
