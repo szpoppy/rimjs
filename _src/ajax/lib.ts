@@ -50,32 +50,32 @@ function getSafeData(data: any, property: string): any {
     return data
 }
 
-// interface NodeFormDataItem {
-//     value?: ReadStream | string | Buffer
-//     url?: string
-//     name?: string
-//     fileName?: string
-// }
-// type NodeFormDataItemValue = NodeFormDataItem | ReadStream | string | Buffer
-// export class NodeFormData {
-//     private _data: { [prot: string]: NodeFormDataItemValue }
+interface NodeFormDataItem {
+    value?: ReadStream | string | Buffer
+    url?: string
+    name?: string
+    fileName?: string
+}
+type NodeFormDataItemValue = NodeFormDataItem | ReadStream | string | Buffer
+export class NodeFormData {
+    private _data: { [prot: string]: NodeFormDataItemValue }
 
-//     set(key: string, item: NodeFormDataItemValue) {
-//         this._data[key] = item
-//     }
+    set(key: string, item: NodeFormDataItemValue) {
+        this._data[key] = item
+    }
 
-//     delete(key: string) {
-//         delete this._data[key]
-//     }
+    delete(key: string) {
+        delete this._data[key]
+    }
 
-//     has(key: string) {
-//         return !!this._data[key]
-//     }
+    has(key: string) {
+        return !!this._data[key]
+    }
 
-//     forEach(fn: (item: NodeFormDataItemValue, key: string) => void) {
-//         forEach(this._data, fn)
-//     }
-// }
+    forEach(fn: (item: NodeFormDataItemValue, key: string) => void) {
+        forEach(this._data, fn)
+    }
+}
 
 // ==================================================================== 接口
 interface IFStrObj {

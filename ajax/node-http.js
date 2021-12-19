@@ -3,44 +3,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lib_1 = require("./lib");
 var http_1 = require("http");
 var https_1 = require("https");
-// import forEach from "../each"
+var each_1 = require("../each");
 var assign_1 = require("../assign");
 var qs = require("querystring");
-// import { ReadStream, createReadStream } from "fs"
+var fs_1 = require("fs");
 // 实现具体的请求
 // ajaxGlobal.isFormData = function(param, req) {
 //     return req.dataType == "form-data"
 // }
 lib_1.ajaxGlobal.paramMerge = function (req, param) {
-    // 不支持 formData
-    req.isFormData = false;
+    var isFormData = param instanceof lib_1.NodeFormData;
+    req.isFormData = isFormData;
+    if (isFormData) {
+        // FormData 将参数都添加到 FormData中
+        each_1.default(req.param, function (value, key) {
+            var fd = param;
+            fd.set(key, value);
+        });
+        req.param = param;
+        return;
+    }
     if (typeof param == "string") {
         // 参数为字符串，自动格式化为 object，后面合并后在序列化
         param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param);
     }
     assign_1.merge(req.param, param || {});
-    // let isFormData = param instanceof NodeFormData
-    // if (isFormData) {
-    //     // FormData 将参数都添加到 FormData中
-    //     forEach(req.param, function(value, key) {
-    //         let fd = <NodeFormData>param
-    //         fd.set(key as string, value)
-    //     })
-    //     req.param = param
-    // } else {
-    //     if (typeof param == "string") {
-    //         // 参数为字符串，自动格式化为 object，后面合并后在序列化
-    //         param = req.dataType == "json" ? JSON.parse(param) : qs.parse(param)
-    //     }
-    //     merge(req.param, param || {})
-    // }
 };
 lib_1.ajaxGlobal.fetchExecute = function (course, ajax) {
     var req = course.req;
     req.isCross = false;
     httpRequest.call(ajax, course);
 };
-// boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
 // fetch 发送数据
 function httpRequest(course) {
     var _this = this;
@@ -56,15 +49,15 @@ function httpRequest(course) {
         headers: req.header
     };
     var isGet = method == "GET";
-    // let boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+    var boundary = "----WebKitFormBoundary" + new Date().getTime().toString(36);
     if (isGet) {
         req.url = lib_1.fixedURL(req.url, lib_1.getParamString(param));
     }
     else {
         if (req.header["Content-Type"] === undefined) {
             // 默认 Content-Type
-            // req.header["Content-Type"] = req.isFormData ? "multipart/form-data; boundary=" + boundary : getDefaultContentType(req.dataType)
-            req.header["Content-Type"] = lib_1.getDefaultContentType(req.dataType);
+            req.header["Content-Type"] = req.isFormData ? "multipart/form-data; boundary=" + boundary : lib_1.getDefaultContentType(req.dataType);
+            // req.header["Content-Type"] = getDefaultContentType(req.dataType)
         }
         if (req.header["X-Requested-With"] === undefined) {
             // 跨域不增加 X-Requested-With
@@ -76,7 +69,6 @@ function httpRequest(course) {
         if (!req.outFlag) {
             res.err = e.message;
         }
-        // req.outFlag = false
         // 统一处理 返回数据
         lib_1.responseEnd.call(this, course);
     }
@@ -103,7 +95,6 @@ function httpRequest(course) {
                 // 统一处理 返回数据
                 lib_1.responseEnd.call(_this, course);
             }
-            // req.outFlag = false
         });
     });
     req.nodeReq = client;
@@ -117,60 +108,63 @@ function httpRequest(course) {
         client.end();
         return;
     }
-    // // 模拟表单
-    // interface upArrItem {
-    //     name: string
-    //     buffer?: Buffer
-    //     readStream?: ReadStream
-    //     fileName?: string
-    // }
-    // let upArr: upArrItem[] = []
-    // ;(<NodeFormData>param).forEach(function(item, key) {
-    //     if (Buffer.isBuffer(item) || item instanceof ReadStream || typeof item == "string") {
-    //         item = { value: item, name: key }
-    //     }
-    //     let it: upArrItem = {
-    //         name: item.name || key
-    //     }
-    //     if (Buffer.isBuffer(item.value)) {
-    //         it.buffer = item.value
-    //     } else if (item.value instanceof ReadStream) {
-    //         it.readStream = item.value
-    //     } else if (item.url) {
-    //         it.readStream = createReadStream(item.url)
-    //     } else if (typeof item.value == "string") {
-    //         it.buffer = Buffer.from(item.value, "utf-8")
-    //     }
-    //     if (it.buffer || it.readStream) {
-    //         if (item.fileName) {
-    //             it.fileName = item.fileName
-    //         }
-    //         upArr.push(it)
-    //     }
-    // })
-    // // 上传
-    // function next() {
-    //     if (!upArr.length) {
-    //         client.end(`\r\n--${boundary}--`)
-    //         return
-    //     }
-    //     let item = upArr.shift()
-    //     client.write(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="${item.name}"${item.fileName ? '; filename="' + item.fileName + '"' : ""}\r\n\r\n`)
-    //     if (item.buffer) {
-    //         client.write(item.buffer)
-    //         next()
-    //         return
-    //     }
-    //     if (item.readStream) {
-    //         item.readStream.pipe(client, { end: false })
-    //         item.readStream.on("end", () => {
-    //             next()
-    //         })
-    //         item.readStream.on("error", httpError)
-    //         return
-    //     }
-    //     next()
-    // }
-    // next()
+    var formData = param;
+    var upArr = [];
+    formData.forEach(function (item, key) {
+        if (Buffer.isBuffer(item) || item instanceof fs_1.ReadStream || typeof item == "string") {
+            item = { value: item, name: key };
+        }
+        var it = {
+            name: item.name || key
+        };
+        if (Buffer.isBuffer(item.value)) {
+            it.buffer = item.value;
+        }
+        else if (item.value instanceof fs_1.ReadStream) {
+            it.readStream = item.value;
+        }
+        else if (item.url) {
+            it.readStream = fs_1.createReadStream(item.url);
+            if (!item.fileName) {
+                it.fileName;
+            }
+        }
+        else if (typeof item.value == "string") {
+            it.buffer = Buffer.from(item.value, "utf-8");
+        }
+        if (it.buffer || it.readStream) {
+            if (item.fileName) {
+                it.fileName = item.fileName;
+            }
+            upArr.push(it);
+        }
+    });
+    // 上传
+    function next() {
+        if (!upArr.length) {
+            client.end("\r\n--" + boundary + "--");
+            return;
+        }
+        var item = upArr.shift();
+        if (item.readStream) {
+            // 流上传
+            var formStr = "\r\n----" + boundary + "\r\n\" + \"Content-Type: application/octet-stream\r\nContent-Disposition: form-data; name=\"" + item.name + "\"" + (item.fileName ? '; filename="' + item.fileName + '"' : "") + "\r\nContent-@R_883_301@: binary\r\n\r\n";
+            client.write(Buffer.from(formStr, "utf-8"));
+            item.readStream.pipe(client, { end: false });
+            item.readStream.on("end", function () {
+                next();
+            });
+            item.readStream.on("error", httpError);
+            return;
+        }
+        if (item.buffer) {
+            client.write("\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + item.name + "\"" + (item.fileName ? '; filename="' + item.fileName + '"' : "") + "\r\n\r\n");
+            client.write(item.buffer);
+            next();
+            return;
+        }
+        next();
+    }
+    next();
 }
 //# sourceMappingURL=node-http.js.map

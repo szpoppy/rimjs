@@ -15,11 +15,12 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.responseEnd = exports.ajaxGlobal = exports.Global = exports.AjaxGroup = exports.Ajax = exports.AjaxCourse = exports.AjaxRes = exports.AjaxReq = exports.getDefaultContentType = exports.getParamString = exports.fixedURL = void 0;
+exports.responseEnd = exports.ajaxGlobal = exports.Global = exports.AjaxGroup = exports.Ajax = exports.AjaxCourse = exports.AjaxRes = exports.AjaxReq = exports.NodeFormData = exports.getDefaultContentType = exports.getParamString = exports.fixedURL = void 0;
 var event_1 = require("../event");
 var assign_1 = require("../assign");
 var sole_1 = require("../sole");
 var qs = require("querystring");
+var each_1 = require("../each");
 // ===================================================================== 参数整合url, 将多个URLSearchParams字符串合并为一个
 function fixedURL(url, paramStr) {
     if (paramStr) {
@@ -64,6 +65,24 @@ function getSafeData(data, property) {
     }
     return data;
 }
+var NodeFormData = /** @class */ (function () {
+    function NodeFormData() {
+    }
+    NodeFormData.prototype.set = function (key, item) {
+        this._data[key] = item;
+    };
+    NodeFormData.prototype.delete = function (key) {
+        delete this._data[key];
+    };
+    NodeFormData.prototype.has = function (key) {
+        return !!this._data[key];
+    };
+    NodeFormData.prototype.forEach = function (fn) {
+        each_1.default(this._data, fn);
+    };
+    return NodeFormData;
+}());
+exports.NodeFormData = NodeFormData;
 var EResType;
 (function (EResType) {
     // eslint-disable-next-line

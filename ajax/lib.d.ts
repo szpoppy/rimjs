@@ -1,7 +1,23 @@
+/// <reference types="node" />
 import Event from "../event";
+import { ReadStream } from "fs";
 export declare function fixedURL(url: string, paramStr: string): string;
 export declare function getParamString(param?: FormData | IParam | string, dataType?: string): string | FormData;
 export declare function getDefaultContentType(dataType?: string): string;
+interface NodeFormDataItem {
+    value?: ReadStream | string | Buffer;
+    url?: string;
+    name?: string;
+    fileName?: string;
+}
+declare type NodeFormDataItemValue = NodeFormDataItem | ReadStream | string | Buffer;
+export declare class NodeFormData {
+    private _data;
+    set(key: string, item: NodeFormDataItemValue): void;
+    delete(key: string): void;
+    has(key: string): boolean;
+    forEach(fn: (item: NodeFormDataItemValue, key: string) => void): void;
+}
 interface IFStrObj {
     [propName: string]: string;
 }
