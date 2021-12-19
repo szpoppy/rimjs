@@ -1,11 +1,33 @@
 import { Ajax, AjaxCourse, ajaxGlobal, getParamString, fixedURL, getDefaultContentType, responseEnd } from "./lib"
 import { default as fetch, RequestInit, Response } from "node-fetch"
 import * as FormData from "form-data"
+import forEach from "../each"
+import { merge } from "../assign"
+import * as qs from "querystring"
 
 // 实现具体的请求
-ajaxGlobal.isFormData = function(para: any) {
-    return para instanceof FormData
+// ajaxGlobal.isFormData = function(para: any) {
+//     return para instanceof FormData
+// }
+
+ajaxGlobal.paramMerge = function(req, param) {
+    let isFormData = param instanceof FormData
+    if (isFormData) {
+        // FormData 将参数都添加到 FormData中
+        forEach(req.param, function(value, key) {
+            let fd = <FormData>param
+            fd.append(key as string, value)
+        })
+        req.param = param
+    } else {
+        if (typeof param == "string") {
+            // 参数为字符串，自动格式化为 object，后面合并后在序列化
+            param = req.dataType == "json" ? JSON.parse(param) : qs.parse(param)
+        }
+        merge(req.param, param || {})
+    }
 }
+
 ajaxGlobal.fetchExecute = function(course, ajax) {
     let { req } = course
     req.isCross = false
