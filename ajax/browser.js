@@ -9,7 +9,7 @@ var assign_1 = require("../assign");
 var qs = require("querystring");
 // 实现具体的请求
 lib_1.ajaxGlobal.paramMerge = function (req, param) {
-    var isFormData = window.FormData && param instanceof window.FormData;
+    var isFormData = (req.isFormData = window.FormData && param instanceof window.FormData);
     if (isFormData) {
         req.method = "POST";
         // FormData 将参数都添加到 FormData中
