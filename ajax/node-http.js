@@ -51,7 +51,7 @@ function httpRequest(course) {
         headers: req.header
     };
     var isGet = method == "GET";
-    var boundary = "----WebKitFormBoundaryWebKitFormBoundary7MA4YWxkTrZu0gW";
+    var boundary = "----WebKitFormBoundary" + new Date().getTime().toString(36);
     if (isGet) {
         req.url = lib_1.fixedURL(req.url, lib_1.getParamString(param));
     }
@@ -61,21 +61,19 @@ function httpRequest(course) {
             req.header["Content-Type"] = req.isFormData ? "multipart/form-data; boundary=" + boundary : lib_1.getDefaultContentType(req.dataType);
             // req.header["Content-Type"] = getDefaultContentType(req.dataType)
         }
-        // if (req.header["X-Requested-With"] === undefined) {
-        //     // 跨域不增加 X-Requested-With
-        //     req.header["X-Requested-With"] = "XMLHttpRequest";
-        // }
+        if (req.header["X-Requested-With"] === undefined) {
+            // 跨域不增加 X-Requested-With
+            req.header["X-Requested-With"] = "XMLHttpRequest";
+        }
     }
     var reqSend = isHttps ? https_1.request : http_1.request;
     var httpError = function (e) {
-        httpError = function(){}
         if (!req.outFlag) {
             res.err = e.message;
         }
         // 统一处理 返回数据
         lib_1.responseEnd.call(_this, course);
     };
-    console.log('oooo', option)
     var client = reqSend(req.url, option, function (cRes) {
         cRes.setEncoding("utf8");
         var chunks = [];
@@ -128,9 +126,7 @@ function httpRequest(course) {
             it.readStream = item.value;
         }
         else if (item.url) {
-            console.log(item.url)
             it.readStream = fs_1.createReadStream(item.url);
-            it.url = item.url
             if (!item.fileName) {
                 item.fileName = path.basename(item.url);
             }
@@ -145,33 +141,26 @@ function httpRequest(course) {
             upArr.push(it);
         }
     });
-
     // 上传
     function next() {
         if (!upArr.length) {
-            console.log("\r\n--" + boundary + "--")
             client.end("\r\n--" + boundary + "--");
             return;
         }
         var item = upArr.shift();
         if (item.readStream) {
             // 流上传
-            var formStr = "\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + item.name + "\"" + (item.fileName ? '; filename="' + item.fileName + '"' : "") + "\r\nContent-Type: image/png\r\n\r\n";
-            console.log(formStr)
+            var formStr = "\r\n--" + boundary + "\r\n\" + \"Content-Type: application/octet-stream\r\nContent-Disposition: form-data; name=\"" + item.name + "\"" + (item.fileName ? '; filename="' + item.fileName + '"' : "") + "\r\nContent-@R_883_301@: binary\r\n\r\n";
             client.write(Buffer.from(formStr, "utf-8"));
-            let s = fs_1.createReadStream(item.url)
-            s.pipe(client, { end: false });
-            s.on("end", function () {
-                console.log("--0-0-0-0--0")
+            item.readStream.pipe(client, { end: false });
+            item.readStream.on("end", function () {
                 next();
             });
-            s.on("error", httpError);
+            item.readStream.on("error", httpError);
             return;
         }
         if (item.buffer) {
-            var x = "\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + item.name + "\"" + (item.fileName ? '; filename="' + item.fileName + '"' : "") + "\r\n\r\n"
-            console.log(x, item.buffer.toString())
-            client.write(x);
+            client.write("\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + item.name + "\"" + (item.fileName ? '; filename="' + item.fileName + '"' : "") + "\r\n\r\n");
             client.write(item.buffer);
             next();
             return;

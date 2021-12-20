@@ -26,9 +26,10 @@ function rimUp() {
 
     let formData = new NodeFormData()
     formData.set("bucket_name", c.bucket)
-    formData.set("key", "/test/rimjs/")
+    formData.set("key", Buffer.from("/test/rimjs/"))
 
-    formData.set("file", { url: img })
+    // formData.set("file", { url: img })
+    formData.set("file", { value: fs.createReadStream(img), fileName: "fe.png" })
 
     ajax.load(
         {

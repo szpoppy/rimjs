@@ -165,7 +165,7 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
         let item = upArr.shift()
         if (item.readStream) {
             // 流上传
-            let formStr = `\r\n----${boundary}\r\n" + "Content-Type: application/octet-stream\r\nContent-Disposition: form-data; name="${item.name}"${item.fileName ? '; filename="' + item.fileName + '"' : ""}\r\nContent-@R_883_301@: binary\r\n\r\n`
+            let formStr = `\r\n--${boundary}\r\n" + "Content-Type: application/octet-stream\r\nContent-Disposition: form-data; name="${item.name}"${item.fileName ? '; filename="' + item.fileName + '"' : ""}\r\nContent-@R_883_301@: binary\r\n\r\n`
             client.write(Buffer.from(formStr, "utf-8"))
             item.readStream.pipe(client, { end: false })
             item.readStream.on("end", () => {
