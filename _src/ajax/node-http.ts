@@ -4,6 +4,7 @@ import { request as httpsSend, RequestOptions as httpsOptions } from "https"
 import forEach from "../each"
 import { merge } from "../assign"
 import * as qs from "querystring"
+import * as path from "path"
 import { ReadStream, createReadStream } from "fs"
 
 // 实现具体的请求
@@ -15,6 +16,7 @@ ajaxGlobal.paramMerge = function(req, param) {
     let isFormData = param instanceof NodeFormData
     req.isFormData = isFormData
     if (isFormData) {
+        req.method = "POST"
         // FormData 将参数都添加到 FormData中
         forEach(req.param, function(value, key) {
             let fd = <NodeFormData>param
@@ -68,7 +70,7 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
         }
     }
     let reqSend = isHttps ? httpsSend : httpSend
-    function httpError(e: Error) {
+    let httpError = (e: Error) => {
         if (!req.outFlag) {
             res.err = e.message
         }
@@ -139,8 +141,8 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
             it.readStream = item.value
         } else if (item.url) {
             it.readStream = createReadStream(item.url)
-            if(!item.fileName) {
-                it.fileName
+            if (!item.fileName) {
+                item.fileName = path.basename(item.url)
             }
         } else if (typeof item.value == "string") {
             it.buffer = Buffer.from(item.value, "utf-8")

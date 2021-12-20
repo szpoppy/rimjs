@@ -10,7 +10,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ajaxUtil = void 0;
+exports.ajax = exports.ajaxUtil = void 0;
 /*
 function getDefaultAdapter() {
     var adapter;
@@ -39,6 +39,6 @@ exports.ajaxUtil = {
     // 浏览器
     require("./browser");
 })();
-var def = Object.assign(new lib_1.AjaxGroup(), { global: lib_1.ajaxGlobal, Group: lib_1.AjaxGroup, util: exports.ajaxUtil });
-exports.default = def;
+exports.ajax = Object.assign(new lib_1.AjaxGroup(), { global: lib_1.ajaxGlobal, Group: lib_1.AjaxGroup, util: exports.ajaxUtil });
+exports.default = exports.ajax;
 //# sourceMappingURL=index.js.map

@@ -67,6 +67,7 @@ function getSafeData(data, property) {
 }
 var NodeFormData = /** @class */ (function () {
     function NodeFormData() {
+        this._data = {};
     }
     NodeFormData.prototype.set = function (key, item) {
         this._data[key] = item;
@@ -419,8 +420,6 @@ function requestSend(param, course) {
         // 已经中止
         return;
     }
-    // 方法
-    req.method = String(req.method || "get").toUpperCase();
     // 之前发出
     this.emit("before", course);
     req.path = "";
@@ -452,8 +451,8 @@ function requestSend(param, course) {
     }
     // 确认短路径后
     this.emit("path", course);
-    var method = req.method = String(req.method || "get").toUpperCase();
     exports.ajaxGlobal.paramMerge(req, param);
+    var method = req.method = String(req.method || "get").toUpperCase();
     // 是否为 FormData
     var isFormData = req.isFormData;
     // 请求类型

@@ -4,7 +4,7 @@ export declare let ajaxUtil: {
     fixedURL: typeof fixedURL;
     toParam: typeof getParamString;
 };
-declare let def: AjaxGroup & {
+export declare let ajax: AjaxGroup & {
     global: import("./lib").Global;
     Group: typeof AjaxGroup;
     util: {
@@ -12,4 +12,4 @@ declare let def: AjaxGroup & {
         toParam: typeof getParamString;
     };
 };
-export default def;
+export default ajax;

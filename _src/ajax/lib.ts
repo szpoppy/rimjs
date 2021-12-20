@@ -58,7 +58,7 @@ interface NodeFormDataItem {
 }
 type NodeFormDataItemValue = NodeFormDataItem | ReadStream | string | Buffer
 export class NodeFormData {
-    private _data: { [prot: string]: NodeFormDataItemValue }
+    private _data: { [prot: string]: NodeFormDataItemValue } = {}
 
     set(key: string, item: NodeFormDataItemValue) {
         this._data[key] = item
@@ -486,9 +486,6 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
         return
     }
 
-    // 方法
-    req.method = String(req.method || "get").toUpperCase()
-
     // 之前发出
     this.emit("before", course)
 
@@ -525,9 +522,9 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     // 确认短路径后
     this.emit("path", course)
-    let method = req.method = String(req.method || "get").toUpperCase()
-
+    
     ajaxGlobal.paramMerge(req, param)
+    let method = req.method = String(req.method || "get").toUpperCase()
     // 是否为 FormData
     let isFormData = req.isFormData
 

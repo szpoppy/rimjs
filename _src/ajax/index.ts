@@ -28,6 +28,5 @@ export let ajaxUtil = {
     require("./browser")
 })()
 
-let def = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup, util: ajaxUtil })
-
-export default def
+export let ajax = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup, util: ajaxUtil })
+export default ajax

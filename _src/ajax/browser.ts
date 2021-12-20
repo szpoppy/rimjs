@@ -10,6 +10,7 @@ import * as qs from "querystring"
 ajaxGlobal.paramMerge = function(req, param) {
     let isFormData = window.FormData && param instanceof window.FormData
     if (isFormData) {
+        req.method = "POST"
         // FormData 将参数都添加到 FormData中
         forEach(req.param, function(value, key) {
             let fd = <FormData>param
