@@ -1,17 +1,22 @@
-type setDataFn = (data: any) => void
+type initedNum = 0 | 2
+type setDataFn = (data: any, initNum?: initedNum) => void
 type getDataFn = (setData: setDataFn, para: any) => void
 
 type backFn<T> = (value: T) => void
 
 class Cache<T> {
     backs: backFn<T>[] = []
-    inited: 0 | 1 | 2 = 0
+    inited: initedNum | 1 = 0
     date: number = new Date().getTime()
     data!: T
 
-    setData(data: T) {
-        this.data = data
-        this.inited = 2
+    setData(data: T, inited: initedNum = 2) {
+        if (inited == 2) {
+            // 为0，异常，不更新
+            this.data = data
+        }
+
+        this.inited = inited
 
         while (this.backs.length) {
             let fn = this.backs.shift() as backFn<T>
@@ -54,8 +59,8 @@ export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKe
 
             if (cache.inited < 1) {
                 cache.inited = 1
-                getFn(function(data) {
-                    cache.setData(data)
+                getFn(function(data, inited) {
+                    cache.setData(data, inited)
                 }, para)
             }
         })

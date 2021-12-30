@@ -7,9 +7,13 @@ var Cache = /** @class */ (function () {
         this.inited = 0;
         this.date = new Date().getTime();
     }
-    Cache.prototype.setData = function (data) {
-        this.data = data;
-        this.inited = 2;
+    Cache.prototype.setData = function (data, inited) {
+        if (inited === void 0) { inited = 2; }
+        if (inited == 2) {
+            // 为0，异常，不更新
+            this.data = data;
+        }
+        this.inited = inited;
         while (this.backs.length) {
             var fn = this.backs.shift();
             fn(this.data);
@@ -51,8 +55,8 @@ function promiseCache(getFn, eTime, getKey) {
             cache.backs.push(resolve);
             if (cache.inited < 1) {
                 cache.inited = 1;
-                getFn(function (data) {
-                    cache.setData(data);
+                getFn(function (data, inited) {
+                    cache.setData(data, inited);
                 }, para);
             }
         });
