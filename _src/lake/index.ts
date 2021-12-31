@@ -190,9 +190,9 @@ async function _lakePub<D>(self: Lake | null, query: string, data?: D): Promise<
     await next()
     return uniEvent
 }
-export async function lakePub<D>(lake: Lake, query: string, data?: D)
-export async function lakePub<D>(lake: string, query?: D)
-export async function lakePub<D>(lake: Lake | string, query: string | D, data?: D) {
+export async function lakePub<D>(lake: Lake, query: string, data?: D):Promise<LakeEvent<D>>
+export async function lakePub<D>(lake: string, query?: D):Promise<LakeEvent<D>>
+export async function lakePub<D>(lake: Lake | string, query: string | D, data?: D):Promise<LakeEvent<D>> {
     if (typeof lake == "string") {
         return await _lakePub<D>(null, lake, query as D)
     }

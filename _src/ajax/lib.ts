@@ -127,14 +127,13 @@ export class AjaxReq {
     xhr?: XMLHttpRequest
     nodeReq: any
     path: string = ""
-    orginURL: string = ""
+    originURL: string = ""
     formatURL: string = ""
     isFormData: boolean = false
     isCross: boolean = false
     outFlag: boolean = false;
 
     [propName: string]: any
-
     // constructor() {}
 }
 
@@ -490,12 +489,12 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
     this.emit("before", course)
 
     req.path = ""
-    req.orginURL = req.url || ""
+    req.originURL = req.url || ""
 
     // let paths = req.paths || {}
 
     // 短路径替换
-    req.formatURL = req.orginURL
+    req.formatURL = req.originURL
         // 自定义req属性
         .replace(/^<([\w,:]*)>/, function(s0: string, s1: string) {
             s1.split(/,+/).forEach(function(key: string) {

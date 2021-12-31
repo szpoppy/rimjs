@@ -528,7 +528,7 @@ export function vueUnicomInstall(V: VueConstructor | App, { useProps = true } = 
                 }
             },
             watch: {
-                [unicomIdName](nv) {
+                [unicomIdName](nv: string) {
                     let ud = this._unicom_data_ as any
                     if (ud && ud.unicom) {
                         ud.unicom.setId(nv)

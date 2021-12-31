@@ -183,7 +183,7 @@ group.load(
 | outFlag         | ajax 已经中止，内部使用               | false                                           |
 | method          | 请求方法                              | GET                                             |
 | url             | 请求 url                              | 空字符串                                        |
-| orginURL        | 保存的是原始传入的 url                | url                                             |
+| originURL        | 保存的是原始传入的 url                | url                                             |
 | formatURL       | 格式化后（最终使用的）的 url          | 短路径 -> 全路径                                |
 | path            | 短路径目录截取值                      | 短路径 url 开头处 : 前面的字符，默认为 空字符串 |
 | cache           | get 请求是否有缓存                    | true                                            |

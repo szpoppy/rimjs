@@ -39,7 +39,7 @@ class vueLakeData {
 }
 
 let lakeProt = Object.assign(
-    async function<D>(this: any, query, data?: D) {
+    async function<D>(this: any, query: any, data?: D): Promise<LakeEvent<D>> {
         let self = (this._lake_data_ && this._lake_data_.lake) || this
         return await lakePub(self, query, data)
     },
@@ -191,7 +191,7 @@ export function vueLakeInstall(V: VueConstructor | App, { useProps = true } = {}
                 }
             },
             watch: {
-                [lakeIdName](nv) {
+                [lakeIdName](nv: string) {
                     let ud = this._lake_data_ as any
                     if (ud && ud.lake) {
                         ud.lake.setId(nv)

@@ -14,9 +14,12 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var date_1 = require("../date");
-var event_1 = require("../event");
+var date_1 = __importDefault(require("../date"));
+var event_1 = __importDefault(require("../event"));
 /**
  * 获取当前时间，可以更改为获取当前服务器时间
  */

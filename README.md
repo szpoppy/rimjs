@@ -15,6 +15,7 @@
 ## 更新日志
 [2021-2-7] ajax支持nodejs（FormData没测试），使用方式不变
 [2021-04-30] vueLake、vueUnicom 支持通过参数 useProps:false 设置禁用全局的 name 和 id功能
+[2021-12-31] ajax中 orgin 改为 origin，ajax已经重构为原生支持nodejs，也能支持FormData 使用内部定义的 NodeFormData来传递参数
 
 ## 功能
 | 名称                                    | 说明                                        |

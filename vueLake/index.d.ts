@@ -19,7 +19,7 @@ declare class vueLakeData {
     setId(id: string): void;
     setGroup(group: string | string[]): void;
 }
-declare let lakeProt: (<D>(this: any, query: any, data?: D) => Promise<any>) & {
+declare let lakeProt: (<D>(this: any, query: any, data?: D) => Promise<LakeEvent<D>>) & {
     id: (id: string) => Lake<any>;
     group: (name: string) => Lake<any>[];
 };

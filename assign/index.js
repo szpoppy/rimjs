@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.assign = exports.merge = void 0;
-var each_1 = require("../each");
+var each_1 = __importDefault(require("../each"));
 // 用于类型判断
 var _toString = Object.prototype.toString;
 function _assign(target, objs, flag) {

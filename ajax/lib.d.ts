@@ -59,7 +59,7 @@ export declare class AjaxReq {
     xhr?: XMLHttpRequest;
     nodeReq: any;
     path: string;
-    orginURL: string;
+    originURL: string;
     formatURL: string;
     isFormData: boolean;
     isCross: boolean;

@@ -1,11 +1,11 @@
 {
     "name": "rimjs",
-    "version": "1.5.7",
+    "version": "1.6.0",
     "scripts": {
         "build": "node clean.js && tsc"
     },
     "devDependencies": {
-        "@types/node": "~15.0.1",
+        "@types/node": "15.0.1",
         "@typescript-eslint/eslint-plugin": "~4.22.0",
         "@typescript-eslint/parser": "~4.22.0",
         "eslint": "~6.8.0",
@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "vue": "~2.6.12",
-        "vue3": "npm:vue@3.0.11"
+        "vue3": "https://registry.npmjs.org/vue/-/vue-3.0.11.tgz"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org/"
