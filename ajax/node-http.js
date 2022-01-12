@@ -92,9 +92,9 @@ function httpRequest(course) {
     var httpError = function (e) {
         if (!req.outFlag) {
             res.err = e.message;
+            // 统一处理 返回数据
+            lib_1.responseEnd.call(_this, course);
         }
-        // 统一处理 返回数据
-        lib_1.responseEnd.call(_this, course);
     };
     var client = reqSend(req.url, option, function (cRes) {
         cRes.setEncoding("utf8");

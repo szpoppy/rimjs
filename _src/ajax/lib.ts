@@ -210,7 +210,7 @@ export class Ajax extends Event {
     }
 
     // 超时
-    timeout(this: Ajax, time: number, callback: IEventOnFn): Ajax {
+    timeout(this: Ajax, time: number, callback?: IEventOnFn): Ajax {
         setTimeout(() => {
             let course = this._course
             if (course) {

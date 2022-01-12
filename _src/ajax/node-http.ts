@@ -73,10 +73,11 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
     let httpError = (e: Error) => {
         if (!req.outFlag) {
             res.err = e.message
+            // 统一处理 返回数据
+            responseEnd.call(this, course)
         }
 
-        // 统一处理 返回数据
-        responseEnd.call(this, course)
+        
     }
     let client = reqSend(req.url, option, cRes => {
         cRes.setEncoding("utf8")

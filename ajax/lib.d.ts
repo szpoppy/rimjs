@@ -96,7 +96,7 @@ export declare class Ajax extends Event {
     constructor(parent: AjaxGroup, opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): Ajax;
     abort(): Ajax;
-    timeout(this: Ajax, time: number, callback: IEventOnFn): Ajax;
+    timeout(this: Ajax, time: number, callback?: IEventOnFn): Ajax;
     send(this: Ajax, param?: sendParam, over?: boolean): Ajax;
     then(): Promise<AjaxCourse>;
     then(thenFn: (course: AjaxCourse) => any): Promise<any>;

@@ -1,6 +1,6 @@
 {
     "name": "rimjs",
-    "version": "1.6.0",
+    "version": "1.6.2",
     "scripts": {
         "build": "node clean.js && tsc"
     },
