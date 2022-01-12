@@ -19,6 +19,14 @@ export default class Event {
         }
     }
 
+    once<T>(type: string, fn: IEventFn<T>, isPre: boolean = false): void {
+        function back() {
+            fn.apply(this, arguments)
+            this.off(type, back)
+        }
+        this[":on"](type, back, isPre)
+    }
+
     on<T>(type: string, fn: IEventFn<T>, isPre: boolean = false): void {
         this[":on"](type, fn, isPre)
     }

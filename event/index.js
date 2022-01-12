@@ -12,6 +12,14 @@ var Event = /** @class */ (function () {
             this._parent = parent;
         }
     }
+    Event.prototype.once = function (type, fn, isPre) {
+        if (isPre === void 0) { isPre = false; }
+        function back() {
+            fn.apply(this, arguments);
+            this.off(type, back);
+        }
+        this[":on"](type, back, isPre);
+    };
     Event.prototype.on = function (type, fn, isPre) {
         if (isPre === void 0) { isPre = false; }
         this[":on"](type, fn, isPre);

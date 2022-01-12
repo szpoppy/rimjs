@@ -8,6 +8,7 @@ export default class Event {
     private _events;
     private _parent;
     constructor(parent?: any);
+    once<T>(type: string, fn: IEventFn<T>, isPre?: boolean): void;
     on<T>(type: string, fn: IEventFn<T>, isPre?: boolean): void;
     /**
      * 绑定事件

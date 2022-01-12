@@ -73,7 +73,7 @@ export class NodeFormData {
     }
 
     forEach(fn: (item: NodeFormDataItemValue, key: string) => void) {
-        forEach(this._data, fn)
+        forEach(this._data, fn as any)
     }
 }
 
@@ -95,6 +95,9 @@ enum EResType {
 }
 
 export interface IFAjaxConf {
+    timeout?: number
+    timeoutToCallback?: boolean
+    abortToCallback?: boolean
     baseURL?: string
     paths?: IFStrObj
     useFetch?: boolean
@@ -145,7 +148,9 @@ export class AjaxRes {
     json?: object
     cancel?: boolean
     err?: any
-    result?: any;
+    result?: any
+    isTimeout?: boolean = false
+    isAbort?: boolean = false;
     [propName: string]: any
 
     // constructor() {}
@@ -186,6 +191,7 @@ export class Ajax extends Event {
     _course?: AjaxCourse
     conf: IFAjaxConf
     parent: AjaxGroup
+    private _timeoutHandle: any
 
     on(type: string, fn: (arg: AjaxCourse) => void, isPre: boolean = false): void {
         this[":on"]<Ajax>(type, fn, isPre)
@@ -205,25 +211,39 @@ export class Ajax extends Event {
 
     // 中止 请求
     abort(): Ajax {
-        ajaxAbort(this, true)
+        let course = this._course
+        if (course) {
+            delete this._course
+            let req = course.req
+            if (req) {
+                ajaxAbort(req)
+                course.res.isAbort = true
+                this.emit(this.conf.abortToCallback ? "callback" : "abort", course)
+            }
+        }
         return this
     }
 
-    // 超时
+    // 超时 可以调用多次，最后一次为准
     timeout(this: Ajax, time: number, callback?: IEventOnFn): Ajax {
-        setTimeout(() => {
+        if (!this._course) {
+            return this
+        }
+        clearTimeout(this._timeoutHandle)
+        this._timeoutHandle = setTimeout(() => {
             let course = this._course
             if (course) {
-                let { req } = course
+                delete this._course
+                let req = course.req
                 if (req) {
                     // 超时 设置中止
-                    ajaxAbort(this)
+                    ajaxAbort(req)
                     // 出发超时事件
-                    this.emit("timeout", course)
+                    this.emit(this.conf.timeoutToCallback ? "callback" : "timeout", course)
                 }
             }
         }, time)
-        callback && this.on("timeout", callback)
+        callback && this.once(this.conf.timeoutToCallback ? "callback" : "timeout", callback)
         return this
     }
 
@@ -243,6 +263,9 @@ export class Ajax extends Event {
         let course = new AjaxCourse(this)
         let req = course.req
         this._course = course
+        if (this.conf.timeout && this.conf.timeout > 0) {
+            this.timeout(this.conf.timeout)
+        }
         // 异步，settime 部分参数可以后置设置生效
         setTimeout(() => {
             merge(req, this.conf)
@@ -256,17 +279,19 @@ export class Ajax extends Event {
     then(thenFn: (course: AjaxCourse) => any): Promise<any>
     then(thenFn?: (course: AjaxCourse) => any): Promise<AjaxCourse | any> {
         let pse: Promise<AjaxCourse> = new Promise((resolve, reject) => {
-            this.on("callback", function(course) {
-                resolve(course)
-            })
-            this.on("timeout", function() {
-                // eslint-disable-next-line
-                reject({ err: "访问超时", errType: 1 })
-            })
-            this.on("abort", function() {
-                // eslint-disable-next-line
-                reject({ err: "访问中止", errType: 2 })
-            })
+            let end = (course: AjaxCourse) => {
+                if (course.res.isTimeout || course.res.isAbort) {
+                    reject(course)
+                } else {
+                    resolve(course)
+                }
+                this.off("callback", end)
+                this.off("timeout", end)
+                this.off("abort", end)
+            }
+            this.on("callback", end)
+            this.on("timeout", end)
+            this.on("abort", end)
         })
         return (thenFn && pse.then(thenFn)) || pse
     }
@@ -398,7 +423,7 @@ export class Global extends Event {
 export let ajaxGlobal = new Global()
 
 // 统一设置参数
-function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, param = {}, header = {}, jsonpKey, cache, withCredentials }: IFAjaxConf = {}, val: IFAjaxConf = {}): IFAjaxConf {
+function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, param = {}, header = {}, jsonpKey, cache, withCredentials, timeout, timeoutToCallback, abortToCallback }: IFAjaxConf = {}, val: IFAjaxConf = {}): IFAjaxConf {
     if (baseURL) {
         val.baseURL = baseURL
     }
@@ -451,28 +476,32 @@ function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, par
     if (typeof withCredentials == "boolean") {
         val.withCredentials = withCredentials
     }
+
+    if (timeout != undefined) {
+        val.timeout = timeout
+    }
+    if (timeoutToCallback != undefined) {
+        val.timeoutToCallback = timeoutToCallback
+    }
+    if (abortToCallback != undefined) {
+        val.abortToCallback = abortToCallback
+    }
+
     return val
 }
 
 // 中止
-function ajaxAbort(target: Ajax, flag: boolean = false): void {
-    let course = target._course
-    if (course) {
-        let { req } = course
-        // 设置outFlag，会中止回调函数的回调
-        req.outFlag = true
-        if (req.xhr) {
-            // xhr 可以原声支持 中止
-            req.xhr.abort()
-            req.xhr = undefined
-        }
-        else if(req.nodeReq) {
-            // node 中止
-            req.nodeReq.abort()
-            req.nodeReq = undefined
-        }
-        delete target._course
-        flag && target.emit("abort", course)
+function ajaxAbort(req: AjaxReq): void {
+    // 设置outFlag，会中止回调函数的回调
+    req.outFlag = true
+    if (req.xhr) {
+        // xhr 可以原声支持 中止
+        req.xhr.abort()
+        req.xhr = undefined
+    } else if (req.nodeReq) {
+        // node 中止
+        req.nodeReq.abort()
+        req.nodeReq = undefined
     }
 }
 
@@ -521,9 +550,9 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
 
     // 确认短路径后
     this.emit("path", course)
-    
+
     ajaxGlobal.paramMerge(req, param)
-    let method = req.method = String(req.method || "get").toUpperCase()
+    let method = (req.method = String(req.method || "get").toUpperCase())
     // 是否为 FormData
     let isFormData = req.isFormData
 

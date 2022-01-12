@@ -30,6 +30,9 @@ declare enum EResType {
     text = "text"
 }
 export interface IFAjaxConf {
+    timeout?: number;
+    timeoutToCallback?: boolean;
+    abortToCallback?: boolean;
     baseURL?: string;
     paths?: IFStrObj;
     useFetch?: boolean;
@@ -75,6 +78,8 @@ export declare class AjaxRes {
     cancel?: boolean;
     err?: any;
     result?: any;
+    isTimeout?: boolean;
+    isAbort?: boolean;
     [propName: string]: any;
     getData(prot: string, data?: any): any;
     getHeader(key: string): string;
@@ -92,6 +97,7 @@ export declare class Ajax extends Event {
     _course?: AjaxCourse;
     conf: IFAjaxConf;
     parent: AjaxGroup;
+    private _timeoutHandle;
     on(type: string, fn: (arg: AjaxCourse) => void, isPre?: boolean): void;
     constructor(parent: AjaxGroup, opt?: IFAjaxConf);
     setConf(opt?: IFAjaxConf): Ajax;

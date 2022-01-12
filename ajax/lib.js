@@ -141,6 +141,8 @@ var AjaxRes = /** @class */ (function () {
     function AjaxRes() {
         this.jsonKey = "json";
         this.headers = "";
+        this.isTimeout = false;
+        this.isAbort = false;
     }
     // constructor() {}
     AjaxRes.prototype.getData = function (prot, data) {
@@ -190,25 +192,39 @@ var Ajax = /** @class */ (function (_super) {
     };
     // 中止 请求
     Ajax.prototype.abort = function () {
-        ajaxAbort(this, true);
+        var course = this._course;
+        if (course) {
+            delete this._course;
+            var req = course.req;
+            if (req) {
+                ajaxAbort(req);
+                course.res.isAbort = true;
+                this.emit(this.conf.abortToCallback ? "callback" : "abort", course);
+            }
+        }
         return this;
     };
-    // 超时
+    // 超时 可以调用多次，最后一次为准
     Ajax.prototype.timeout = function (time, callback) {
         var _this = this;
-        setTimeout(function () {
+        if (!this._course) {
+            return this;
+        }
+        clearTimeout(this._timeoutHandle);
+        this._timeoutHandle = setTimeout(function () {
             var course = _this._course;
             if (course) {
+                delete _this._course;
                 var req = course.req;
                 if (req) {
                     // 超时 设置中止
-                    ajaxAbort(_this);
+                    ajaxAbort(req);
                     // 出发超时事件
-                    _this.emit("timeout", course);
+                    _this.emit(_this.conf.timeoutToCallback ? "callback" : "timeout", course);
                 }
             }
         }, time);
-        callback && this.on("timeout", callback);
+        callback && this.once(this.conf.timeoutToCallback ? "callback" : "timeout", callback);
         return this;
     };
     // 发送数据， over 代表 是否要覆盖本次请求
@@ -228,6 +244,9 @@ var Ajax = /** @class */ (function (_super) {
         var course = new AjaxCourse(this);
         var req = course.req;
         this._course = course;
+        if (this.conf.timeout && this.conf.timeout > 0) {
+            this.timeout(this.conf.timeout);
+        }
         // 异步，settime 部分参数可以后置设置生效
         setTimeout(function () {
             assign_1.merge(req, _this.conf);
@@ -238,17 +257,20 @@ var Ajax = /** @class */ (function (_super) {
     Ajax.prototype.then = function (thenFn) {
         var _this = this;
         var pse = new Promise(function (resolve, reject) {
-            _this.on("callback", function (course) {
-                resolve(course);
-            });
-            _this.on("timeout", function () {
-                // eslint-disable-next-line
-                reject({ err: "访问超时", errType: 1 });
-            });
-            _this.on("abort", function () {
-                // eslint-disable-next-line
-                reject({ err: "访问中止", errType: 2 });
-            });
+            var end = function (course) {
+                if (course.res.isTimeout || course.res.isAbort) {
+                    reject(course);
+                }
+                else {
+                    resolve(course);
+                }
+                _this.off("callback", end);
+                _this.off("timeout", end);
+                _this.off("abort", end);
+            };
+            _this.on("callback", end);
+            _this.on("timeout", end);
+            _this.on("abort", end);
         });
         return (thenFn && pse.then(thenFn)) || pse;
     };
@@ -366,7 +388,7 @@ exports.Global = Global;
 exports.ajaxGlobal = new Global();
 // 统一设置参数
 function getConf(_a, val) {
-    var _b = _a === void 0 ? {} : _a, baseURL = _b.baseURL, paths = _b.paths, useFetch = _b.useFetch, url = _b.url, method = _b.method, dataType = _b.dataType, resType = _b.resType, _c = _b.param, param = _c === void 0 ? {} : _c, _d = _b.header, header = _d === void 0 ? {} : _d, jsonpKey = _b.jsonpKey, cache = _b.cache, withCredentials = _b.withCredentials;
+    var _b = _a === void 0 ? {} : _a, baseURL = _b.baseURL, paths = _b.paths, useFetch = _b.useFetch, url = _b.url, method = _b.method, dataType = _b.dataType, resType = _b.resType, _c = _b.param, param = _c === void 0 ? {} : _c, _d = _b.header, header = _d === void 0 ? {} : _d, jsonpKey = _b.jsonpKey, cache = _b.cache, withCredentials = _b.withCredentials, timeout = _b.timeout, timeoutToCallback = _b.timeoutToCallback, abortToCallback = _b.abortToCallback;
     if (val === void 0) { val = {}; }
     if (baseURL) {
         val.baseURL = baseURL;
@@ -410,28 +432,30 @@ function getConf(_a, val) {
     if (typeof withCredentials == "boolean") {
         val.withCredentials = withCredentials;
     }
+    if (timeout != undefined) {
+        val.timeout = timeout;
+    }
+    if (timeoutToCallback != undefined) {
+        val.timeoutToCallback = timeoutToCallback;
+    }
+    if (abortToCallback != undefined) {
+        val.abortToCallback = abortToCallback;
+    }
     return val;
 }
 // 中止
-function ajaxAbort(target, flag) {
-    if (flag === void 0) { flag = false; }
-    var course = target._course;
-    if (course) {
-        var req = course.req;
-        // 设置outFlag，会中止回调函数的回调
-        req.outFlag = true;
-        if (req.xhr) {
-            // xhr 可以原声支持 中止
-            req.xhr.abort();
-            req.xhr = undefined;
-        }
-        else if (req.nodeReq) {
-            // node 中止
-            req.nodeReq.abort();
-            req.nodeReq = undefined;
-        }
-        delete target._course;
-        flag && target.emit("abort", course);
+function ajaxAbort(req) {
+    // 设置outFlag，会中止回调函数的回调
+    req.outFlag = true;
+    if (req.xhr) {
+        // xhr 可以原声支持 中止
+        req.xhr.abort();
+        req.xhr = undefined;
+    }
+    else if (req.nodeReq) {
+        // node 中止
+        req.nodeReq.abort();
+        req.nodeReq = undefined;
     }
 }
 // 发送数据整理
@@ -474,7 +498,7 @@ function requestSend(param, course) {
     // 确认短路径后
     this.emit("path", course);
     exports.ajaxGlobal.paramMerge(req, param);
-    var method = req.method = String(req.method || "get").toUpperCase();
+    var method = (req.method = String(req.method || "get").toUpperCase());
     // 是否为 FormData
     var isFormData = req.isFormData;
     // 请求类型
