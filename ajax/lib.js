@@ -198,8 +198,10 @@ var Ajax = /** @class */ (function (_super) {
             var req = course.req;
             if (req) {
                 ajaxAbort(req);
+                course.res.err = "abort";
                 course.res.isAbort = true;
-                this.emit(this.conf.abortToCallback ? "callback" : "abort", course);
+                this.emit("finish", course);
+                this.emit("abort", course);
             }
         }
         return this;
@@ -210,6 +212,9 @@ var Ajax = /** @class */ (function (_super) {
         if (!this._course) {
             return this;
         }
+        if (this.conf.timeout != time) {
+            this.conf.timeout = time;
+        }
         clearTimeout(this._timeoutHandle);
         this._timeoutHandle = setTimeout(function () {
             var course = _this._course;
@@ -219,12 +224,15 @@ var Ajax = /** @class */ (function (_super) {
                 if (req) {
                     // 超时 设置中止
                     ajaxAbort(req);
+                    course.res.err = "timeout";
+                    course.res.isTimeout = true;
                     // 出发超时事件
-                    _this.emit(_this.conf.timeoutToCallback ? "callback" : "timeout", course);
+                    _this.emit("finish", course);
+                    _this.emit("timeout", course);
                 }
             }
         }, time);
-        callback && this.once(this.conf.timeoutToCallback ? "callback" : "timeout", callback);
+        callback && this.on("timeout", callback);
         return this;
     };
     // 发送数据， over 代表 是否要覆盖本次请求
@@ -256,21 +264,10 @@ var Ajax = /** @class */ (function (_super) {
     };
     Ajax.prototype.then = function (thenFn) {
         var _this = this;
-        var pse = new Promise(function (resolve, reject) {
-            var end = function (course) {
-                if (course.res.isTimeout || course.res.isAbort) {
-                    reject(course);
-                }
-                else {
-                    resolve(course);
-                }
-                _this.off("callback", end);
-                _this.off("timeout", end);
-                _this.off("abort", end);
-            };
-            _this.on("callback", end);
-            _this.on("timeout", end);
-            _this.on("abort", end);
+        var pse = new Promise(function (resolve) {
+            _this.once("finish", function (course) {
+                resolve(course);
+            });
         });
         return (thenFn && pse.then(thenFn)) || pse;
     };
@@ -287,7 +284,7 @@ function groupLoad(target, url, callback, param, onNew) {
     var one = new Ajax(target, opt);
     onNew && onNew(one);
     if (typeof callback == "function") {
-        one.on("callback", callback);
+        one.on("finish", callback);
     }
     one.send(param);
     return one;
@@ -324,7 +321,7 @@ var AjaxGroup = /** @class */ (function (_super) {
             return groupLoad(_this, opt, callback, param, function (one) {
                 if (events) {
                     if (typeof events == "function") {
-                        one.on("callback", events);
+                        one.on("finish", events);
                         return;
                     }
                     for (var n in events) {
@@ -388,7 +385,7 @@ exports.Global = Global;
 exports.ajaxGlobal = new Global();
 // 统一设置参数
 function getConf(_a, val) {
-    var _b = _a === void 0 ? {} : _a, baseURL = _b.baseURL, paths = _b.paths, useFetch = _b.useFetch, url = _b.url, method = _b.method, dataType = _b.dataType, resType = _b.resType, _c = _b.param, param = _c === void 0 ? {} : _c, _d = _b.header, header = _d === void 0 ? {} : _d, jsonpKey = _b.jsonpKey, cache = _b.cache, withCredentials = _b.withCredentials, timeout = _b.timeout, timeoutToCallback = _b.timeoutToCallback, abortToCallback = _b.abortToCallback;
+    var _b = _a === void 0 ? {} : _a, baseURL = _b.baseURL, paths = _b.paths, useFetch = _b.useFetch, url = _b.url, method = _b.method, dataType = _b.dataType, resType = _b.resType, _c = _b.param, param = _c === void 0 ? {} : _c, _d = _b.header, header = _d === void 0 ? {} : _d, jsonpKey = _b.jsonpKey, cache = _b.cache, withCredentials = _b.withCredentials, timeout = _b.timeout;
     if (val === void 0) { val = {}; }
     if (baseURL) {
         val.baseURL = baseURL;
@@ -434,12 +431,6 @@ function getConf(_a, val) {
     }
     if (timeout != undefined) {
         val.timeout = timeout;
-    }
-    if (timeoutToCallback != undefined) {
-        val.timeoutToCallback = timeoutToCallback;
-    }
-    if (abortToCallback != undefined) {
-        val.abortToCallback = abortToCallback;
     }
     return val;
 }
@@ -542,6 +533,7 @@ function responseEnd(course) {
     delete this._course;
     // 出发验证事件
     this.emit("verify", course);
+    this.emit("finish", course);
     if (res.cancel === true) {
         // 验证事件中设置 res.cancel 为false，中断处理
         return;

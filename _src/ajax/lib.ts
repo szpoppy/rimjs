@@ -96,8 +96,6 @@ enum EResType {
 
 export interface IFAjaxConf {
     timeout?: number
-    timeoutToCallback?: boolean
-    abortToCallback?: boolean
     baseURL?: string
     paths?: IFStrObj
     useFetch?: boolean
@@ -217,8 +215,10 @@ export class Ajax extends Event {
             let req = course.req
             if (req) {
                 ajaxAbort(req)
+                course.res.err = "abort"
                 course.res.isAbort = true
-                this.emit(this.conf.abortToCallback ? "callback" : "abort", course)
+                this.emit("finish", course)
+                this.emit("abort", course)
             }
         }
         return this
@@ -229,6 +229,9 @@ export class Ajax extends Event {
         if (!this._course) {
             return this
         }
+        if (this.conf.timeout != time) {
+            this.conf.timeout = time
+        }
         clearTimeout(this._timeoutHandle)
         this._timeoutHandle = setTimeout(() => {
             let course = this._course
@@ -238,12 +241,15 @@ export class Ajax extends Event {
                 if (req) {
                     // 超时 设置中止
                     ajaxAbort(req)
+                    course.res.err = "timeout"
+                    course.res.isTimeout = true
                     // 出发超时事件
-                    this.emit(this.conf.timeoutToCallback ? "callback" : "timeout", course)
+                    this.emit("finish", course)
+                    this.emit("timeout", course)
                 }
             }
         }, time)
-        callback && this.once(this.conf.timeoutToCallback ? "callback" : "timeout", callback)
+        callback && this.on("timeout", callback)
         return this
     }
 
@@ -278,20 +284,10 @@ export class Ajax extends Event {
     then(): Promise<AjaxCourse>
     then(thenFn: (course: AjaxCourse) => any): Promise<any>
     then(thenFn?: (course: AjaxCourse) => any): Promise<AjaxCourse | any> {
-        let pse: Promise<AjaxCourse> = new Promise((resolve, reject) => {
-            let end = (course: AjaxCourse) => {
-                if (course.res.isTimeout || course.res.isAbort) {
-                    reject(course)
-                } else {
-                    resolve(course)
-                }
-                this.off("callback", end)
-                this.off("timeout", end)
-                this.off("abort", end)
-            }
-            this.on("callback", end)
-            this.on("timeout", end)
-            this.on("abort", end)
+        let pse: Promise<AjaxCourse> = new Promise(resolve => {
+            this.once("finish", function(course) {
+                resolve(course)
+            })
         })
         return (thenFn && pse.then(thenFn)) || pse
     }
@@ -315,7 +311,7 @@ function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEven
     let one = new Ajax(target, opt)
     onNew && onNew(one)
     if (typeof callback == "function") {
-        one.on("callback", callback)
+        one.on("finish", callback)
     }
     one.send(param as sendParam)
     return one
@@ -359,7 +355,7 @@ export class AjaxGroup extends Event {
             return groupLoad(this, opt, callback, param, function(one: Ajax) {
                 if (events) {
                     if (typeof events == "function") {
-                        one.on("callback", events)
+                        one.on("finish", events)
                         return
                     }
                     for (let n in events) {
@@ -423,7 +419,7 @@ export class Global extends Event {
 export let ajaxGlobal = new Global()
 
 // 统一设置参数
-function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, param = {}, header = {}, jsonpKey, cache, withCredentials, timeout, timeoutToCallback, abortToCallback }: IFAjaxConf = {}, val: IFAjaxConf = {}): IFAjaxConf {
+function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, param = {}, header = {}, jsonpKey, cache, withCredentials, timeout }: IFAjaxConf = {}, val: IFAjaxConf = {}): IFAjaxConf {
     if (baseURL) {
         val.baseURL = baseURL
     }
@@ -479,12 +475,6 @@ function getConf({ baseURL, paths, useFetch, url, method, dataType, resType, par
 
     if (timeout != undefined) {
         val.timeout = timeout
-    }
-    if (timeoutToCallback != undefined) {
-        val.timeoutToCallback = timeoutToCallback
-    }
-    if (abortToCallback != undefined) {
-        val.abortToCallback = abortToCallback
     }
 
     return val
@@ -605,7 +595,7 @@ export function responseEnd(this: Ajax, course: AjaxCourse): void {
 
     // 出发验证事件
     this.emit("verify", course)
-
+    this.emit("finish", course)
     if (res.cancel === true) {
         // 验证事件中设置 res.cancel 为false，中断处理
         return

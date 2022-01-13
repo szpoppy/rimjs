@@ -31,8 +31,6 @@ declare enum EResType {
 }
 export interface IFAjaxConf {
     timeout?: number;
-    timeoutToCallback?: boolean;
-    abortToCallback?: boolean;
     baseURL?: string;
     paths?: IFStrObj;
     useFetch?: boolean;
