@@ -3,30 +3,35 @@ import forEach from "../each"
 // 用于类型判断
 const _toString: Function = Object.prototype.toString
 
+function __assign(target: any, source: object, flag = false): any {
+    forEach(source, function(item, n): void {
+        if (item) {
+            let type = _toString.call(item).toLowerCase()
+            let isTArr = type == "[object array]"
+            let isTObj = type == "[object object]"
+            if (type == "[object date]") {
+                target[n] = new Date(item.getTime())
+                return
+            }
+
+            let targetType = _toString.call(target[n]).toLowerCase()
+            if (isTArr || isTObj) {
+                // 数组 或者 对象
+                if (target[n] == null || (!flag && targetType != type)) {
+                    target[n] = isTArr ? [] : {}
+                }
+                __assign(target[n], item, flag)
+                return
+            }
+        }
+        target[n] = item
+    })
+    return target
+}
+
 function _assign(target: any, objs: Array<any>, flag = false): any {
     forEach(objs, function(source: object) {
-        forEach(source, function(item, n): void {
-            if (item) {
-                let type = _toString.call(item).toLowerCase()
-                let isTArr = type == "[object array]"
-                let isTObj = type == "[object object]"
-                if (type == "[object date]") {
-                    target[n] = new Date(item.getTime())
-                    return
-                }
-
-                let targetType = _toString.call(target[n]).toLowerCase()
-                if (isTArr || isTObj) {
-                    // 数组 或者 对象
-                    if (target[n] == null || (!flag && targetType != type)) {
-                        target[n] = isTArr ? [] : {}
-                    }
-                    _assign(target[n], [item], flag)
-                    return
-                }
-            }
-            target[n] = item
-        })
+        __assign(target, source, flag)
     })
     return target
 }

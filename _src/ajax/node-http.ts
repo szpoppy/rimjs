@@ -2,7 +2,7 @@ import { Ajax, AjaxCourse, ajaxGlobal, getParamString, fixedURL, getDefaultConte
 import { request as httpSend } from "http"
 import { request as httpsSend, RequestOptions as httpsOptions } from "https"
 import forEach from "../each"
-import { merge } from "../assign"
+import { assign } from "../assign"
 import * as qs from "querystring"
 import * as path from "path"
 import { ReadStream, createReadStream } from "fs"
@@ -29,7 +29,7 @@ ajaxGlobal.paramMerge = function(req, param) {
         // 参数为字符串，自动格式化为 object，后面合并后在序列化
         param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param)
     }
-    merge(req.param, param || {})
+    req.param = assign({ $: req.param }, { $: param || {} }).$
 }
 
 ajaxGlobal.fetchExecute = function(course, ajax) {
@@ -76,8 +76,6 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
             // 统一处理 返回数据
             responseEnd.call(this, course)
         }
-
-        
     }
     let client = reqSend(req.url, option, cRes => {
         cRes.setEncoding("utf8")

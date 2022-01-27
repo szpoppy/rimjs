@@ -3,7 +3,7 @@ import getUUID from "../sole"
 import { getFullUrl } from "../util/getFullUrl"
 import { loadJS } from "../util/loadJS"
 import forEach from "../each"
-import { merge } from "../assign"
+import { assign } from "../assign"
 import * as qs from "querystring"
 
 // 实现具体的请求
@@ -22,7 +22,7 @@ ajaxGlobal.paramMerge = function(req, param) {
             // 参数为字符串，自动格式化为 object，后面合并后在序列化
             param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param)
         }
-        merge(req.param, param || {})
+        req.param = assign({ $: req.param }, { $: param || {} }).$
     }
 }
 ajaxGlobal.fetchExecute = function(course, ajax) {

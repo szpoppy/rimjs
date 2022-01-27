@@ -51,7 +51,7 @@ lib_1.ajaxGlobal.paramMerge = function (req, param) {
         // 参数为字符串，自动格式化为 object，后面合并后在序列化
         param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param);
     }
-    assign_1.merge(req.param, param || {});
+    req.param = assign_1.assign({ $: req.param }, { $: param || {} }).$;
 };
 lib_1.ajaxGlobal.fetchExecute = function (course, ajax) {
     var req = course.req;

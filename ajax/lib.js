@@ -281,6 +281,10 @@ function groupLoad(target, url, callback, param, onNew) {
         param = callback;
         callback = undefined;
     }
+    if (param && typeof param == "function") {
+        onNew = param;
+        param = null;
+    }
     var one = new Ajax(target, opt);
     onNew && onNew(one);
     if (typeof callback == "function") {

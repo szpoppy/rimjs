@@ -81,11 +81,12 @@ export class NodeFormData {
 interface IFStrObj {
     [propName: string]: string
 }
+
 interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam
 }
 
-type sendParam = IParam | string | FormData
+type sendParam = IParam | string | FormData | Array<number | string | boolean>
 
 enum EResType {
     // eslint-disable-next-line
@@ -299,13 +300,18 @@ interface shortcutEventObj {
 }
 type shortcutEvent = shortcutEventObj | IEventOnFn
 type groupLoadOnNew = (ajax: Ajax) => void
-function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam | groupLoadOnNew, onNew?: groupLoadOnNew) {
+function groupLoad(target: AjaxGroup, url: string | IFAjaxConf, callback?: IEventOnFn | sendParam, param?: sendParam | groupLoadOnNew, onNew?: groupLoadOnNew): Ajax {
     let opt = typeof url == "string" ? { url } : url
 
     if (callback && typeof callback != "function") {
         onNew = param as groupLoadOnNew
         param = callback
         callback = undefined
+    }
+
+    if (param && typeof param == "function") {
+        onNew = param as groupLoadOnNew
+        param = null
     }
 
     let one = new Ajax(target, opt)
