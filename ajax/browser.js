@@ -278,11 +278,6 @@ function xhrSend(course) {
         // 跨域不增加 X-Requested-With 如果增加，容易出现问题，需要可以通过 事件设置
         req.header["X-Requested-With"] = "XMLHttpRequest";
     }
-    // XDR 不能设置 header
-    each_1.default(req.header, function (v, k) {
-        var xhr = req.xhr;
-        xhr.setRequestHeader(k, v);
-    });
     res.status = 0;
     if (this.hasEvent("progress")) {
         // 跨域 加上 progress post请求导致 多发送一个 options 的请求
@@ -308,6 +303,11 @@ function xhrSend(course) {
     }
     // 发送前出发send事件
     this.emit("send", course);
+    // 设置 header
+    each_1.default(req.header, function (v, k) {
+        var xhr = req.xhr;
+        xhr.setRequestHeader(k, v);
+    });
     req.xhr.send(req.body);
 }
 //# sourceMappingURL=browser.js.map

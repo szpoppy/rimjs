@@ -283,11 +283,6 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
         req.header["X-Requested-With"] = "XMLHttpRequest"
     }
 
-    // XDR 不能设置 header
-    forEach(req.header, function(v, k) {
-        let xhr = req.xhr as XMLHttpRequest
-        xhr.setRequestHeader(k as string, v)
-    })
     res.status = 0
 
     if (this.hasEvent("progress")) {
@@ -318,6 +313,12 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
 
     // 发送前出发send事件
     this.emit("send", course)
+    
+    // 设置 header
+    forEach(req.header, function(v, k) {
+        let xhr = req.xhr as XMLHttpRequest
+        xhr.setRequestHeader(k as string, v)
+    })
 
     req.xhr.send(req.body)
 }

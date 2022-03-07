@@ -96,7 +96,13 @@ function httpRequest(course) {
             lib_1.responseEnd.call(_this, course);
         }
     };
-    var client = reqSend(req.url, option, function (cRes) {
+    // 发送前出发send事件
+    var src = req.url;
+    if (!isGet) {
+        req.body = req.isFormData ? param : lib_1.getParamString(req.param, req.dataType);
+    }
+    this.emit("send", course);
+    var client = reqSend(src, option, function (cRes) {
         cRes.setEncoding("utf8");
         var chunks = [];
         cRes.on("data", function (chunk) {
@@ -124,24 +130,15 @@ function httpRequest(course) {
     req.nodeReq = client;
     client.on("error", httpError);
     if (isGet) {
-        // 发送前出发send事件
-        this.emit("send", course);
         client.end();
         return;
     }
     if (!req.isFormData) {
-        req.body = lib_1.getParamString(req.param, req.dataType);
-        // 发送前出发send事件
-        this.emit("send", course);
         client.write(req.body, "utf-8");
         client.end();
         return;
     }
-    var formData = param;
-    req.body = formData;
-    // 发送前出发send事件
-    this.emit("send", course);
-    formData = req.body;
+    var formData = req.body;
     var upArr = [];
     formData.forEach(function (item, key) {
         if (Buffer.isBuffer(item) || item instanceof fs_1.ReadStream || typeof item == "string") {
