@@ -93,12 +93,12 @@ function jsonpSend(this: Ajax, course: AjaxCourse): void {
     w[backFunKey] = backFun
 
     // 所有参数都放在url上
-    let url = fixedURL(req.url, getParamString(param) as string)
+    let src = (req.url = fixedURL(req.url, getParamString(param) as string))
 
     // 发送事件出发
     this.emit("send", course)
     // 发送请求
-    loadJS(url, function() {
+    loadJS(src, function() {
         backFun()
     })
 }
@@ -122,10 +122,9 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
 
     if (method == "GET") {
         req.url = fixedURL(req.url, getParamString(param) as string)
-        option.body = null
         param = undefined
     } else {
-        option.body = (req.isFormData ? (param as FormData) : getParamString(param, req.dataType)) || null
+        req.body = (req.isFormData ? (param as FormData) : getParamString(param, req.dataType)) || null
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // 默认 Content-Type
             req.header["Content-Type"] = getDefaultContentType(req.dataType)
@@ -159,6 +158,8 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
 
     // 发送事件处理
     this.emit("send", course)
+    option.body = req.body
+
     // 发送数据
     window.fetch(req.url, option).then(
         function(response: Response) {
@@ -265,14 +266,13 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
         req.xhr.withCredentials = true
     }
 
-    let paramStr: string | FormData | null = null
-
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
-        req.xhr.open(method, fixedURL(req.url, getParamString(req.param) as string), true)
+        req.url = fixedURL(req.url, getParamString(req.param) as string)
+        req.xhr.open(method, req.url, true)
     } else {
         req.xhr.open(method, req.url, true)
-        paramStr = req.isFormData ? (req.param as FormData) : getParamString(req.param, req.dataType)
+        req.body = req.isFormData ? (req.param as FormData) : getParamString(req.param, req.dataType)
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // Content-Type 默认值
             req.header["Content-Type"] = getDefaultContentType(req.dataType)
@@ -306,17 +306,18 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
     // onload事件
     req.xhr.onload = onload.bind(this, course)
 
-    // 发送前出发send事件
-    this.emit("send", course)
-
     if (["arraybuffer", "blob"].indexOf(req.resType) >= 0) {
         req.xhr.responseType = req.resType as XMLHttpRequestResponseType
     }
 
     // 发送请求，注意要替换
-    if (typeof paramStr == "string") {
+    if (typeof req.body == "string") {
         // eslint-disable-next-line
-        paramStr = paramStr.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*")
+        req.body = req.body.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*")
     }
-    req.xhr.send(paramStr)
+
+    // 发送前出发send事件
+    this.emit("send", course)
+
+    req.xhr.send(req.body)
 }

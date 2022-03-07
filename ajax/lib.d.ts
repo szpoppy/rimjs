@@ -53,6 +53,7 @@ export declare class AjaxReq {
     dataType: string;
     resType: EResType;
     param?: IParam | string | FormData;
+    body: any;
     header: IFStrObj;
     jsonpKey: string;
     cache: boolean;

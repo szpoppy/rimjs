@@ -121,6 +121,7 @@ export class AjaxReq {
     dataType: string = ""
     resType: EResType = EResType.text
     param?: IParam | string | FormData
+    body: any = null
     header: IFStrObj = {}
     jsonpKey: string = ""
     cache: boolean = false

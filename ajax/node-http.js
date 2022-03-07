@@ -124,15 +124,24 @@ function httpRequest(course) {
     req.nodeReq = client;
     client.on("error", httpError);
     if (isGet) {
+        // 发送前出发send事件
+        this.emit("send", course);
         client.end();
         return;
     }
     if (!req.isFormData) {
-        client.write(lib_1.getParamString(req.param, req.dataType), "utf-8");
+        req.body = lib_1.getParamString(req.param, req.dataType);
+        // 发送前出发send事件
+        this.emit("send", course);
+        client.write(req.body, "utf-8");
         client.end();
         return;
     }
     var formData = param;
+    req.body = formData;
+    // 发送前出发send事件
+    this.emit("send", course);
+    formData = req.body;
     var upArr = [];
     formData.forEach(function (item, key) {
         if (Buffer.isBuffer(item) || item instanceof fs_1.ReadStream || typeof item == "string") {

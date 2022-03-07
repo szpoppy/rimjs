@@ -77,6 +77,7 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
             responseEnd.call(this, course)
         }
     }
+
     let client = reqSend(req.url, option, cRes => {
         cRes.setEncoding("utf8")
         let chunks: any[] = []
@@ -106,17 +107,27 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
     client.on("error", httpError)
 
     if (isGet) {
+        // 发送前出发send事件
+        this.emit("send", course)
         client.end()
         return
     }
 
     if (!req.isFormData) {
-        client.write(getParamString(req.param, req.dataType), "utf-8")
+        req.body = getParamString(req.param, req.dataType)
+        // 发送前出发send事件
+        this.emit("send", course)
+        client.write(req.body, "utf-8")
         client.end()
         return
     }
 
     let formData = (<unknown>param) as NodeFormData
+    req.body = formData
+
+    // 发送前出发send事件
+    this.emit("send", course)
+    formData = req.body
 
     // 模拟表单
     interface upArrItem {

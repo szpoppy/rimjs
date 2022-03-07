@@ -107,11 +107,11 @@ function jsonpSend(course) {
     var w = window;
     w[backFunKey] = backFun;
     // 所有参数都放在url上
-    var url = lib_1.fixedURL(req.url, lib_1.getParamString(param));
+    var src = (req.url = lib_1.fixedURL(req.url, lib_1.getParamString(param)));
     // 发送事件出发
     this.emit("send", course);
     // 发送请求
-    loadJS_1.loadJS(url, function () {
+    loadJS_1.loadJS(src, function () {
         backFun();
     });
 }
@@ -132,11 +132,10 @@ function fetchSend(course) {
     };
     if (method == "GET") {
         req.url = lib_1.fixedURL(req.url, lib_1.getParamString(param));
-        option.body = null;
         param = undefined;
     }
     else {
-        option.body = (req.isFormData ? param : lib_1.getParamString(param, req.dataType)) || null;
+        req.body = (req.isFormData ? param : lib_1.getParamString(param, req.dataType)) || null;
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // 默认 Content-Type
             req.header["Content-Type"] = lib_1.getDefaultContentType(req.dataType);
@@ -165,6 +164,7 @@ function fetchSend(course) {
     };
     // 发送事件处理
     this.emit("send", course);
+    option.body = req.body;
     // 发送数据
     window.fetch(req.url, option).then(function (response) {
         if (!req.outFlag) {
@@ -261,14 +261,14 @@ function xhrSend(course) {
         // xhr 跨域带cookie
         req.xhr.withCredentials = true;
     }
-    var paramStr = null;
     if (method == "GET") {
         // get 方法，参数都组合到 url上面
-        req.xhr.open(method, lib_1.fixedURL(req.url, lib_1.getParamString(req.param)), true);
+        req.url = lib_1.fixedURL(req.url, lib_1.getParamString(req.param));
+        req.xhr.open(method, req.url, true);
     }
     else {
         req.xhr.open(method, req.url, true);
-        paramStr = req.isFormData ? req.param : lib_1.getParamString(req.param, req.dataType);
+        req.body = req.isFormData ? req.param : lib_1.getParamString(req.param, req.dataType);
         if (req.header["Content-Type"] === undefined && !req.isFormData) {
             // Content-Type 默认值
             req.header["Content-Type"] = lib_1.getDefaultContentType(req.dataType);
@@ -298,16 +298,16 @@ function xhrSend(course) {
     //发送请求
     // onload事件
     req.xhr.onload = onload.bind(this, course);
-    // 发送前出发send事件
-    this.emit("send", course);
     if (["arraybuffer", "blob"].indexOf(req.resType) >= 0) {
         req.xhr.responseType = req.resType;
     }
     // 发送请求，注意要替换
-    if (typeof paramStr == "string") {
+    if (typeof req.body == "string") {
         // eslint-disable-next-line
-        paramStr = paramStr.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*");
+        req.body = req.body.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*");
     }
-    req.xhr.send(paramStr);
+    // 发送前出发send事件
+    this.emit("send", course);
+    req.xhr.send(req.body);
 }
 //# sourceMappingURL=browser.js.map

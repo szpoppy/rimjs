@@ -122,6 +122,7 @@ var AjaxReq = /** @class */ (function () {
         this.method = "GET";
         this.dataType = "";
         this.resType = EResType.text;
+        this.body = null;
         this.header = {};
         this.jsonpKey = "";
         this.cache = false;
