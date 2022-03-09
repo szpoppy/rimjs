@@ -35,9 +35,11 @@ function getKeyDef(para: any): string {
     return ":default"
 }
 
-export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKey: (key: any) => string = getKeyDef) {
+export type IPromiseCacheBackFn<T = any> = (para?: any) => Promise<T>
+
+export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKey: (key: any) => string = getKeyDef): IPromiseCacheBackFn<T> {
     let caches: Record<string, Cache<T>> = {}
-    return function(para: any = null) {
+    return function(para = null) {
         let key = getKey(para)
         let cache = caches[key]
         if (cache && cache.inited == 2 && eTime > 0 && cache.date + eTime < new Date().getTime()) {
@@ -50,7 +52,7 @@ export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKe
         }
 
         // 直接返回已经存在
-        return new Promise<T>(function(resolve) {
+        return new Promise(function(resolve) {
             if (cache.inited > 1) {
                 resolve(cache.data)
                 return
