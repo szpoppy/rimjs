@@ -73,7 +73,7 @@ export declare class AjaxRes {
     headers?: any;
     status?: number;
     text?: string;
-    json?: object;
+    json?: any;
     cancel?: boolean;
     err?: any;
     result?: any;
