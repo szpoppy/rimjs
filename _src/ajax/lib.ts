@@ -284,14 +284,20 @@ export class Ajax extends Event {
 
     // 返回Promist
     then(): Promise<AjaxCourse>
-    then(thenFn: (course: AjaxCourse) => any): Promise<any>
-    then(thenFn?: (course: AjaxCourse) => any): Promise<AjaxCourse | any> {
-        let pse: Promise<AjaxCourse> = new Promise(resolve => {
-            this.once("finish", function(course) {
-                resolve(course)
+    then<T = any>(thenFn: (course: AjaxCourse) => T): Promise<T>
+    then(thenFn: "res"): Promise<AjaxCourse["res"]>
+    then(thenFn: "req"): Promise<AjaxCourse["req"]>
+    then(thenFn: "ajax"): Promise<AjaxCourse["ajax"]>
+    then(thenFn?: ((course: AjaxCourse) => any) | keyof AjaxCourse) {
+        let pse: Promise<AjaxCourse | unknown> = new Promise(resolve => {
+            this.once("finish", function(course: AjaxCourse) {
+                resolve(typeof thenFn == "string" ? course[thenFn] : course)
             })
         })
-        return (thenFn && pse.then(thenFn)) || pse
+        if (typeof thenFn == "function") {
+            return pse.then(thenFn)
+        }
+        return pse
     }
 }
 

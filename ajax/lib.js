@@ -267,10 +267,13 @@ var Ajax = /** @class */ (function (_super) {
         var _this = this;
         var pse = new Promise(function (resolve) {
             _this.once("finish", function (course) {
-                resolve(course);
+                resolve(typeof thenFn == "string" ? course[thenFn] : course);
             });
         });
-        return (thenFn && pse.then(thenFn)) || pse;
+        if (typeof thenFn == "function") {
+            return pse.then(thenFn);
+        }
+        return pse;
     };
     return Ajax;
 }(event_1.default));
