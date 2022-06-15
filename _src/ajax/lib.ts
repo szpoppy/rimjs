@@ -86,7 +86,7 @@ interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam
 }
 
-type sendParam = IParam | string | FormData | Array<number | string | boolean>
+type sendParam = IParam | string | FormData | Array<number | string | boolean> | NodeFormData
 
 enum EResType {
     // eslint-disable-next-line

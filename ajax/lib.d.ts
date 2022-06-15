@@ -24,7 +24,7 @@ interface IFStrObj {
 interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam;
 }
-declare type sendParam = IParam | string | FormData | Array<number | string | boolean>;
+declare type sendParam = IParam | string | FormData | Array<number | string | boolean> | NodeFormData;
 declare enum EResType {
     json = "json",
     text = "text"
