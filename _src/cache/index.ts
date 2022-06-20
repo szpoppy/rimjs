@@ -10,13 +10,13 @@ class Cache<T> {
     date: number = new Date().getTime()
     data!: T
 
-    setData(data: T, inited: initedNum = 2) {
-        if (inited == 2) {
+    setData(data: T, inited: initedNum | Boolean = false) {
+        if (inited == 2 || inited === true) {
             // 为0，异常，不更新
             this.data = data
         }
 
-        this.inited = inited
+        this.inited = inited ? 2 : 0
 
         while (this.backs.length) {
             let fn = this.backs.shift() as backFn<T>
@@ -35,11 +35,14 @@ function getKeyDef(para: any): string {
     return ":default"
 }
 
-export type IPromiseCacheBackFn<T = any> = (para?: any) => Promise<T>
+export interface IPromiseCacheBackFn<T = any> {
+    (para?: any) : Promise<T>
+    caches: Record<string, Cache<T>>
+}
 
 export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKey: (key: any) => string = getKeyDef): IPromiseCacheBackFn<T> {
     let caches: Record<string, Cache<T>> = {}
-    return function(para = null) {
+    let cacheFn = function(para = null) {
         let key = getKey(para)
         let cache = caches[key]
         if (cache && cache.inited == 2 && eTime > 0 && cache.date + eTime < new Date().getTime()) {
@@ -66,7 +69,9 @@ export function promiseCache<T = any>(getFn: getDataFn, eTime: number = 0, getKe
                 }, para)
             }
         })
-    }
+    } as IPromiseCacheBackFn<T>
+    cacheFn.caches = caches
+    return cacheFn
 }
 
 export default {

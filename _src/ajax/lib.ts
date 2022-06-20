@@ -393,6 +393,9 @@ export class AjaxGroup extends Event {
         if (typeof date == "string") {
             date = new Date(date.replace(/(\d)T(\d)/, "$1 $2").replace(/\.\d+$/, ""))
         }
+        if (!(date instanceof Date) || !date.getTime || isNaN(date.getTime())) {
+            return
+        }
         this.dateDiff = ajaxDateDiff = date.getTime() - new Date().getTime()
     }
 
