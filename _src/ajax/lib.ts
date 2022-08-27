@@ -33,6 +33,9 @@ export function getDefaultContentType(dataType?: string): string {
     if (dataType == "json") {
         return "application/json"
     }
+    if (dataType == "text") {
+        return "text/plain"
+    }
     return "application/x-www-form-urlencoded"
 }
 

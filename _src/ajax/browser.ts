@@ -19,6 +19,10 @@ ajaxGlobal.paramMerge = function(req, param) {
         req.param = param
     } else {
         if (typeof param == "string") {
+            if (req.dataType == "text") {
+                req.param = param
+                return
+            }
             // 参数为字符串，自动格式化为 object，后面合并后在序列化
             param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param)
         }
@@ -313,7 +317,7 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
 
     // 发送前出发send事件
     this.emit("send", course)
-    
+
     // 设置 header
     forEach(req.header, function(v, k) {
         let xhr = req.xhr as XMLHttpRequest

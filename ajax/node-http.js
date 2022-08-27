@@ -48,6 +48,10 @@ lib_1.ajaxGlobal.paramMerge = function (req, param) {
         return;
     }
     if (typeof param == "string") {
+        if (req.dataType == "text") {
+            req.param = param;
+            return;
+        }
         // 参数为字符串，自动格式化为 object，后面合并后在序列化
         param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param);
     }

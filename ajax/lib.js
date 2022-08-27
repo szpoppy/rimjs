@@ -71,6 +71,9 @@ function getDefaultContentType(dataType) {
     if (dataType == "json") {
         return "application/json";
     }
+    if (dataType == "text") {
+        return "text/plain";
+    }
     return "application/x-www-form-urlencoded";
 }
 exports.getDefaultContentType = getDefaultContentType;
