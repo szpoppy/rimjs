@@ -30,7 +30,7 @@ function each(arr, fn, exe) {
             doExe = exe instanceof Array ? forPush : forAppend;
         }
         var len = arr.length;
-        if (forTypes.indexOf("-" + _toString.call(arr).toLowerCase() + "-") > -1 || "[object htmlcollection]" == String(arr).toLowerCase()) {
+        if (forTypes.indexOf("-" + _toString.call(arr).toLowerCase() + "-") > -1) {
             for (var i = 0; i < len; i += 1) {
                 var item = fn(arr[i], i, stop);
                 if (isStop) {

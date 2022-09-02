@@ -479,9 +479,9 @@ function requestSend(param, course) {
     // 短路径替换
     req.formatURL = req.originURL
         // 自定义req属性
-        .replace(/^<([\w,:]*)>/, function (s0, s1) {
+        .replace(/^<([\w\-,:!@#$%&*]*)>/, function (s0, s1) {
         s1.split(/,+/).forEach(function (key) {
-            var _a = key.toLowerCase().split(/:+/), k1 = _a[0], k2 = _a[1];
+            var _a = key.split(/:+/), k1 = _a[0], k2 = _a[1];
             if (k2 === undefined) {
                 k2 = k1;
                 k1 = "method";
@@ -491,7 +491,7 @@ function requestSend(param, course) {
         return "";
     })
         // 短路经
-        .replace(/^(\w+):(?!\/\/)/, function (s0, s1) {
+        .replace(/^([\w\-,!@#$%&*]+):(?!\/\/)/, function (s0, s1) {
         req.path = s1;
         return (req.paths[s1] || s0);
     });

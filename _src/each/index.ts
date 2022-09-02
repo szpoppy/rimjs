@@ -42,7 +42,7 @@ export function each<T>(arr: any, fn: (item: any, index: number | string, stop: 
         }
 
         let len: number = arr.length
-        if (forTypes.indexOf("-" + _toString.call(arr).toLowerCase() + "-") > -1 || "[object htmlcollection]" == String(arr).toLowerCase()) {
+        if (forTypes.indexOf("-" + _toString.call(arr).toLowerCase() + "-") > -1) {
             for (let i = 0; i < len; i += 1) {
                 let item = fn(arr[i], i, stop)
                 if (isStop) {

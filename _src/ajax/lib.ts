@@ -534,9 +534,9 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
     // 短路径替换
     req.formatURL = req.originURL
         // 自定义req属性
-        .replace(/^<([\w,:]*)>/, function(s0: string, s1: string) {
+        .replace(/^<([\w\-,:!@#$%&*]*)>/, function(s0: string, s1: string) {
             s1.split(/,+/).forEach(function(key: string) {
-                let [k1, k2] = key.toLowerCase().split(/:+/)
+                let [k1, k2] = key.split(/:+/)
                 if (k2 === undefined) {
                     k2 = k1
                     k1 = "method"
@@ -546,7 +546,7 @@ function requestSend(this: Ajax, param: sendParam, course: AjaxCourse) {
             return ""
         })
         // 短路经
-        .replace(/^(\w+):(?!\/\/)/, (s0, s1) => {
+        .replace(/^([\w\-,!@#$%&*]+):(?!\/\/)/, (s0, s1) => {
             req.path = s1
             return (req.paths[s1] || s0) as string
         })
