@@ -310,10 +310,10 @@ function xhrSend(this: Ajax, course: AjaxCourse): void {
     }
 
     // 发送请求，注意要替换
-    if (typeof req.body == "string") {
+    // if (typeof req.body == "string") {
         // eslint-disable-next-line
-        req.body = req.body.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*")
-    }
+        // req.body = req.body.replace(/[\x00-\x08\x11-\x12\x14-\x20]/g, "*")
+    // }
 
     // 发送前出发send事件
     this.emit("send", course)
