@@ -10,7 +10,7 @@ class Cache<T> {
     date: number = new Date().getTime()
     data!: T
 
-    setData(data: T, inited: initedNum | Boolean = false) {
+    setData(data: T, inited: initedNum | Boolean = true) {
         if (inited == 2 || inited === true) {
             // 为0，异常，不更新
             this.data = data

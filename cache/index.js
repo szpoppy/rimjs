@@ -8,7 +8,7 @@ var Cache = /** @class */ (function () {
         this.date = new Date().getTime();
     }
     Cache.prototype.setData = function (data, inited) {
-        if (inited === void 0) { inited = false; }
+        if (inited === void 0) { inited = true; }
         if (inited == 2 || inited === true) {
             // 为0，异常，不更新
             this.data = data;
