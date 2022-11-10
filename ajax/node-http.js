@@ -105,6 +105,9 @@ function httpRequest(course) {
     if (!isGet) {
         req.body = req.isFormData ? param : lib_1.getParamString(req.param, req.dataType);
     }
+    if (req.header["Content-Length"] === undefined && method != "GET" && method != "POST" && req.body && typeof req.body == 'string') {
+        req.header["Content-Length"] = Buffer.byteLength(req.body);
+    }
     this.emit("send", course);
     var client = reqSend(src, option, function (cRes) {
         cRes.setEncoding("utf8");

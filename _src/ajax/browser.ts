@@ -121,7 +121,7 @@ function fetchSend(this: Ajax, course: AjaxCourse): void {
     // fetch option参数
     let option: RequestInit = {
         method: method,
-        headers: req.header
+        headers: req.header as any
     }
 
     if (method == "GET") {

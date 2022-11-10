@@ -82,7 +82,7 @@ export class NodeFormData {
 
 // ==================================================================== 接口
 interface IFStrObj {
-    [propName: string]: string
+    [propName: string]: string | number
 }
 
 interface IParam {

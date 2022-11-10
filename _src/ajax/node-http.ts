@@ -1,6 +1,6 @@
 import { Ajax, AjaxCourse, ajaxGlobal, getParamString, fixedURL, getDefaultContentType, responseEnd, NodeFormData } from "./lib"
-import { request as httpSend } from "http"
-import { request as httpsSend, RequestOptions as httpsOptions } from "https"
+import { request as httpSend, RequestOptions as httpsOptions } from "http"
+import { request as httpsSend } from "https"
 import forEach from "../each"
 import { assign } from "../assign"
 import * as qs from "querystring"
@@ -12,13 +12,13 @@ import { ReadStream, createReadStream } from "fs"
 //     return req.dataType == "form-data"
 // }
 
-ajaxGlobal.paramMerge = function(req, param) {
+ajaxGlobal.paramMerge = function (req, param) {
     let isFormData = param instanceof NodeFormData
     req.isFormData = isFormData
     if (isFormData) {
         req.method = "POST"
         // FormData 将参数都添加到 FormData中
-        forEach(req.param, function(value, key) {
+        forEach(req.param, function (value, key) {
             let fd = <NodeFormData>param
             fd.set(key as string, value)
         })
@@ -36,7 +36,7 @@ ajaxGlobal.paramMerge = function(req, param) {
     req.param = assign({ $: req.param }, { $: param || {} }).$
 }
 
-ajaxGlobal.fetchExecute = function(course, ajax) {
+ajaxGlobal.fetchExecute = function (course, ajax) {
     let { req } = course
     req.isCross = false
     httpRequest.call(ajax, course)
@@ -55,7 +55,7 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
     // fetch option参数
     let option: httpsOptions = {
         method: method,
-        headers: req.header
+        headers: req.header as any
     }
 
     let isGet = method == "GET"
@@ -87,6 +87,11 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
     if (!isGet) {
         req.body = req.isFormData ? param : getParamString(req.param, req.dataType)
     }
+
+    if (req.header["Content-Length"] === undefined && method != "GET" && method != "POST" && req.body && typeof req.body == 'string') {
+        req.header["Content-Length"] = Buffer.byteLength(req.body)
+    }
+
     this.emit("send", course)
 
     let client = reqSend(src, option, cRes => {
@@ -107,7 +112,7 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
                 res.err = (s >= 200 && s < 300) || s === 304 ? null : "http error [" + s + "]"
                 try {
                     res.text = Buffer.isBuffer(chunks[0]) ? Buffer.concat(chunks).toString() : chunks.join("")
-                } catch (e) {}
+                } catch (e) { }
 
                 // 统一处理 返回数据
                 responseEnd.call(this, course)
@@ -138,7 +143,7 @@ function httpRequest(this: Ajax, course: AjaxCourse): void {
         fileName?: string
     }
     let upArr: upArrItem[] = []
-    formData.forEach(function(item, key) {
+    formData.forEach(function (item, key) {
         if (Buffer.isBuffer(item) || item instanceof ReadStream || typeof item == "string") {
             item = { value: item, name: key }
         }

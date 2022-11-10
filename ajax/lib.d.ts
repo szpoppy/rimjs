@@ -19,7 +19,7 @@ export declare class NodeFormData {
     forEach(fn: (item: NodeFormDataItemValue, key: string) => void): void;
 }
 interface IFStrObj {
-    [propName: string]: string;
+    [propName: string]: string | number;
 }
 interface IParam {
     [propName: string]: number | string | boolean | Array<number | string | boolean> | IParam;
