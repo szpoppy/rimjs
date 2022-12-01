@@ -11,30 +11,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ajax = exports.ajaxUtil = void 0;
-/*
-function getDefaultAdapter() {
-    var adapter;
-    if (typeof XMLHttpRequest !== 'undefined') {
-        // For browsers use XHR adapter
-        adapter = require('./adapters/xhr');
-    } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
-        // For node use HTTP adapter
-        adapter = require('./adapters/http');
-    }
-    return adapter;
-}
-*/
 var lib_1 = require("./lib");
+require("./browser");
 __exportStar(require("./lib"), exports);
 exports.ajaxUtil = {
     fixedURL: lib_1.fixedURL,
     toParam: lib_1.getParamString
 };
-require(typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]"
-    ? // node
-        "./node-http"
-    : // 浏览器
-        "./browser");
 exports.ajax = Object.assign(new lib_1.AjaxGroup(), { global: lib_1.ajaxGlobal, Group: lib_1.AjaxGroup, util: exports.ajaxUtil });
 exports.default = exports.ajax;
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=h5.js.map

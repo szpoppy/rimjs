@@ -18,15 +18,11 @@ export let ajaxUtil = {
     fixedURL,
     toParam: getParamString
 }
-;(function() {
-    if (typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]") {
-        // node
-        require("./node-http")
-        return
-    }
-    // 浏览器
-    require("./browser")
-})()
+require(typeof process !== "undefined" && Object.prototype.toString.call(process) === "[object process]"
+    ? // node
+      "./node-http"
+    : // 浏览器
+      "./browser")
 
 export let ajax = Object.assign(new AjaxGroup(), { global: ajaxGlobal, Group: AjaxGroup, util: ajaxUtil })
 export default ajax
