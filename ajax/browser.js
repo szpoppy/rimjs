@@ -174,7 +174,11 @@ function fetchSend(course) {
         if (!req.outFlag) {
             // outFlag 为true，表示 中止了
             // 设置 headers 方便获取
-            res.headers = response.headers || "";
+            try {
+                // 可能有权限问题
+                res.headers = response.headers || "";
+            }
+            catch (e) { }
             // 状态吗
             res.status = response.status || 0;
             // 返回的字符串

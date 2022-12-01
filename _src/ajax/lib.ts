@@ -170,7 +170,10 @@ export class AjaxRes {
         if (typeof this.headers == "string") {
             return new RegExp("(?:" + key + "):[ \t]*([^\r\n]*)\r").test(this.headers as string) ? RegExp.$1 : ""
         }
-        return (this.headers.get && this.headers.get(key)) || ""
+        try {
+            return this.headers.get(key) || ""
+        } catch (e) {}
+        return ""
     }
 }
 
