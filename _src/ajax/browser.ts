@@ -4,7 +4,7 @@ import { getFullUrl } from "../util/getFullUrl"
 import { loadJS } from "../util/loadJS"
 import forEach from "../each"
 import { assign } from "../assign"
-import * as qs from "querystring"
+import qs from "../qs"
 
 // 实现具体的请求
 ajaxGlobal.paramMerge = function(req, param) {

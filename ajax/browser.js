@@ -1,23 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -28,7 +9,7 @@ var getFullUrl_1 = require("../util/getFullUrl");
 var loadJS_1 = require("../util/loadJS");
 var each_1 = __importDefault(require("../each"));
 var assign_1 = require("../assign");
-var qs = __importStar(require("querystring"));
+var qs_1 = __importDefault(require("../qs"));
 // 实现具体的请求
 lib_1.ajaxGlobal.paramMerge = function (req, param) {
     var isFormData = (req.isFormData = window.FormData && param instanceof window.FormData);
@@ -48,7 +29,7 @@ lib_1.ajaxGlobal.paramMerge = function (req, param) {
                 return;
             }
             // 参数为字符串，自动格式化为 object，后面合并后在序列化
-            param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param);
+            param = req.dataType != "json" || req.method == "GET" ? qs_1.default.parse(param) : JSON.parse(param);
         }
         req.param = assign_1.assign({ $: req.param }, { $: param || {} }).$;
     }

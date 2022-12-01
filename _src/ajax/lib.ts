@@ -1,7 +1,7 @@
 import Event from "../event"
 import { merge } from "../assign"
 import getUUID from "../sole"
-import * as qs from "querystring"
+import qs from "../qs"
 import { ReadStream } from "fs"
 import forEach from "../each"
 

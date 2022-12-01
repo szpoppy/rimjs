@@ -3,7 +3,7 @@ import { request as httpSend, RequestOptions as httpsOptions } from "http"
 import { request as httpsSend } from "https"
 import forEach from "../each"
 import { assign } from "../assign"
-import * as qs from "querystring"
+import qs from "../qs"
 import * as path from "path"
 import { ReadStream, createReadStream } from "fs"
 

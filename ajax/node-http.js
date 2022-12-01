@@ -27,7 +27,7 @@ var http_1 = require("http");
 var https_1 = require("https");
 var each_1 = __importDefault(require("../each"));
 var assign_1 = require("../assign");
-var qs = __importStar(require("querystring"));
+var qs_1 = __importDefault(require("../qs"));
 var path = __importStar(require("path"));
 var fs_1 = require("fs");
 // 实现具体的请求
@@ -53,7 +53,7 @@ lib_1.ajaxGlobal.paramMerge = function (req, param) {
             return;
         }
         // 参数为字符串，自动格式化为 object，后面合并后在序列化
-        param = req.dataType != "json" || req.method == "GET" ? qs.parse(param) : JSON.parse(param);
+        param = req.dataType != "json" || req.method == "GET" ? qs_1.default.parse(param) : JSON.parse(param);
     }
     req.param = assign_1.assign({ $: req.param }, { $: param || {} }).$;
 };
