@@ -16,7 +16,7 @@ var Cache = /** @class */ (function () {
         this.inited = inited ? 2 : 0;
         while (this.backs.length) {
             var fn = this.backs.shift();
-            fn(this.data);
+            fn(data);
         }
     };
     return Cache;

@@ -20,7 +20,7 @@ class Cache<T> {
 
         while (this.backs.length) {
             let fn = this.backs.shift() as backFn<T>
-            fn(this.data)
+            fn(data)
         }
     }
 }
