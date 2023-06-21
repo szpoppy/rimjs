@@ -143,19 +143,20 @@ var LSClass = /** @class */ (function () {
                 json.expiration = new Date().getTime() + expiration;
             }
         }
-        else {
-            if (typeof expiration == "string") {
-                if (/^(\d+)([a-z])$/i.test(expiration)) {
-                    var num = parseInt(RegExp.$1) * (appendTimeOpt[RegExp.$2.toLowerCase()] || 0);
-                    expiration = new Date().getTime() + num;
-                }
-                else {
-                    expiration = new Date(expiration
-                        .replace(/-/g, "/")
-                        .replace(/T/, " ")
-                        .replace(/\.\d*$/, "")).getTime();
-                }
+        else if (typeof expiration == "string") {
+            if (/^(\d+)([a-z])$/i.test(expiration)) {
+                var num = parseInt(RegExp.$1) * (appendTimeOpt[RegExp.$2.toLowerCase()] || 0);
+                json.expiration = new Date().getTime() + num;
             }
+            else {
+                json.expiration = new Date(expiration
+                    .replace(/-/g, "/")
+                    .replace(/T/, " ")
+                    .replace(/\.\d*$/, "")).getTime();
+            }
+        }
+        else if (expiration instanceof Date) {
+            json.expiration = expiration.getTime();
         }
         LS.setItem(key, JSON.stringify(json));
     };
