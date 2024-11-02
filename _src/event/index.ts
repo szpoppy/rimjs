@@ -24,6 +24,7 @@ export default class Event {
             fn.apply(this, arguments)
             this.off(type, back)
         }
+        back.__isOnce = true
         this[":on"](type, back, isPre)
     }
 
@@ -81,8 +82,12 @@ export default class Event {
         }
 
         let evs = this._events[type] || []
-        for (let i = 0; i < evs.length; i += 1) {
-            evs[i].call(target, arg)
+        for (let i = 0; i < evs.length;) {
+            let fn = evs[i] as any
+            fn.call(target, arg)
+            if (!fn.__isOnce) {
+                i += 1
+            }
         }
 
         return arg
